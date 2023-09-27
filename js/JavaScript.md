@@ -1,0 +1,1694 @@
+# JavaScript
+
+## 数据类型
+
+JavaScript 提供八种不同的数据类型
+
+|    数据类型    |              含义               |
+| :------------: | :-----------------------------: |
+|   undefined    |             未定义              |
+|      null      |               空                |
+|    boolean     |              布尔               |
+| string(不可变) |    字符串(可以通过下标访问)     |
+|     symbol     | 表示一个独一无二的值（es6新增） |
+|     number     |              数字               |
+|     bigint     |             大整数              |
+|     object     |              对象               |
+
+### 引用类型
+
+`Object,Array,Function`
+
+这两种类型最主要的区别在于声明变量时候内存分配不同，对**基本类型**而言，它的变量值是直接存储在**栈内存**中的
+
+对于**引用类型**而言，声明变量的时候，栈内存存储的是值所在的内存地址，而真正的值存放在**堆内存**中
+
+### 关于string的问题
+
+字符串是基本类型，所以，对程序员来说，
+
+```js
+var i=1;
+i=2;
+var str="a";
+str="b";
+```
+
+效果是差不多的。
+
+**当字符串通过`[]`来取出其中一个字符的时候，会转换为一个 String 对象，而 String 对象的这个属性是不可写的，对他赋值不会有任何效果。在严格模式下对它的赋值是会抛异常的。**
+
+```js
+let str="Hello";
+str[0]='J';
+console.log(str);//输出Hello
+
+str="Jello";
+console.log(str);//输出Jello
+```
+
+## 声明变量
+
+通过在变量前面使用关键字 `var`，声明一个变量
+
+```javascript
+var name;
+```
+
+上面代码的意思是创建一个名为 `name` 的变量。 在 JavaScript 中我们以分号结束语句。 变量名称可以由数字、字母、美元符号 `$` 或者下划线 `_` 组成，但是不能包含空格或者以数字为开头。
+
+当 JavaScript 中的变量被声明的时候，程序内部会给它一个初始值 `undefined`。 当你对一个值为 `undefined` 的变量进行运算操作的时候，算出来的结果将会是 `NaN`，它的意思是 "Not a Number"。 如果你用 `undefined` 变量连接一个字符串，你将得到一个 `undefined` 的 字符串。
+
+```javascript
+{
+ var a;
+ a=a+"1";
+}
+//输出：'undefined1'
+{ 
+ var b;
+ b=b+1;
+}
+//输出：NaN
+```
+
+### var 和 let
+
+使用 `var` 关键字声明变量的最大问题之一是你可以轻松覆盖变量声明：
+
+```javascript
+var camper = "James";
+var camper = "David";
+console.log(camper);
+```
+
+在上面的代码中，`camper` 变量最初声明为 `James`，然后被覆盖为 `David`。 然后控制台显示字符串 `David`。
+
+在小型应用程序中，你可能不会遇到此类问题。 但是随着你的代码库变大，你可能会意外地覆盖一个你不打算覆盖的变量。 由于此行为不会引发错误，因此搜索和修复错误变得更加困难。
+
+ES6 中引入了一个名为 `let` 的关键字，这是对 JavaScript 的一次重大更新，以解决与 `var` 关键字有关的潜在问题。 你将在后面的挑战中了解其他 ES6 特性。
+
+如果将上面代码中的 `var` 替换为 `let` ，则会导致错误：
+
+```javascript
+let camper = "James";
+let camper = "David";
+```
+
+所以不像 `var`，当你使用 `let` 时，同名的变量只能声明一次。
+
+**使用 `var` 关键字声明变量时，它是全局声明的，如果在函数内部声明则是局部声明的。**
+
+var是**函数作用域**，let是**块作用域**。
+
+**在函数中声明了var，整个函数内都是有效的，比如说在for循环内定义的一个var变量，实际上其在for循环以外也是可以访问的。**
+
+**而let由于是块作用域，所以如果在块作用域内定义的变量，比如说在for循环内，在其外面是不可被访问的，所以for循环推荐用let**
+
+### const
+
+关键字 `let` 并不是声明变量的唯一新方法。 在 ES6 中，你还可以使用 `const` 关键字声明变量。`const` 具有 `let` 的所有出色功能，另外还有一个额外的好处，即使用 `const` 声明的变量是只读的。 它们是一个常量值，这意味着一旦一个变量被赋值为 `const`，它就不能被重新赋值：
+
+```javascript
+const FAV_PET = "Cats";
+FAV_PET = "Dogs";
+```
+
+由于重新分配 `FAV_PET` 的值，控制台将显示错误。你应该始终使用 `const` 关键字命名不想重新分配的变量。 这有助于避免给一个常量进行额外的再次赋值。**注意：** 通常，开发者会用大写字母作为常量标识符，用小写字母或者驼峰命名作为变量（对象或数组）标识符。 你将在后面的挑战中了解有关对象、数组以及不可变和可变值的更多信息。 同样在后面的挑战中，你将看到大写、小写或驼峰式变量标识符的示例。
+
+**const保证的不是变量的值不动，而是变量指向的那个内存地址所保存的数据不能改变**。对于基本数据类型，值就保存在变量指向的那个内存地址，所以用const定义的基本数据类型的值是不能改变了，而对于数组和对象，它们属于引用数据类型，变量保存的只是一个指向实际数据的指针，而这个指针指向的内存地址才是真正保存数据的值的地方，所以const只能保证这个指针不能变，但不能保证他所指向的这个内存地址里面的值不能变。
+
+### 单双引号
+
+JavaScript 中的字符串可以使用开始和结束都是同类型的单引号或双引号表示。 与其他一些编程语言不同的是，单引号和双引号的功能在 JavaScript 中是相同的。
+
+```javascript
+const doubleQuoteStr = "This is a string"; 
+const singleQuoteStr = 'This is also a string';
+```
+
+当你需要在一个字符串中使用多个引号的时候，你可以使用单引号包裹双引号或者相反。 常见的场景比如在字符串中包含对话的句子需要用引号包裹。
+
+```javascript
+const conversation = 'Finn exclaims to Jake, "Algebraic!"';
+```
+
+ 另外比如在一个包含有 `<a>` 标签的字符串中，标签的属性值需要用引号包裹。然而，如果你需要在其中使用外面的引号，这就成为一个问题。 记住，一个字符串在**开头和结尾处有相同的引号**。如果在中间使用了相同的引号，字符串会提前中止并抛出错误。
+
+```javascript
+const goodStr = 'Jake asks Finn, "Hey, let\'s go on an adventure?"'; 
+const badStr = 'Finn responds, "Let's go!"';
+```
+
+在这里 `badStr` 会产生一个错误。
+
+灵活使用引号组合，从而无需转义字符
+
+```javascript
+const myStr = '<a href="http://www.example.com" target="_blank">Link</a>';
+```
+
+### 转义字符
+
+| 代码 |  输出  |
+| :--: | :----: |
+| `\'` | 单引号 |
+| `\"` | 双引号 |
+| `\\` | 反斜杠 |
+| `\n` | 换行符 |
+| `\t` | 制表符 |
+| `\r` |  回车  |
+| `\b` | 退格符 |
+| `\f` | 换页符 |
+
+*请注意，反斜线本身必须被转义，才能显示为反斜线。*
+
+### 数组
+
+以左方括号开始定义一个数组，以右方括号结束，里面每个元素之间用逗号隔开
+
+```javascript
+const sandwich = ["peanut butter", "jelly", "bread"];
+//数组也可同时放其他类型值
+const myArray = ["dddd",656];
+
+//多维数组
+const myArray = [["hh",2,3],["pp",5,6]];
+```
+
+与字符串不同，数组的**条目**是 可变的 并且可以自由更改，即使数组是用 `const` 声明的。
+
+```javascript
+const ourArray = [50, 40, 30];
+ourArray[0] = 15;
+```
+
+`ourArray` 值为 `[15, 40, 30]`。
+
+### 数组声明问题
+
+下面两组代码返回两种不同的值，请看
+
+```js
+let newArray = [];
+let row = [];
+for (let i = 0; i < m; i++) {
+   // 添加第 m 行到 newArray
+   for (let j = 0; j < n; j++) {
+       // 将 n 个 0 推入当前行以创建列
+       row.push(0);
+   }
+   // 将当前行（已有 n 个 0）推送到数组
+   newArray.push(row);
+   for (let j = 0; j < n; j++) {//指向原有数组！！！！！！！！！！！！！！！！！！！
+        // 将 n 个 0 移出
+        row.shift();
+    }
+}
+```
+
+```json
+[ [], [], [] ]
+```
+
+```js
+let newArray = [];
+let row = [];
+for (let i = 0; i < m; i++) {
+  // 添加第 m 行到 newArray
+  row=[];//指向空数组！！！！！！！！！！！！！！！！！！！
+  for (let j = 0; j < n; j++) {
+    // 将 n 个 0 推入当前行以创建列
+    row.push(0);
+  }
+  // 将当前行（已有 n 个 0）推送到数组
+  newArray.push(row);
+}
+return newArray;
+```
+
+```json
+[ [ 0, 0 ], [ 0, 0 ], [ 0, 0 ] ]
+```
+
+
+
+### 函数
+
+在 JavaScript 中，我们可以把代码的重复部分抽取出来，放到一个函数 （functions）中。
+
+```js
+function functionName() {
+  console.log("Hello World");
+}
+```
+
+你可以通过函数名加上后面的小括号来调用（invoke）这个函数，就像这样： `functionName();` 每次调用函数时，它都会在控制台上打印消息 `Hello World`。 每次调用函数时，大括号之间的所有代码都将被执行。
+
+#### 参数
+
+函数的参数 （parameters）在函数调用中充当传入函数的输入占位符（也叫形参）。 函数调用时，参数可以为一个或多个。 调用函数时输入（或传递 "passed"）的实际值被称为参数（arguments）。
+
+这是带有两个参数的函数，`param1` 和 `param2`：
+
+```javascript
+function testFun(param1, param2) {
+  console.log(param1, param2);
+}
+```
+
+然后我们可以调用 `testFun`，就像这样： `testFun("Hello", "World");`。 我们传入了两个字符串参数， `Hello` 和 `World`。 在函数中，`param1` 等于字符串 `Hello` 以及 `param2` 等于字符串 `World`。 请注意，`testFun` 函数可以多次调用，每次调用时传递的参数会决定参数的实际值。
+
+我们可以通过函数的参数（arguments）把值传入函数， 也可以使用 `return` 语句把数据从一个函数中传出来。
+
+```js
+function plusThree(num) {
+  return num + 3;
+}
+
+const answer = plusThree(5);
+//plusThree 带有一个参数（argument）num，并返回（return）一个等于 num + 3 的值。
+```
+
+`answer` 的值为 `8`。
+
+### 匿名函数
+
+在 JavaScript 里，我们会经常遇到不需要给函数命名的情况，尤其是在需要将**一个函数作为参数传给另外一个函数**的时候。 这时，我们会创建匿名函数。 因为这些函数不会在其他地方复用，所以我们不需要给它们命名。
+
+这种情况下，我们通常会使用以下语法：
+
+```js
+const myFunc = function() {
+  const myVar = "value";
+  return myVar;
+}
+```
+
+ES6 提供了其他写匿名函数的方式的语法糖。 你可以使用**箭头函数**：
+
+```js
+const myFunc = () => {
+  const myVar = "value";
+  return myVar;
+}
+```
+
+当**不需要函数体，只返回一个值的时候**，箭头函数允许你省略 `return` 关键字和外面的大括号。 这样就可以将一个简单的函数简化成一个单行语句。
+
+```js
+const myFunc = () => "value";
+```
+
+#### 匿名函数参数
+
+和一般的函数一样，你也可以给箭头函数传递参数。
+
+```js
+const doubler = (item) => item * 2;
+doubler(4);
+```
+
+`doubler(4)` 将返回 `8`。
+
+如果箭头函数只有一个参数，则可以省略参数外面的括号。
+
+```js
+const doubler = item => item * 2;
+```
+
+可以给箭头函数传递多个参数。
+
+`multiplier(4, 2)` 将返回 `8`。
+
+###  默认参数
+
+**ES6 里允许给函数传入默认参数**，来构建更加灵活的函数。
+
+```js
+const greeting = (name = "Anonymous") => "Hello " + name;
+
+console.log(greeting("John"));
+console.log(greeting());
+```
+
+控制台将显示字符串 `Hello John` 和 `Hello Anonymous`。
+
+默认参数会在参数没有被指定（值为 undefined）的时候起作用。 在上面的例子中，参数 `name` 会在没有得到新的值的时候，默认使用值 `Anonymous`。 你还可以给多个参数赋予默认值。
+
+### 可变参数
+
+ES6 推出了用于函数参数的 **rest 操作符**帮助我们创建更加灵活的函数。 rest 操作符可以用于创建有一个变量来接受多个参数的函数。 这些参数被储存在一个可以在函数内部读取的数组中。
+
+```js
+function howMany(...args) {
+  return "You have passed " + args.length + " arguments.";
+}
+console.log(howMany(0, 1, 2));
+console.log(howMany("string", null, [1, 2, 3], { }));
+```
+
+控制台将显示字符串 `You have passed 3 arguments.` 和 `You have passed 4 arguments.`。
+
+rest 参数使我们不需要使用 `arguments` 对象，允许我们对传递给函数 `howMany` 的参数数组使用数组方法。
+
+```javascript
+const sum = (...args) => { //匿名函数和可变参数实例
+ let total = 0;
+ for (let i = 0; i < args.length; i++) {
+  total += args[i];
+ }
+ return total;
+}
+```
+
+**可变参数无法用默认参数初始化**
+
+### 展开运算符 ...
+
+> 官方https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Spread_syntax
+>
+> 人话https://zhuanlan.zhihu.com/p/394698999
+
+- 展开操作符是三个点（...）
+- 它可以应用到可迭代的对象上，例如数组或字符串
+- 它把可迭代对象展开为其内部的各个元素
+- 可以在函数调用时使用展开语法
+
+ES6 引入了展开操作符，可以展开数组以及需要多个参数或元素的表达式。
+
+下面的 ES5 代码使用了 `apply()` 来计算数组的最大值：
+
+```js
+var arr = [6, 89, 3, 45];
+var maximus = Math.max.apply(null, arr);
+```
+
+`maximus` 的值为 `89`。
+
+我们必须使用 `Math.max.apply(null, arr)`，因为 `Math.max(arr)` 返回 `NaN`。 `Math.max()` 函数中需要传入的是一系列由**逗号分隔的参数**，而不是一个数组。 展开操作符可以提升代码的可读性，使代码易于维护。
+
+```js
+const arr = [6, 89, 3, 45];
+const maximus = Math.max(...arr);
+```
+
+`maximus` 的值应该是 `89`。
+
+`...arr` 返回一个解压缩的数组。 换句话说，它展开了数组。 然而，展开操作符只能够在函数的参数中或者数组中使用。 例如：
+
+```js
+const spreaded = [...arr];
+```
+
+下面的代码将不能运行：
+
+```js
+const spreaded = ...arr;
+```
+
+#### 展开运算之复制
+
+我们可以用展开运算符来复制数组：
+
+```js
+let thisArray = [true, true, undefined, false, null];
+let thatArray = [...thisArray];
+```
+
+`thatArray` 等于 `[true, true, undefined, false, null]`。 `thisArray` 保持不变， `thatArray` 包含与 `thisArray` 相同的元素。
+
+#### 展开运算之合并（插入）
+
+展开语法（spread）的另一个重要用途是合并数组，或者将某个数组的所有元素插入到另一个数组的任意位置。 我们也可以使用 ES5 的语法连接两个数组，但只能让它们首尾相接。 而展开语法可以让这样的操作变得极其简单：
+
+```js
+let thisArray = ['sage', 'rosemary', 'parsley', 'thyme'];
+
+let thatArray = ['basil', 'cilantro', ...thisArray, 'coriander'];
+```
+
+```json
+thatArray 会有值 ['basil', 'cilantro', 'sage', 'rosemary', 'parsley', 'thyme', 'coriander']
+```
+
+使用展开语法，我们就可以很方便的实现一个用传统方法会写得很复杂且冗长的操作。
+
+### 解构运算
+
+> 解构详解https://blog.csdn.net/Zhang_wang_yun/article/details/129976907
+
+解构赋值是 ES6 引入的新语法，用来从数组和对象中提取值，并优雅地对变量进行赋值。
+
+有如下 ES5 代码：
+
+```js
+const user = { name: 'John Doe', age: 34 };
+
+const name = user.name;
+const age = user.age;
+```
+
+`name` 的值应该是字符串 `John Doe`， `age` 的值应该是数字 `34`。
+
+下面是使用 ES6 解构赋值语句，实现相同效果：
+
+```js
+const { name, age } = user;
+```
+
+同样，`name` 的值应该是字符串 `John Doe`， `age` 的值应该是数字 `34`。
+
+#### 对象解构
+
+```json
+1.赋值运算符 = 左侧的 {} 用于批量声明变量，右侧对象的属性值将被赋值给左侧的变量
+2.对象属性的值将被赋值给与属性名相同的变量
+3.注意解构的变量名不要和外面的变量名冲突否则报错.
+4.对象中找不到与变量名一致的属性时变量值为 undefine
+```
+
+**与数组解构不同的是，对象解构不需要严格按照顺序取值，而只要按照变量名去取对应属性名的值，若取不到对应属性名的值，则为undefined 。**
+
+如果在解构对象之前有一个对象的同名变量，在后面进行解构赋值的时候将会报错，提示我们标识符“uname”已经声明。
+
+```js
+let uname = 1//同名变量
+const user = {
+  uname: '张三', 
+  age: 18
+}
+const { uname, age } = user
+console.log(uname);//会报uname已声明错误
+console.log(age);
+```
+这个时候可以给解构的值赋予一个新的变量名， 通过在赋值的时候将新的变量名放在冒号后面来解决这个问题。
+
+```js
+let uname = 1
+const user = {
+  uname: '张三', 
+  age: 18
+}
+const { uname: username, age } = user
+console.log(username);
+console.log(age);
+```
+还是以上个例子的对象来举例：
+
+```js
+const user = { name: 'John Doe', age: 34 };
+```
+
+这是指定新的变量名的例子：
+
+```js
+const { name: userName, age: userAge } = user;
+```
+
+你可以这么理解这段代码：获取 `user.name` 的值，将它赋给一个新的变量 `userName`，等等。 `userName` 的值将是字符串 `John Doe`，`userAge` 的值将是数字 `34`。
+
+#### 解构嵌套对象
+
+使用与前面的例子中类似的对象：
+
+```js
+const user = {
+  johnDoe: { 
+    age: 34,
+    email: 'johnDoe@freeCodeCamp.com'
+  }
+};
+```
+
+这是解构对象的属性值赋值给具有相同名字的变量：
+
+```js
+const { johnDoe: { age, email }} = user;
+```
+
+这是将对象的属性值赋值给具有不同名字的变量：
+
+```js
+const { johnDoe: { age: userAge, email: userEmail }} = user;
+```
+
+#### 数组解构
+
+与数组解构不同，数组的扩展运算会将数组里的所有内容分解成一个由逗号分隔的列表。 所以，你不能选择哪个元素来给变量赋值。
+
+```js
+1.赋值运算符 = 左侧的 [ ] 用于批量声明变量，右侧数组的单元值将被赋值给左侧的变量
+2.变量的顺序对应数组单元值的位置依次进行赋值操作。
+3.变量的数量大于单元值数量时，多余的变量将被赋值为 undefine
+4.防止有undefined传递单元值的情况，可以设置默认值。
+
+const [a='张三',b='李四',c='王五',d='赵六'] = ['张三','李四','王五'];//也可以使用,,来跳过某个值
+console.log(a,b,c,d);//张三 李四 王五 赵六 
+```
+
+#### 有用的应用，交换变量值
+
+```js
+let a = 8, b = 6;
+[a,b]=[b,a];
+```
+
+### 箭头函数
+
+> 箭头函数详解 https://www.cnblogs.com/LIXI-/p/16471548.html
+
+在 JavaScript 里，我们会经常遇到不需要给函数命名的情况，尤其是在需要将一个函数作为参数传给另外一个函数的时候。 这时，我们会创建匿名函数。 因为这些函数不会在其他地方复用，所以我们不需要给它们命名。
+
+```js
+const myFunc = function() {
+  const myVar = "value";
+  return myVar;
+}
+```
+
+ES6 提供了其他写匿名函数的方式的语法糖。 你可以使用**箭头函数**：
+
+```js
+const myFunc = () => {
+  const myVar = "value";
+  return myVar;
+}
+```
+
+当不需要函数体，只返回一个值的时候，箭头函数允许你省略 `return` 关键字和外面的大括号。 这样就可以将一个简单的函数简化成一个单行语句。
+
+```js
+const myFunc = () => "value";
+```
+
+**当箭头函数要返回对象的时候，为了区分于代码块，要用 () 将对象包裹起来**
+
+```js
+var f = (id,name) => ({id: id, name: name});
+f(6,2);  // {id: 6, name: 2}
+```
+
+#### 箭头函数传参
+
+和一般的函数一样，你也可以给箭头函数传递参数。
+
+```js
+const doubler = (item) => item * 2;
+doubler(4);
+```
+
+`doubler(4)` 将返回 `8`。
+
+如果箭头函数只有一个参数，则可以省略参数外面的括号。
+
+```js
+const doubler = item => item * 2;
+```
+
+可以给箭头函数传递多个参数。
+
+```js
+const multiplier = (item, multi) => item * multi;
+multiplier(4, 2);
+```
+
+`multiplier(4, 2)` 将返回 `8`。
+
+### 作用域
+
+在 JavaScript 中，作用域涉及到变量的作用范围。 在函数外定义的变量具有 全局 作用域。 这意味着，具有全局作用域的变量可以在代码的任何地方被调用。
+
+**未使用 **`let` 或 `const` 关键字声明的变量会在 `global` 范围内自动创建。 当在代码其他地方无意间定义了一个变量，刚好变量名与全局变量相同，这时会产生意想不到的后果。 你应该总是用 `let` 或 `const` 声明你的变量。
+
+也就是说不用关键字默认是全局作用域，但如果变量重名，会出问题，所以建议使用关键字
+
+#### 局部作用域
+
+在一个函数内声明的变量，以及该函数的参数都具有局部（local）作用域。 这意味着它们只在该函数内可见。
+
+```js
+function myTest() {
+  const loc = "foo";
+  console.log(loc);
+}
+
+myTest();
+console.log(loc);
+```
+
+`myTest()` 函数调用将在控制台中显示字符串 `foo`。 `console.log(loc)` 行（在 `myTest` 函数之外）将抛出错误，因为 `loc` 未在函数之外定义。
+
+一个程序中有可能具有相同名称的局部变量 和全局变量。 在这种情况下，局部变量将会优先于全局变量。
+
+```js
+const someVar = "Hat";
+
+function myFun() {
+  const someVar = "Head";
+  return someVar;
+}
+```
+
+函数 `myFun` 将会返回字符串 `Head`，因为局部变量的优先级更高。
+
+### return
+
+函数一般用 `return` 语句来返回值，但这不是必须的。 在函数没有 `return` 语句的情况下，当你调用它时，该函数会执行内部代码，返回的值是 `undefined`。
+
+```js
+let sum = 0;
+
+function addSum(num) {
+  sum = sum + num;
+}
+
+addSum(3);
+```
+
+`addSum` 是一个没有 `return` 语句的函数。 该函数将更改全局变量 `sum`，函数的返回值为 `undefined`。
+
+### ==和=== 
+
+严格相等运算符（`===`）是相对相等操作符（`==`）的另一种比较操作符。 与相等操作符转换数据两类型不同，严格相等运算符不会做类型转换。
+
+如果比较的值类型不同，那么在严格相等运算符比较下它们是不相等的，会返回 false 。
+
+```js
+3 ===  3  // true
+3 === '3' // false
+
+3=='3' //true
+```
+
+`3 == '3'` 返回 `true` ，因为 JavaScript 执行了从字符串到数字类型的转换。 `3 === '3'` 返回 `false`，因为类型不同，没有进行类型转换。
+
+不相等运算符（`!=`）与相等运算符是相反的。 这意味着不相等并返回 `false` 的地方，用相等运算符会返回 `true`，*反之亦然*。 与相等运算符类似，不相等运算符在比较的时候也会转换值的数据类型。
+
+```js
+1 !=  2    // true
+1 != "1"   // false，1=="1"
+```
+
+严格不相等运算符（`!==`）与全等运算符是相反的。 这意味着严格不相等并返回 `false` 的地方，用严格相等运算符会返回 `true`，*反之亦然*。 严格不相等运算符不会转换值的数据类型。
+
+```js
+3 !==  3  // false
+3 !== '3' // true
+```
+
+### 大于、大于等于
+
+使用大于运算符（`>`）来比较两个数字。 如果大于运算符左边的数字大于右边的数字，将会返回 `true`。 否则，它返回 `false`。
+
+与相等运算符一样，大于运算符在比较的时候，会**转换值的数据类型**。
+
+```js
+5   >  3  // true
+7   > '3' // true
+2   >  3  // false
+'1' >  9  // false
+```
+
+使用大于等于运算符（`>=`）来比较两个数字的大小。 如果大于等于运算符左边的数字比右边的数字大或者相等，会返回 `true`。 否则，会返回 `false`。
+
+与相等运算符相似，大于等于运算符在比较的时候会**转换值的数据类型**。
+
+```js
+6   >=  6  // true
+7   >= '3' // true
+```
+
+**小于运算符类似，略**
+
+### 模板字符串
+
+> https://www.runoob.com/js/js-string-templates.html
+
+模板字符串是 ES6 的另外一项新的功能。 这是一种可以轻松构建复杂字符串的方法。
+
+模板字符串可以使用多行字符串和字符串插值功能。
+
+模板字符串支持换行,只需代码内换行，显示也就换行
+
+请看以下代码：
+
+```js
+const person = {
+  name: "Zodiac Hasbro",
+  age: 56
+};
+
+const greeting = `Hello, my name is ${person.name}!
+I am ${person.age} years old.`;
+
+console.log(greeting);
+```
+
+控制台将显示字符串 `Hello, my name is Zodiac Hasbro!` 和 `I am 56 years old.`。
+
+这里发生了许多事情。 首先，这个例子使用反引号（\`），而不是引号（`'` 或者 `"`）将字符串括起来。 其次，注意代码和输出中的字符串都是多行的。 不需要在字符串中插入 `\n`。 上面使用的 `${variable}` 语法是一个占位符。 这样一来，你将不再需要使用 `+` 运算符来连接字符串。 当需要在字符串里增加变量的时候，你只需要在变量的外面括上 `${` 和 `}`，并将其放在模板字符串里就可以了。 同样，你可以在字符串中包含其他表达式，例如 `${a + b}`。 这个新的方式使你可以更灵活地创建复杂的字符串。
+
+### for...in 遍历对象
+
+有时候你需要遍历一个对象中的所有键。 你可以使用 for...in 循环来做这件事。 for...in 循环是这样的：
+
+```javascript
+const refrigerator = {
+  'milk': 1,
+  'eggs': 12,
+};
+
+for (const food in refrigerator) {
+  console.log(food, refrigerator[food]);
+}
+```
+
+以上代码记录 `milk 1` 和 `eggs 12`，每个键值对单独为一行。
+
+我们在循环头中定义了变量 `food` ，这个变量被设置为每次迭代上对象的每个键值，将每个食物的名称打印到控制台。
+
+**注意：**对象中的**键是无序的**，这与数组不同。 因此，一个对象中**某个属性的位置，或者说它出现的相对顺序，在引用或访问该属性时是不确定的。**
+
+## 对象
+
+对象和 `arrays` 类似，区别在于数组使用索引来访问和修改数据，而对象中的数据是通过 `properties` 访问的。
+
+对象非常适合用来存储结构化数据，可以表示真实世界中的物体，比如一只猫。
+
+对象（object）本质上是键值对（key-value pair）的集合。 或者说，一系列被映射到唯一标识符的数据就是对象；习惯上，唯一标识符叫做属性（property）或者键（key）；数据叫做值（value）
+
+这里是一个猫对象的样本：
+
+```js
+const cat = {
+  "name": "Whiskers",
+  "legs": 4,
+  "tails": 1,
+  "enemies": ["Water", "Dogs"]
+};
+```
+
+在此示例中，所有属性都存储为字符串，例如 `name`、`legs` 和 `tails`。 然而，你也可以使用数字作为属性。 你甚至可以**省略单字字符串(即属性字符串无空格)属性中的引号**，如下所示：
+
+```js
+const anotherObject = {
+  make: "Ford",
+  5: "five",
+  "model": "focus"
+};
+```
+
+然而，如果你的对象有**非字符串属性**的话，JavaScript 会**自动将它们转为字符串**。
+
+### 访问对象
+
+访问对象属性有两种方式：点号表示法（`.`）和方括号表示法（`[]`）。
+
+如果我们已经提前知道要访问的属性名，使用点号表示法是最方便的。
+
+这里是一个用点符号（`.`）读取对象属性的示例：
+
+```js
+const myObj = {
+  prop1: "val1",
+  prop2: "val2"
+};
+
+const prop1val = myObj.prop1;
+const prop2val = myObj.prop2;
+```
+
+`prop1val` 的值将为字符串 `val1`，并且`prop2val` 的值将为字符串 `val2`。
+
+访问对象属性的第二种方式是方括号表示法（`[]`）。 **如果你想访问的属性名中包含空格，就必须使用方括号表示法来获取它的属性值**。当然，如果属性名不包含空格，也可以使用方括号表示法。
+
+这是一个使用方括号表示法读取对象属性的例子：
+
+```js
+const myObj = {
+  "Space Name": "Kirk",
+  "More Space": "Spock",
+  "NoSpace": "USS Enterprise"
+};
+
+myObj["Space Name"];
+myObj['More Space'];
+myObj["NoSpace"];
+```
+
+`myObj["Space Name"]` 将会是字符串 `Kirk`，`myObj['More Space']` 将会是字符串 `Spock`，并且`myObj["NoSpace"]` 将会是字符串 `USS Enterprise`。
+
+**注意，如果属性名中包含空格，就必须使用引号（单引号或双引号）将它们包裹起来。**
+
+### 根据变量访问属性 方括号专属
+
+**对对象上使用方括号表示法，还可以访问对象上作为变量值存储的属性**。 当你需要遍历对象的所有属性，或者根据一个变量的值查找对应的属性值时，这种写法尤其适用。
+
+以下是一个使用变量来访问属性的例子：
+
+```js
+const dogs = {
+  Fido: "Mutt",
+  Hunter: "Doberman",
+  Snoopie: "Beagle"
+};
+
+const myDog = "Hunter";
+const myBreed = dogs[myDog];
+console.log(myBreed);
+```
+
+字符串 `Doberman` 将会出现在控制台中。
+
+请注意，我们在使用变量名访问属性时，*不要*使用引号引起来，因为我们使用的是 ***值***，而不是 ***属性名***。
+
+### 对象添加属性
+
+你也可以像更改属性一样给 JavaScript 对象添加属性。
+
+这里展示了如何给 `ourDog` 添加一个属性 `bark`：
+
+```js
+const ourDog = {
+  "name": "Camper",
+  "legs": 4,
+  "tails": 1,
+  "friends": ["everything!"]
+};
+
+ourDog.bark = "bow-wow";//或者ourDog["bark"] = "bow-wow";
+```
+
+现在，当我们执行 `ourDog.bark` 时，就能得到他的叫声，`bow-wow`。
+
+### 删除对象属性
+
+我们同样可以删除对象的属性，例如：
+
+```js
+delete ourDog.bark;
+```
+
+例如：
+
+```js
+const ourDog = {
+  "name": "Camper",
+  "legs": 4,
+  "tails": 1,
+  "friends": ["everything!"],
+  "bark": "bow-wow"
+};
+
+delete ourDog.bark;//也可以delete ourDog["bark"];
+```
+
+### 检查属性是否存在
+
+要检查某个对象是否具有一个属性，你可以使用 `.hasOwnProperty()` 方法。 根据对象是否具有该属性，`someObject.hasOwnProperty(someProperty)` 返回 `true` 或 `false`。
+
+```js
+function checkForProperty(object, property) {
+  return object.hasOwnProperty(property);
+}
+
+checkForProperty({ top: 'hat', bottom: 'pants' }, 'top'); // true
+checkForProperty({ top: 'hat', bottom: 'pants' }, 'middle'); // false
+```
+
+第一个 `checkForProperty` 函数返回 `true`，第二个返回 `false`。
+
+如果我们想知道一个对象中是否包含某个属性呢？ JavaScript 为我们提供了两种不同的方式来实现这个功能： 一个是通过 `hasOwnProperty()` 方法，另一个是使用 `in` 关键字。 假如我们有一个 `users` 对象，为检查它是否含有 `Alan` 属性，可以这样写：
+
+```js
+users.hasOwnProperty('Alan');
+'Alan' in users;
+```
+
+这两者结果都应该为 `true`。
+
+## 数据结构 
+
+### 对象嵌套
+
+有时你可能希望将数据存储在一个灵活的数据结构（Data Structure）中。 JavaScript 对象是一种灵活的数据结构。 它可以储存字符串（strings）、数字（numbers）、布尔值（booleans）、数组（arrays）、函数（functions）和对象（objects）以及这些值的任意组合。
+
+这是一个复杂数据结构的示例：
+
+```js
+const ourMusic = [
+  {
+    "artist": "Daft Punk",
+    "title": "Homework",
+    "release_year": 1997,
+    "formats": [ 
+      "CD", 
+      "Cassette", 
+      "LP"
+    ],
+    "gold": true
+  }
+];
+```
+
+这是一个包含一个对象的数组。 该对象有关于专辑的各种元数据（metadata）。 它也有一个嵌套的 `formats` 数组。 可以将专辑添加到顶级数组来增加更多的专辑记录。 对象将数据以一种键 - 值对的形式保存。 在上面的示例中，`"artist": "Daft Punk"` 有一个键为 `artist` 值为 `Daft Punk` 的属性。
+
+**提示：**数组中有多个 JSON 对象的时候，对象与对象之间要用逗号隔开
+
+### 访问被嵌套的对象
+
+我们可以通过连续使用点号表示法和方括号表示法来访问对象的嵌套属性。
+
+这是一个嵌套对象：
+
+```js
+const ourStorage = {
+  "desk": {
+    "drawer": "stapler"
+  },
+  "cabinet": {
+    "top drawer": { 
+      "folder1": "a file",
+      "folder2": "secrets"
+    },
+    "bottom drawer": "soda"
+  }
+};
+
+ourStorage.cabinet["top drawer"].folder2;
+ourStorage.desk.drawer;
+```
+
+`ourStorage.cabinet["top drawer"].folder2` 将会是字符串 `secrets`，并且 `ourStorage.desk.drawer` 将会是字符串 `stapler`。
+
+### 嵌套数组
+
+在之前的挑战中，我们学习了在对象中嵌套对象和数组。 与访问嵌套对象类似，数组的方括号可以用来对嵌套数组进行链式访问。
+
+下面是访问嵌套数组的例子：
+
+```js
+const ourPets = [
+  {
+    animalType: "cat",
+    names: [
+      "Meowzer",
+      "Fluffy",
+      "Kit-Cat"
+    ]
+  },
+  {
+    animalType: "dog",
+    names: [
+      "Spot",
+      "Bowser",
+      "Frankie"
+    ]
+  }
+];
+
+ourPets[0].names[1];//也可以ourPets[0]["names"][1];
+ourPets[1].names[0];
+```
+
+`ourPets[0].names[1]` 应该是字符串 `Fluffy`， 并且 `ourPets[1].names[0]` 应该是字符串 `Spot`。
+
+## 属性
+
+### Array prototype  引用全局 Array() 对象
+
+- `prototype` 是可用于所有 JavaScript 对象的全局构造函数。
+- `prototype` 引用全局 Array() 对象。
+- `prototype` 构造函数允许您向数组添加新的属性和方法。
+- 当构造新属性时，所有数组都将获得此属性及其值。
+- 当构造新方法时，所有数组都将获得此方法。
+
+**例如**：创建一个新的数组方法，将数组值转换为大写
+
+```js
+Array.prototype.myUcase = function() {
+  for (i = 0; i < this.length; i++) {
+    this[i] = this[i].toUpperCase();
+  }
+};
+```
+
+创建一个数组，然后调用 myUcase 方法：
+
+```js
+var fruits = ["Banana", "Orange", "Apple", "Mango"];
+fruits.myUcase();
+```
+
+## Es6新特性
+
+### x:x冗余
+
+```js
+const getMousePosition = (x, y) => ({
+  x: x,
+  y: y
+});
+```
+
+`getMousePosition` 简单的函数，返回拥有两个属性的对象。 ES6 提供了一个语法糖，消除了类似 `x: x` 这种冗余的写法。 你可以只写一次 `x`，解释器会自动将其转换成 `x: x`（或效果相同的内容）。 下面是使用这种语法重写的同样的函数：
+
+```js
+const getMousePosition = (x, y) => ({ x, y });
+```
+
+### 对象中的函数
+
+在 ES5 中，当我们需要在对象中定义一个函数的时候，必须像这样使用 `function` 关键字：
+
+```js
+const person = {
+  name: "Taylor",
+  sayHello: function() {
+    return `Hello! My name is ${this.name}.`;
+  }
+};
+```
+
+用 ES6 的语法在对象中定义函数的时候，可以删除 `function` 关键词和冒号。 请看以下例子：
+
+```js
+const person = {
+  name: "Taylor",
+  sayHello() {
+    return `Hello! My name is ${this.name}.`;
+  }
+};
+```
+
+### 默认无参构造
+
+在 ES5 里面，我们通过定义一个函数 `constructor` 来创建一个对象，然后使用 `new` 关键字来实例化对象。
+
+在 ES6 里，`class` 声明有一个 `constructor` 方法，与 `new` 关键字一起被调用。 如果 `constructor` 方法没有明确定义，那么它就被含蓄地定义为没有参数。
+
+### get and set
+
+> 和java类似，但是不是显式地调用get和set
+
+你可以从对象中获得一个值，也可以给对象的属性赋值。
+
+这些操作通常被称为 getters 以及 setters。
+
+Getter 函数的作用是可以让对象返回一个私有变量，而不需要直接去访问私有变量。
+
+Setter 函数的作用是可以基于传进的参数来修改对象中私有变量。 这些修改可以是计算，或者是直接替换之前的值。
+
+```js
+class Book {
+  constructor(author) {
+    this._author = author;
+  }
+  // getter
+  get writer() {
+    return this._author;
+  }
+  // setter
+  set writer(updatedAuthor) {
+    this._author = updatedAuthor;
+  }
+}
+const novel = new Book('anonymous');
+console.log(novel.writer);
+novel.writer = 'newAuthor';
+console.log(novel.writer);
+```
+
+控制台将显示字符串 `anonymous` 和 `newAuthor`。
+
+请注意用于调用 getter 和 setter 的语法。 它们甚至看起来不像是函数。 getter 和 setter 非常重要，因为它们隐藏了内部的实现细节。
+
+**注意：** 通常会在私有变量前添加下划线（`_`）。 然而，这种做法本身**并不是将变量变成私有的**。
+
+### js共享代码
+
+起初，JavaScript 几乎只在 HTML web 扮演一个很小的角色。 今天，一切不同了，很多网站几乎全是用 JavaScript 所写。 为了让 JavaScript 更模块化、更整洁以及更易于维护，ES6 引入了在多个 JavaScript 文件之间共享代码的机制。 它可以导出文件的一部分供其它文件使用，然后在需要它的地方按需导入。 为了使用这一功能， 需要在 HTML 文档里创建一个 `type` 为 `module` 的脚本。 例子如下：
+
+```html
+<script type="module" src="filename.js"></script>
+```
+
+使用了 `module` 类型的脚本可以使用 `import` 和 `export` 特性（接下来的挑战会介绍）。
+
+#### 导出
+
+假设有一个文件 `math_functions.js`，该文件包含了数学运算相关的一些函数。 其中一个存储在变量 `add` 里，该函数接受两个数字作为参数返回它们的和。 你想在几个不同的 JavaScript 文件中使用这个函数。 要实现这个目的，就需要 `export` 它。
+
+```js
+export const add = (x, y) => {
+  return x + y;
+}
+```
+
+上面是导出单个函数常用方法，还可以这样导出：
+
+```js
+const add = (x, y) => {
+  return x + y;
+}
+
+export { add };
+```
+
+导出变量和函数后，就可以在其它文件里导入使用从而避免了代码冗余。 重复第一个例子的代码可以导出多个对象或函数，在第二个例子里面的导出语句中添加更多值也可以导出多项，例子如下：
+
+```js
+export { add, subtract };
+```
+
+#### 默认导出
+
+在 `export` 的课程中，你学习了命名导出语法， 这可以在其他文件中引用一些函数或者变量。
+
+还需要了解另外一种被称为默认导出的 `export` 的语法。 在文件中只有一个值需要导出的时候，通常会使用这种语法。 它也常常用于给文件或者模块创建返回值。
+
+下面是使用 `export default` 的例子：
+
+```js
+export default function add(x, y) {
+  return x + y;
+}
+
+export default function(x, y) {
+  return x + y;
+}
+```
+
+第一个是命名函数，第二个是匿名函数。
+
+`export default` 用于为模块或文件声明一个返回值，在每个文件或者模块中应当只默认导出一个值。 此外，你不能将 `export default` 与 `var`、`let` 或 `const` 同时使用。
+
+#### 默认导入
+
+在上一个挑战里，学习了 `export default` 的用法。 还需要一种 `import` 的语法来导入默认的导出。 在下面的例子里，`add` 是 `math_functions.js` 文件的默认导出。 以下是如何导入它：
+
+```js
+import add from "./math_functions.js";
+```
+
+**这个语法有一处特别的地方， 被导入的 `add` 值没有被花括号（`{}`）所包围**。 `add` 只是一个变量的名字，对应 `math_functions.js` 文件的任何默认导出值。 在导入默认导出时，可以使用任何名字。
+
+#### 导入
+
+`import` 可以导入文件或模块的一部分。 在之前的课程里，例子从 `math_functions.js` 文件里导出了 `add`。 下面看一下如何在其它文件导入它：
+
+```js
+import { add } from './math_functions.js';
+```
+
+在这里，`import` 会在 `math_functions.js` 里找到 `add`，只导入这个函数，忽略剩余的部分。 `./` 告诉程序在当前文件的相同目录寻找 `math_functions.js` 文件。 用这种方式导入时，相对路径（`./`）和文件扩展名（`.js`）都是必需的。
+
+通过在 `import` 语句里添加项目，可以从文件里导入多个项目，如下：
+
+```js
+import { add, subtract } from './math_functions.js';
+```
+
+如果想**导入目标文件所有内容**
+
+ 可以用 `import * as` 语法来实现。 下面是一个从同目录下的 `math_functions.js` 文件中导入所有内容的例子：
+
+```js
+import * as myMathModule from "./math_functions.js";
+```
+
+上面的 `import` 语句会创建一个叫作 `myMathModule` 的对象。 这只是一个变量名，可以随便命名。 对象包含 `math_functions.js` 文件里的所有导出，可以像访问对象的属性那样访问里面的函数。 下面是使用导入的 `add` 和 `subtract` 函数的例子：
+
+```js
+myMathModule.add(2,3);
+myMathModule.subtract(5,3);
+```
+
+### Promise 异步
+
+Promise 是异步编程的一种解决方案 - 它在未来的某时会生成一个值。 任务完成，分执行成功和执行失败两种情况。 `Promise` 是构造器函数，需要通过 `new` 关键字来创建。 构造器参数是一个函数，该函数有两个参数 - `resolve` 和 `reject`。 通过它们来判断 promise 的执行结果。 用法如下：
+
+```js
+const myPromise = new Promise((resolve, reject) => {
+
+});
+```
+
+Promise 有三个状态：`pending`、`fulfilled` 和 `rejected`。 上一个挑战里创建的 promise 一直阻塞在 `pending` 状态里，因为没有调用 promise 的完成方法。 Promise 提供的 `resolve` 和 `reject` 参数就是用来结束 promise 的。 Promise 成功时调用 `resolve`，promise 执行失败时调用 `reject`， 如下文所述，这些方法需要有一个参数。
+
+```js
+const myPromise = new Promise((resolve, reject) => {
+  if(condition here) {
+    resolve("Promise was fulfilled");
+  } else {
+    reject("Promise was rejected");
+  }
+});
+```
+
+当程序需要花费未知的时间才能完成时（比如一些异步操作），一般是服务器请求，promise 很有用。 服务器请求会花费一些时间，当结束时，需要根据服务器的响应执行一些操作。 这可以用 `then` 方法来实现， 当 promise 完成 `resolve` 时会触发 `then` 方法。 例子如下：
+
+```js
+const myPromise = new Promise((resolve, reject) => {
+  if(condition here) {
+    resolve("Promise was fulfilled");
+  } else {
+    reject("Promise was rejected");
+  }
+});
+myPromise.then(result => {
+
+});
+myPromise.catch(error => {
+
+});
+```
+
+`result` 即传入 `resolve` 方法的参数。
+
+当 promise 失败时会调用 `catch` 方法。 当 promise 的 `reject` 方法执行时会直接调用。 用法如上
+
+## 正则化
+
+在编程语言中，正则表达式用于匹配指定的字符串。 通过正则表达式创建匹配模式（规则）可以帮你完成指定匹配。
+
+### 正则表达式符号
+
+| 符号 |                             含义                             |
+| :--: | :----------------------------------------------------------: |
+| `i`  |                       忽略大小写`//i`                        |
+| `g`  |                全局匹配，返回所有匹配值`//g`                 |
+| `.`  |  通配符,代表任意字符`/b.g/`匹配首为b尾为g的所有长为3字符串   |
+| `[]` |     定义一组需要匹配的字符串,`/b[aiu]g/`,中间只为a\|i\|u     |
+| `-`  | 使用连字符（`-`）来定义要匹配的字符范围。`/[a-e]/`匹配小写a到e。也可以匹配数字，例如，`/[0-5]/` 匹配 `0` 和 `5` 之间的任意数字，包含 `0` 和 `5`。此外，还可以在单个字符集中组合一系列字母和数字。`/[a-z0-9]/` |
+| `^`  | 不想匹配的字符集合,`/[^aeiou]/gi` 匹配所有非元音字符,或者**匹配文本是否在字符串的开始位置** |
+| `+`  |      匹配出现一次或者连续多次的的字符（或字符组）`/a+/`      |
+| `*`  |                匹配出现零次或多次的字符`/a*/`                |
+| `?`  | 懒惰（lazy）匹配，它会匹配到满足正则表达式的字符串的最小可能部分 |
+| `\w` |           匹配字母和数字以及下划线 `[A-Za-z0-9_]`            |
+| `\W` |              此缩写与 `[^A-Za-z0-9_]` 是一样的               |
+| `\d` |                     等同于元字符 `[0-9]`                     |
+| `\D` | 等同于字符串 `[^0-9]`，它查找不是 0 - 9 之间数字的单个字符。 |
+| `\s` |  将匹配空格、回车符、制表符、换页符和换行符`[ \r\t\f\n\v]`   |
+| `\S` |                     等价`[^ \r\t\f\n\v]`                     |
+| `{}` | 数量说明符指定匹配模式的上下限,也就是匹配几个,也可不写上限如`{1,}`,也可指定数量如`{3}`，只匹配3次 |
+
+**注意：**在正则表达式上可以有多个标志，比如 `/search/gi`
+
+### 测试正则表达式
+
+JavaScript 中有多种使用正则表达式的方法。 测试正则表达式的一种方法是使用 `.test()` 方法。 `.test()` 方法会把编写的正则表达式和字符串（即括号内的内容）匹配，如果成功匹配到字符，则返回 `true`，反之，返回 `false`。
+
+```js
+let testStr = "freeCodeCamp";
+let testRegex = /Code/;
+testRegex.test(testStr);//创建正则表达式，使用其去匹配字符串
+```
+
+`test` 方法会返回 `true`。
+
+### 提取匹配的字符串
+
+可以使用 `.match()` 方法来提取找到的实际**第一个**匹配项。
+
+可以使用字符串来调用 `.match()` 方法，并在括号内传入正则表达式。
+
+```js
+"Hello, World!".match(/Hello/);
+let ourStr = "Regular expressions";
+let ourRegex = /expressions/;
+ourStr.match(ourRegex);
+```
+
+这里第一个 `match` 将返回 `["Hello"]` 第二个将返回 `["expressions"]`。
+
+请注意， `.match` 语法是目前为止一直使用的 `.test` 方法中的“反向”：
+
+```js
+'string'.match(/regex/);
+/regex/.test('string');
+```
+
+实际上match返回的是一个数组,内有找到的第一个匹配项，下标以及源输入和分组情况
+
+```
+let extractStr = "Extract the word 'coding' from this 'coding' string.";
+let codingRegex = /coding/; // 修改这一行
+let result = extractStr.match(codingRegex); // 修改这一行
+console.log(result);
+```
+
+```json
+[
+  'coding',
+  index: 18,
+  input: "Extract the word 'coding' from this string.",
+  groups: undefined
+]
+```
+
+#### 提取所有匹配值
+
+到目前为止，只能提取或搜寻一次模式匹配。
+
+```js
+let testStr = "Repeat, Repeat, Repeat";
+let ourRegex = /Repeat/;
+testStr.match(ourRegex);
+```
+
+在这里 `match` 将返回 `["Repeat"]`。
+
+**要多次搜索或提取模型，你可以使用全局搜索标志： `g`。**
+
+```js
+let repeatRegex = /Repeat/g;
+testStr.match(repeatRegex);
+```
+
+这里 `match` 返回值 `["Repeat", "Repeat", "Repeat"]`
+
+**当加g后，返回值变为匹配值，即使只有一个匹配值，也不会像加标志g前那样返回详尽的匹配信息了。**
+
+```
+let extractStr = "Extract the word 'coding' from this  string.";
+let codingRegex = /coding/g; // 修改这一行
+let result = extractStr.match(codingRegex); // 修改这一行
+console.log(result);
+```
+
+```json
+[ 'coding' ]
+```
+
+### 匹配单个字符串区分大小写
+
+如果想要在字符串 `Hello, my name is Kevin.` 中匹配到 `Kevin` 这个单词，可以使用如下正则表达式：`/Kevin/`。 注意，正则表达式中不需要引号。
+
+**任何其他形式的 `Kevin` 都不会被匹配。例如，正则表达式 `/Kevin/` 不会匹配 `kevin` 或者`KEVIN`。**
+
+### 匹配多个不同字符串区分大小写
+
+使用正则表达式`/coding/`，你可以在其他字符串中查找`coding`。
+
+这对于搜寻单个字符串非常有用，但仅限于一种匹配模式。 你可以使用 `alternation` 或 `OR` 操作符搜索多个模式： `|`
+
+此操作符匹配操作符前面或后面的字符。 例如，如果你想匹配 `yes` 或 `no`，你需要的正则表达式是 `/yes|no/`。
+
+### 匹配字符串结尾
+
+可以使用正则表达式的美元符号 `$` 来搜寻字符串的结尾。
+
+```js
+let theEnding = "This is a never ending story";
+let storyRegex = /story$/;
+storyRegex.test(theEnding);
+let noEnding = "Sometimes a story will have to end";
+storyRegex.test(noEnding);
+```
+
+第一次 `test` 调用将返回 `true`, 而第二次调用将返回 `false`。
+
+### + 号
+
+有时，需要匹配出现一次或者连续多次的的字符（或字符组）。 这意味着它至少出现一次，并且可能重复出现。
+
+可以使用 `+` 符号来检查情况是否如此。 记住，字符或匹配模式**必须一个接一个地连续出现**。 这就是说，字符**必须一个接一个地重复**。
+
+例如，`/a+/g` 会在 `abc` 中匹配到一个匹配项，并且返回 `["a"]`。 因为 `+` 的存在，它也会在 `aabc` 中匹配到一个匹配项，然后返回 `["aa"]`。
+
+如果它是检查字符串 `abab`，它将匹配到两个匹配项并且返回`["a", "a"]`，因为`a`字符不连续，在它们之间有一个`b`字符。 最后，因为在字符串 `bcd` 中没有 `a`，因此找不到匹配项。
+
+### * 号
+
+上一次的挑战中使用了加号 `+` 来查找出现一次或多次的字符。 还有一个选项可以匹配出现零次或多次的字符。
+
+执行该操作的字符叫做星号，即`*`。
+
+```js
+let soccerWord = "gooooooooal!";
+let gPhrase = "gut feeling";
+let oPhrase = "over the moon";
+let goRegex = /go*/;
+soccerWord.match(goRegex);
+gPhrase.match(goRegex);
+oPhrase.match(goRegex);
+```
+
+按顺序排列，三次 `match` 调用将返回值 `["goooooooo"]`，`["g"]` 和 `null`。
+
+```js
+let soccerWord = "gooooooooal!";
+let gPhrase = "gut feeling";
+let oPhrase = "over the moon";
+let goRegex = /v*/;//let goRegex = /ov*/;
+console.log(soccerWord.match(goRegex))
+console.log(gPhrase.match(goRegex))
+console.log(oPhrase.match(goRegex))
+```
+
+```json
+[ '', index: 0, input: 'gooooooooal!', groups: undefined ] 
+[ '', index: 0, input: 'gut feeling', groups: undefined ]  
+[ '', index: 0, input: 'over the moon', groups: undefined ]
+
+//let goRegex = /ov*/;
+[ 'o', index: 1, input: 'gooooooooal!', groups: undefined ]  
+null
+[ 'ov', index: 0, input: 'over the moon', groups: undefined ]
+```
+
+用人话说就是*号代表它前面的字符可以不出现也可以出现多次，比如说上面的例子，当只写`/v*/`都匹配上了而不是返回null，因为字符`v`可以出现可以不出现,此时返回的是空字符串。而当使用`/ov*/`，第二个就返回null，因为该字符串没有以o开头第二个任意的字符，其他都正常返回了。
+
+### ? 号
+
+在正则表达式中，贪婪（greedy）匹配会匹配到符合正则表达式匹配模式的字符串的最长可能部分，并将其作为匹配项返回。 另一种方案称为懒惰（lazy）匹配，它会匹配到满足正则表达式的字符串的**最小可能部分**。
+
+可以将正则表达式 `/t[a-z]*i/` 应用于字符串 `"titanic"`。 这个正则表达式是一个以 `t` 开始，以 `i` 结束，并且中间有一些字母的匹配模式。
+
+正则表达式默认是贪婪匹配，因此匹配返回为 `["titani"]`。 它会匹配到适合该匹配模式的最大子字符串。
+
+但是，你可以使用 `?` 字符来将其变成懒惰匹配。 调整后的正则表达式 `/t[a-z]*?i/` 匹配字符串 `"titanic"` 返回 `["ti"]`。
+
+**注意：应该避免使用正则表达式解析 HTML，但是可以用正则表达式匹配 HTML 字符串。**
+
+问号 `?` 指定可能存在的元素。 这将检查前面的零个或一个元素。 可以将此符号视为前面的元素是可选的
+
+例如，美式英语和英式英语略有不同，可以使用问号来匹配两种拼写。
+
+```js
+let american = "color";
+let british = "colour";
+let rainbowRegex= /colou?r/;
+rainbowRegex.test(american);
+rainbowRegex.test(british);
+```
+
+上面的 `test` 都会返回 `true`。
+
+### ^ 号 否定以及字符串开始
+
+使用字符集中前插入符号（`^`）来创建一个否定字符集，形如 `[^thingsThatWillNotBeMatched]`。 除了在字符集中使用之外，插入符号（^）用于匹配文本是否在字符串的开始位置
+
+```js
+let firstString = "Ricky is first and can be found.";
+let firstRegex = /^Ricky/;
+firstRegex.test(firstString);
+let notFirst = "You can't find Ricky now.";
+firstRegex.test(notFirst);
+```
+
+第一次 `test` 调用将返回 `true`，而第二次调用将返回 `false`。
+
+### () 号
+
+有时候我们想使用正则表达式里的括号 `()` 来检查字符组。
+
+如果想在字符串找到 `Penguin` 或 `Pumpkin`，可以用这个正则表达式：`/P(engu|umpk)in/g`。
+
+然后使用 `test()` 方法检查 test 字符串里面是否包含字符组。
+
+```js
+let testStr = "Pumpkin";
+let testRegex = /P(engu|umpk)in/;
+testRegex.test(testStr);
+```
+
+`test` 方法会返回 `true`。
+
+### 捕获组
+
+当你想要匹配一个像下面这样多次出现的单词，
+
+```js
+let repeatStr = "row row row your boat";
+```
+
+你可以使用 `/row row row/`。**但如果你不知道重复的特定单词即只知道有重复单词，怎么办**？ 捕获组可以用于找到重复的子字符串。
+
+捕获组是通过把要捕获的正则表达式放在括号中来构建的。 在这个例子里， 目标是捕获一个包含字母数字字符的词，所以捕获组是将 `\w+` 放在括号中：`/(\w+)/`。
+
+分组匹配的子字符串被保存到一个临时的“变量”， 可以使用同一正则表达式和反斜线及捕获组的编号来访问它（例如：`\1`）。 捕获组按其开头括号的位置自动编号（从左到右），从 1 开始。
+
+### 捕获组的搜索与替换
+
+搜索功能是很有用的。 但是，当搜索同时也执行更改（或替换）匹配文本的操作时，搜索功能就会显得更加强大。
+
+可以在字符串上使用 `.replace()` 方法来搜索并替换字符串中的文本。 `.replace()` 的输入首先是想要搜索的正则表达式匹配模式。 第二个参数是用于替换匹配的字符串或用于执行某些操作的函数。
+
+```js
+let wrongText = "The sky is silver.";
+let silverRegex = /silver/;
+wrongText.replace(silverRegex, "blue");
+```
+
+`replace` 调用将返回字符串 `The sky is blue.`。
+
+你还可以使用美元符号（`$`）访问替换字符串中的捕获组。
+
+```js
+"Code Camp".replace(/(\w+)\s(\w+)/, '$2 $1');
+```
+
+### 正向先行断言
+
+先行断言 （Lookaheads）是告诉 JavaScript 在字符串中向前查找的匹配模式。 当想要在同一个字符串上搜寻多个匹配模式时，这可能非常有用。正向先行断言会查看并确保搜索匹配模式中的元素存在，但实际上并不匹配。 正向先行断言的用法是 `(?=...)`，其中 `...` 就是需要存在但不会被匹配的部分。
+
+```js
+let quit = "qu";
+let noquit = "qt";
+let quRegex= /q(?=u)/;
+let qRegex = /q(?!u)/;//负向
+quit.match(quRegex);
+noquit.match(qRegex);
+```
+
+这两次 `match` 调用都将返回 `["q"]`。
+
+先行断言的更实际用途是检查一个字符串中的两个或更多匹配模式。 这里有一个简单的密码检查器，密码规则是 3 到 6 个字符且至少包含一个数字：**这个代码有匹配问题**
+
+```js
+let password = "abc123";
+let checkPass = /(?=\w{3,6})(?=\D*\d)/;//这里改成应当改成/^(?=.*\d)\w{3,6}$/ 或者/(?=\w{3,6}$)(?=\D*\d)/
+checkPass.test(password);
+```
+
+#### 断言冲突
+
+**如果改成`/^(?=\w*)(?=\d+)\w{3,6}$/`**,依然无法成功匹配，这是因为两个正向先行断言产生了冲突
+
+- `^(?=\w*)` 这部分正向预查要求字符串中只包含字母和数字（`\w*` 匹配零个或多个字母和数字）。这个部分会匹配空字符串，因为它允许零个字符。
+- `(?=\d+)` 这部分正向预查要求字符串中至少包含一个或多个数字。这是一个正确的条件，但它不需要和前面的正向预查一起使用。
+- `\w{3,6}` 这部分要求匹配 3 到 6 个字母或数字
+
+因此，上述正则表达式实际上匹配了包含 3 到 6 个字母或数字的字符串，但它不要求至少包含一个数字，因为第一个正向预查 `^(?=\w*)` 允许零个字符。
+
+**在 JavaScript 中，如果两个正向预查在同一位置发生冲突，正则表达式引擎会尝试所有可能的组合，以找到匹配。如果找到一种组合可以成功匹配整个正则表达式，那么匹配就会成功。如果没有找到匹配的组合，匹配失败。**
+
+举个例子：
+
+```js
+/^(?=\d)(?=[a-z])[0-9a-z]+$/
+```
+
+这个正则表达式包含两个正向预查：
+
+1. `(?=\d)` 要求字符串中至少包含一个数字。
+2. `(?=[a-z])` 要求字符串中至少包含一个小写字母。
+
+如果字符串同时包含至少一个数字和至少一个小写字母，那么正则表达式会匹配成功。正则表达式引擎会尝试不同的组合，例如从字符串的开头找数字，然后从开头找小写字母，或者反过来。只要找到一种组合可以匹配成功，正则表达式就会匹配。
+
+**注意如果改成`/^(?=\d+)\w{3,6}$/`**,也会失败，因为：
+
+`/^(?=\d+)\w{3,6}$/` 的意思是要求字符串中的前面一部分是一个或多个数字，然后后面是 3 到 6 个字母或数字，这些字符可以是任意字符，它并没有要求数字必须是连续的。如果字符串以数字开头，然后包含 3 到 6 个字母或数字，这个正则表达式就会匹配成功。
+
+### 负向先行断言
+
+另一方面，负向先行断言会查看并确保搜索匹配模式中的元素不存在。 负向先行断言的用法是 `(?!...)`，其中 `...` 是希望不存在的匹配模式。 如果负向先行断言部分不存在，将返回匹配模式的其余部分。
+
+### 正则表达式无法限制匹配长度
+
+当使用正则表达式`/[0-9]{5,12}/`限制参数为5到12位数字时，出现可以限制最小长度为5，但无法限制最大长度的问题。例如，目标是限制长度在5-12位之间，使用 `/[0-9]{5,12}/` 判断<5位是不合法的，>12时却合法了，按道理>12位应该是不合法的才对。
+
+```js
+let password = "99999945468711";
+let checkPass = /[0-9]{5,12}/;
+console.log(checkPass.test(password));
+```
+
+```json
+true
+```
+
+**解决方法**:在正则表达式前后添加^与$，如下
+
+```js
+/^[0-9]{5,12}$/
+```
+
+**正则当中" ^ “代表从开头匹配起，” $ "代表匹配到结尾**，如果匹配条件类似这样 ： /^ 匹配条件 $/，那么表达式要从开头开始匹配到结尾，要完全满足匹配条件；如果没有开头和结尾限定符类似这样： / 匹配条件 /，那么表达式不用从开头开始匹配到结尾，只要包含匹配条件即可。
+
+## 正则化实战
+
+### 用户名检索
+
+需要检索数据库中的所有用户名。 以下是用户在创建用户名时必须遵守的一些简单规则。
+
+1. 用户名只能是数字字母字符。`[A-Za-z0-9]`
+2. 用户名中的数字**必须在最后**。 数字可以有零个或多个。 用户名不能以数字开头。`/[0-9]*/`
+3. 用户名字母可以是小写字母和大写字母。`[A-Za-z]`
+4. 用户名长度必须至少为两个字符。 两位用户名只能使用字母。`/[A-Za-z][0-9]*/`
+
+```js
+let username = "JackOfAllTrades";
+let userCheck = /^[a-z][a-z]+\d*$|^[a-z]\d\d+$/i; // 修改这一行
+let result = userCheck.test(username);
+
+//^[a-z]:检测是否是以字符开头，
+//^[a-z][a-z]+:若以字符开头，字符串数量为2或更多
+//\d*$:结尾为数字，0或多个
+但上述解决不了如Z97类型的要求，引入or
+//|^[a-z]:或者以字符开头
+//\d\d+$:2或多个数字结尾
+或者用下面的写法
+let username = "JackOfAllTrades";
+const userCheck = /^[a-z]([0-9]{2,}|[a-z]+\d*)$/i;
+let result = userCheck.test(username);
+
+//^[a-z][0-9]{2,}$:字符开头,2或多个数字结尾
+//^[a-z][a-z]+\d*$:字符开头，字符串数量为2或更多，结尾为数字，0或多个
+```
+
+### 匹配大于 5 个字符且有两个连续数字的密码
+
+```js
+let sampleWord = "astronaut";
+let pwRegex = /(?=\w{5,}$)(?=\D+\d{2})/; // 修改这一行
+let result = pwRegex.test(sampleWord);
+```
+
+### 删除开头结尾的空白
+
+有时字符串周围存在的空白字符并不是必需的。 字符串的典型处理是删除字符串开头和结尾处的空格。
+
+## js 调试
+
+### console.log
+
+`console.log()` 方法可能是最有用的调试工具，它可以将括号中的内容输出到控制台。 将它放在代码中的关键点可以显示变量在当时的值。 在查看输出之前，最好先想清楚输出应该是什么。 在整个代码中使用检查点来查看计算状态将有助于缩小问题的范围。
+
+```js
+console.log('Hello world!');
+```
+
+|      方法       |               含义               |
+| :-------------: | :------------------------------: |
+|  console.log()  |       浏览器控制台打印信息       |
+| console.warn()  | 浏览器控制台打印警告信息（黄色） |
+| console.warn()  | 浏览器控制台打印错误信息（红色） |
+| console.warn()  |             计时开始             |
+| console.warn()  |             结束计时             |
+| console.clear() |     清除当前控制台的所有输出     |
+|  console.dir()  |    可以显示对象所有属性和方法    |
+
