@@ -321,6 +321,17 @@ console.log(index); // 输出 2，因为第一个大于 2 的元素是 3，它�
 - `findIndex()` 方法会遍历数组，从头开始查找，找到满足条件的元素后立即返回，不会继续查找下一个匹配的元素。
 - 可以使用 `thisArg` 参数来指定回调函数中的 `this` 值。
 
+#### reverse 颠倒数组顺序
+
+JavaScript中的 `reverse()` 方法用于颠倒（翻转）数组的顺序，即将数组中的元素按相反的顺序重新排列。`reverse()` 方法**会修改原始数组，不会创建新的数组**。以下是 `reverse()` 方法的使用示例：
+
+```js
+const fruits = ['apple', 'banana', 'cherry', 'date']; 
+const reversedFruits = fruits.slice().reverse();
+console.log(fruits); // 输出原始数组：['apple', 'banana', 'cherry', 'date'] 
+console.log(reversedFruits); // 输出翻转后的新数组：['date', 'cherry', 'banana', 'apple']
+```
+
 ### 字符串
 
 #### parseInt 字符串转整数
@@ -368,7 +379,7 @@ limit参数是一个整数，他决定了split()函数的分割次数。如果li
 
 - `toLowerCase()` 方法不会修改原始字符串，而是返回一个新的字符串，其中的字母都是小写的。
 - 对于非字母字符（如数字、标点符号和空格），`toLowerCase()` 方法不会进行任何变化，**它只会影响字母字符**。
-- 该方法不会更改原始字符串的长度，只是改变字符的大小写。a
+- 该方法不会更改原始字符串的长度，只是改变字符的大小写。
 
 #### replace 字符串中查找并替换
 
@@ -451,11 +462,11 @@ fruits.indexOf('oranges');
 fruits.indexOf('pears');
 ```
 
-`indexOf('dates')` 返回 `-1`，`indexOf('oranges')` 返回 `2`，`indexOf('pears')` 返回 `1` (每个元素存在的第一个索引)。
+`indexOf('dates')` 返回 `-1`，`indexOf('oranges')` 返回 `2`，`indexOf('pears')` 返回 `1` (每个元素存在的第一个索引)。**findIndex可以自定义条件查找，更灵活。**
 
 #### slice 截取子数组/子字符串
 
-**`slice()`** 方法返回一个新的数组对象，这一对象是一个由 `start` 和 `end` 决定的原数组的[浅拷贝](https://developer.mozilla.org/zh-CN/docs/Glossary/Shallow_copy)（包括 `start`，不包括 `end`），其中 `start` 和 `end` 代表了数组元素的索引。原始数组不会被改变。
+**`slice()`** 方法**返回一个新的数组对象**，这一对象是一个由 `start` 和 `end` 决定的原数组的[浅拷贝](https://developer.mozilla.org/zh-CN/docs/Glossary/Shallow_copy)（包括 `start`，不包括 `end`），其中 `start` 和 `end` 代表了数组元素的索引。原始数组不会被改变。
 
 **js中 [].slice 与 Array.prototype.slice 有什么区别?**
 
@@ -718,9 +729,6 @@ confirmEnding("Bastian", "n");
 
 ```js
 function confirmEnding(str, target) {
-  // "Never give up and good luck will find you."
-  // -- Falcor
-
   return str.slice(str.length - target.length) === target;
 }
 
@@ -773,7 +781,7 @@ frankenSplice([1, 2, 3], [4, 5, 6], 1);
 ```js
 function frankenSplice(arr1, arr2, n) {
   // It's alive. It's alive!
-  let localArray = arr2.slice();
+  let localArray = arr2.slice();//为了不影响原数组，直接赋值，是对其的引用
   for (let i = 0; i < arr1.length; i++) {
     localArray.splice(n, 0, arr1[i]);
     n++;
@@ -783,7 +791,7 @@ function frankenSplice(arr1, arr2, n) {
 
 function frankenSplice(arr1, arr2, n) {
   // It's alive. It's alive!
-  let localArr = arr2.slice();
+  let localArr = arr2.slice();//为了不影响原数组，直接赋值，是对其的引用
   localArr.splice(n, 0, ...arr1);
   return localArr;
 }
