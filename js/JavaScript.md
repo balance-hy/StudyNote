@@ -770,6 +770,38 @@ for (const food in refrigerator) {
 
 **注意：**对象中的**键是无序的**，这与数组不同。 因此，一个对象中**某个属性的位置，或者说它出现的相对顺序，在引用或访问该属性时是不确定的。**
 
+### instanceof
+
+凡是通过构造函数创建出的新对象，这个对象都叫做这个构造函数的实例。 JavaScript 提供了一种很简便的方法来验证这个事实，那就是通过 `instanceof` 操作符。 `instanceof` 允许你将对象与构造函数之间进行比较，根据对象是否由这个构造函数创建的返回 `true` 或者 `false`。 以下是一个示例：
+
+```js
+let Bird = function(name, color) {
+  this.name = name;
+  this.color = color;
+  this.numLegs = 2;
+}
+
+let crow = new Bird("Alexis", "black");
+
+crow instanceof Bird;
+```
+
+`instanceof` 方法会返回 `true`。
+
+如果一个对象不是使用构造函数创建的，那么 `instanceof` 将会验证这个对象不是构造函数的实例：
+
+```js
+let canary = {
+  name: "Mildred",
+  color: "Yellow",
+  numLegs: 2
+};
+
+canary instanceof Bird;
+```
+
+`instanceof` 方法会返回 `false`。
+
 ## 对象
 
 对象和 `arrays` 类似，区别在于数组使用索引来访问和修改数据，而对象中的数据是通过 `properties` 访问的。
@@ -927,6 +959,420 @@ users.hasOwnProperty('Alan');
 ```
 
 这两者结果都应该为 `true`。
+
+### 构造函数
+
+构造函数是创建对象的函数。 函数给这个新对象定义属性和行为。 可将它们视为创建的新对象的蓝图。
+
+以下就是一个构造函数的示例：
+
+```js
+function Bird() {
+  this.name = "Albert";
+  this.color = "blue";
+  this.numLegs = 2;
+}
+```
+
+这个构造函数定义了一个 `Bird` 对象，其属性 `name`、`color` 和 `numLegs` 的值分别被设置为 Albert、blue 和 2。 构造函数遵循一些惯例规则：
+
+- **构造函数函数名的首字母大写**，这是为了方便我们区分构造函数（ `constructors`）和其他非构造函数。
+- 构造函数使用 `this` 关键字来给它将创建的这个对象设置新的属性。 在构造函数里面，`this` 指向的就是它新创建的这个对象。
+- 构造函数定义了属性和行为就可创建对象，而不是像其他函数一样需要设置返回值。
+
+#### 构造函数属性 constructor
+
+在上一个挑战中创建的实例对象 `duck` 和 `beagle` 都有一个特殊的 `constructor` 属性：
+
+```js
+let duck = new Bird();
+let beagle = new Dog();
+
+console.log(duck.constructor === Bird); 
+console.log(beagle.constructor === Dog);
+```
+
+这两次 `console.log` 调用都将在控制台中显示 `true`。
+
+需要注意到的是这个 `constructor` 属性**是对创建这个实例的构造函数的一个引用**。 `constructor` 属性的一个好处是可以通过检查这个属性来找出它是一个什么对象。 下面是一个例子，来看看是怎么使用的：
+
+```js
+function joinBirdFraternity(candidate) {
+  if (candidate.constructor === Bird) {
+    return true;
+  } else {
+    return false;
+  }
+}
+```
+
+**注意：由于 `constructor` 属性可以被重写（在下面两节挑战中将会遇到），所以最好使用`instanceof` 方法来检查对象的类型。**
+
+### 构造函数创建对象
+
+在上一个挑战中，我们用所学到的知识创建了一个 `Bird` 构造函数：
+
+```js
+function Bird() {
+  this.name = "Albert";
+  this.color  = "blue";
+  this.numLegs = 2;
+}
+
+let blueBird = new Bird();
+```
+
+**注意：** 构造函数内的 `this` 总是指被创建的对象。
+
+注意**：通过构造函数创建对象的时候要使用 `new` 操作符。 因为只有这样，JavaScript 才知道要给 `Bird` 这个构造函数创建一个新的实例：`blueBird`。 如果不使用 `new` 操作符来新建对象，那么构造函数里面的 `this` 就无法指向新创建的这个对象实例，从而产生不可预见的错误。** 现在 `blueBird` 这个实例就继承了`Bird` 构造函数的所有属性，如下：
+
+```js
+blueBird.name;
+blueBird.color;
+blueBird.numLegs;
+```
+
+由构造函数创建的实例也和其他对象一样，它的属性可以被访问和修改：
+
+```js
+blueBird.name = 'Elvira';
+blueBird.name;
+```
+
+### 构造函数传参
+
+上一个挑战中 `Bird` 和 `Dog` 构造函数运行得不错。 但是，注意到没有：所有通过`Bird` 构造函数创建出来的实例 `Birds` 都自动的取名为 Albert，颜色都是蓝色，还都有两条腿。 如果你想要新创建出来的小鸟们拥有不同的名字和颜色要怎么办呢？ 当然，手动的去修改每一个小鸟实例自己的属性也是可以实现的，只是会增加很多无谓的工作量：
+
+```js
+let swan = new Bird();
+swan.name = "Carlos";
+swan.color = "white";
+```
+
+假如你写了一个程序来追踪一个鸟舍里面的几百只甚至几千只不同的小鸟。 你将会花费很多时间去创建所有的小鸟实例并给它们的属性一一修改为不同的值。 为了减轻创建不同 `Bird` 对象的工作量，**你可以给你的 Bird 设置为可以接收参数的构造函数：**
+
+```js
+function Bird(name, color) {
+  this.name = name;
+  this.color = color;
+  this.numLegs = 2;
+}
+```
+
+然后将值通过参数的方式传递给 `Bird` 构造函数来定义每一个唯一的小鸟实例： `let cardinal = new Bird("Bruce", "red");` 这给 `Bird` 的 `name` 和 `color` 属性分别赋值为 `Bruce` 和 `red` 色。 但 `numLegs` 属性仍然设置为 2。 `cardinal` 有以下这些属性：
+
+```js
+cardinal.name
+cardinal.color
+cardinal.numLegs
+```
+
+这样一来构造函数就变得很灵活了。 现在可以在创建每个`Bird`实例时直接定义属性，这是 JavaScript 构造函数非常实用的用法之一。 它们根据共同或相似的属性和行为将对象归纳为一组，并能够自动的创建各自实例。
+
+### prototype 原型
+
+#### 原型由来
+
+就像人们从父母那里继承基因一样，对象也可直接从创建它的构造函数那里继承其 `prototype`。 请看下面的例子：`Bird` 构造函数创建了一个 `duck` 对象：
+
+```js
+function Bird(name) {
+  this.name = name;
+}
+
+let duck = new Bird("Donald");
+```
+
+`duck` 从 `Bird` 构造函数那里继承了它的 `prototype`。 你可以使用 `isPrototypeOf` 方法来验证他们之间的关系：
+
+```js
+Bird.prototype.isPrototypeOf(duck);
+```
+
+这将返回 `true`。
+
+#### 添加属性
+
+所有 `Bird` 实例可能会有相同的 `numLegs` 值，所以在每一个 `Bird` 的实例中本质上都有一个重复的变量 `numLegs`。
+
+当只有两个实例时可能并不是什么问题，但想象一下如果有数百万个实例。 这将会产生许许多多重复的变量。
+
+更好的方法是使用 `Bird` 的 `prototype`。 **`prototype` 是一个可以在所有 `Bird` 实例之间共享的对象。 以下是一个在 `Bird prototype` 中添加 `numLegs` 属性的示例**：
+
+```js
+Bird.prototype.numLegs = 2;
+```
+
+现在所有的 `Bird` 实例都拥有了共同的 `numLegs` 属性值。
+
+```js
+console.log(duck.numLegs);
+console.log(canary.numLegs);
+```
+
+由于所有的实例都可以继承 `prototype` 上的属性，所以可以把 `prototype` 看作是创建对象的 "配方"。 请注意：`duck` 和 `canary` 的 `prototype` 属于 `Bird` 的构造函数，即 Bird 的原型 `Bird.prototype`。
+
+**手动设置一个新对象的原型有一个重要的副作用。 它清除了 `constructor` 属性！** 此属性可以用来检查是哪个构造函数创建了实例，但由于该属性已被覆盖，它现在给出了错误的结果：
+
+```js
+duck.constructor === Bird;
+duck.constructor === Object;
+duck instanceof Bird;
+```
+
+按顺序，这些表达式会返回 `false`、`true` 和 `true`。
+
+为了解决这个问题，凡是手动给新对象重新设置过原型对象的，都别忘记在原型对象中定义一个 `constructor` 属性：
+
+```js
+Bird.prototype = {
+  constructor: Bird,
+  numLegs: 2,
+  eat: function() {
+    console.log("nom nom nom");
+  },
+  describe: function() {
+    console.log("My name is " + this.name); 
+  }
+};
+```
+
+也可以手动直接设置
+
+```js
+Bird.prototype.constructor = Bird;//方式一
+duck.constructor=Bird;//方式二
+```
+
+#### 自身属性和prototype属性
+
+**现在你已经了解了两种属性: 自身属性和 `prototype` 属性。 自身属性是直接在对象上定义的。 而原型属性在 `prototype` 上定义**。
+
+```js
+function Bird(name) {
+  this.name = name;  //own property
+}
+
+Bird.prototype.numLegs = 2; // prototype property
+
+let duck = new Bird("Donald");
+```
+
+**这个示例会告诉你如何将 `duck` 的自身属性和 `prototype` 属性分别添加到 `ownProps` 数组和 `prototypeProps` 数组里面：**
+
+```js
+let ownProps = [];
+let prototypeProps = [];
+
+for (let property in duck) {
+  if(duck.hasOwnProperty(property)) {
+    ownProps.push(property);
+  } else {
+    prototypeProps.push(property);
+  }
+}
+
+console.log(ownProps);
+console.log(prototypeProps);
+```
+
+`console.log(ownProps)` 将在控制台中显示 `["name"]` ，`console.log(prototypeProps)` 将显示 `["numLegs"]`。
+
+#### 添加多个属性
+
+到目前为止，你已经可以单独给 `prototype` 添加属性了：
+
+```js
+Bird.prototype.numLegs = 2;
+```
+
+需要添加多个属性的，这未免会显得拖沓。
+
+```js
+Bird.prototype.eat = function() {
+  console.log("nom nom nom");
+}
+
+Bird.prototype.describe = function() {
+  console.log("My name is " + this.name);
+}
+```
+
+**一种更有效的方法就是给对象的 `prototype` 设置为一个已经包含了属性的新对象**。 这样一来，所有属性都可以一次性添加进来：
+
+```js
+Bird.prototype = {
+  numLegs: 2, 
+  eat: function() {
+    console.log("nom nom nom");
+  },
+  describe: function() {
+    console.log("My name is " + this.name);
+  }
+};
+```
+
+#### 原型链
+
+JavaScript 中所有的对象（除了少数例外）都有自己的 `prototype`。 而且，对象的 `prototype` 本身也是一个对象。
+
+```js
+function Bird(name) {
+  this.name = name;
+}
+
+typeof Bird.prototype;
+```
+
+**正因为 `prototype` 是一个对象，所以 `prototype` 对象也有它自己的 `prototype`！ 这样看来的话，`Bird.prototype` 的 `prototype` 就是 `Object.prototype`：**
+
+```js
+Object.prototype.isPrototypeOf(Bird.prototype);
+```
+
+这有什么作用呢？ 你可能还记得我们在上一个挑战中学到的 `hasOwnProperty` 方法：
+
+```js
+let duck = new Bird("Donald");
+duck.hasOwnProperty("name");
+```
+
+`hasOwnProperty` 是定义在 `Object.prototype` 上的一个方法，尽管在 `Bird.prototype` 和 `duck`上并没有定义该方法，但是我们依然可以在这两个对象上访问到。 这就是 `prototype` 链的一个例子。 在这个`prototype` 链中，`Bird` 是 `duck` 的 `supertype`，而 `duck` 是 `subtype`。 `Object` 则是 `Bird` 和 `duck` 实例共同的 `supertype`。 `Object` 是 JavaScript 中所有对象的 `supertype`，也就是原型链的最顶层。 因此，所有对象都可以访问 `hasOwnProperty` 方法。
+
+#### 继承
+
+在上一个挑战中，我们创建了一个`Animal` 超类（`supertype`），用来定义所有动物共有的行为：
+
+```js
+function Animal() { }
+Animal.prototype.eat = function() {
+  console.log("nom nom nom");
+};
+```
+
+在这一节以及下一节挑战中我们将学习如何在 `Bird` 和 `Dog` 中重用 `Animal` 中的方法，而无需重新定义它们。 这里我们会用到构造函数的继承特性。 这一节挑战中我们学习第一步：创建一个超类 `supertype`（或者叫父类）的实例。 你已经学会了一种创建 `Animal` 实例的方法，即使用 `new` 操作符：
+
+```js
+let animal = new Animal();
+```
+
+此语法用于继承时会存在一些缺点，这些缺点对于当前我们这个挑战来说太复杂了。 相反，我们学习另外一种没有这些缺点的方法来替代 new 操作：
+
+```js
+let animal = Object.create(Animal.prototype);
+```
+
+`Object.create(obj)` 创建了一个新对象，并指定了 `obj` 作为新对象的 `prototype`。 回忆一下，我们之前说过 `prototype` 就像是创建对象的“配方”。 如果我们把 `animal` 的 `prototype` 设置为与 `Animal` 构造函数的 `prototype` 一样，那么就相当于让 `animal` 这个实例具有与 `Animal` 的其他实例相同的“配方”了。
+
+```js
+animal.eat();
+animal instanceof Animal;
+```
+
+`instanceof` 方法会返回 `true`.
+
+在上一个挑战中，我们学习了从超类（或者叫父类） `Animal` 继承其行为的第一个步骤：创建一个 `Animal` 的新实例。
+
+**这一节挑战我们将学习第二个步骤：给子类型（或者子类）设置 `prototype`。 这样一来，`Bird` 就是 `Animal` 的一个实例了。**
+
+```js
+Bird.prototype = Object.create(Animal.prototype);
+```
+
+请记住，`prototype` 类似于创建对象的“配方”。 从某种意义上来说，`Bird` 对象的配方包含了 `Animal` 的所有关键“成分”。
+
+```js
+let duck = new Bird("Donald");
+duck.eat();
+```
+
+`duck` 继承了`Animal` 的所有属性，其中包括了 `eat` 方法。
+
+**当一个对象从另一个对象那里继承了其 `prototype` 时，那它也继承了父类的 constructor 属性。**
+
+请看下面的举例：
+
+```js
+function Bird() { }
+Bird.prototype = Object.create(Animal.prototype);
+let duck = new Bird();
+duck.constructor
+```
+
+但是 `duck` 和其他所有 `Bird` 的实例都应该表明它们是由 `Bird` 创建的，而不是由 `Animal` 创建的。 为此，你可以手动将 `Bird` 的构造函数属性设置为 `Bird` 对象：
+
+```js
+Bird.prototype.constructor = Bird;
+duck.constructor
+```
+
+##### 继承添加方法
+
+从超类构造函数继承其 `prototype` 对象的构造函数，除了继承的方法外，还可以拥有自己的方法。
+
+请看举例：`Bird` 是一个构造函数，它继承了 `Animal` 的 `prototype`：
+
+```js
+function Animal() { }
+Animal.prototype.eat = function() {
+  console.log("nom nom nom");
+};
+function Bird() { }
+Bird.prototype = Object.create(Animal.prototype);
+Bird.prototype.constructor = Bird;
+```
+
+除了从 `Animal` 构造函数继承的行为之外，还需要给 `Bird` 对象添加它独有的行为。 这里，我们给 `Bird` 对象添加一个 `fly()` 函数。 函数会以一种与其他构造函数相同的方式添加到 `Bird's` 的 `prototype` 中：
+
+```js
+Bird.prototype.fly = function() {
+  console.log("I'm flying!");
+};
+```
+
+现在 `Bird` 的实例中就有了 `eat()` 和 `fly()` 这两个方法：
+
+```js
+let duck = new Bird();
+duck.eat();
+duck.fly();
+```
+
+`duck.eat()` 将在控制台中显示字符串 `nom nom nom`， `duck.fly()` 将显示字符串 `I'm flying!`。
+
+##### 重写继承方法
+
+从超类构造函数继承其 `prototype` 对象的构造函数，除了继承的方法外，还可以拥有自己的方法。
+
+请看举例：`Bird` 是一个构造函数，它继承了 `Animal` 的 `prototype`：
+
+```js
+function Animal() { }
+Animal.prototype.eat = function() {
+  console.log("nom nom nom");
+};
+function Bird() { }
+Bird.prototype = Object.create(Animal.prototype);
+Bird.prototype.constructor = Bird;
+```
+
+除了从 `Animal` 构造函数继承的行为之外，还需要给 `Bird` 对象添加它独有的行为。 这里，我们给 `Bird` 对象添加一个 `fly()` 函数。 函数会以一种与其他构造函数相同的方式添加到 `Bird's` 的 `prototype` 中：
+
+```js
+Bird.prototype.fly = function() {
+  console.log("I'm flying!");
+};
+```
+
+现在 `Bird` 的实例中就有了 `eat()` 和 `fly()` 这两个方法：
+
+```js
+let duck = new Bird();
+duck.eat();
+duck.fly();
+```
+
+`duck.eat()` 将在控制台中显示字符串 `nom nom nom`， `duck.fly()` 将显示字符串 `I'm flying!`。
 
 ## 数据结构 
 
@@ -1268,6 +1714,37 @@ myPromise.catch(error => {
 `result` 即传入 `resolve` 方法的参数。
 
 当 promise 失败时会调用 `catch` 方法。 当 promise 的 `reject` 方法执行时会直接调用。 用法如上
+
+## this 关键字
+
+```js
+let duck = {
+  name: "Aflac",
+  numLegs: 2,
+  sayName: function() {return "The name of this duck is " + duck.name + ".";}
+};
+duck.sayName();
+```
+
+在上一个挑战中我们了解了该如何给 `duck` 对象设置一个方法。 然后在 return 语句里，我们通过使用 “点号表示法” `duck.name` 来获取 `name` 的属性值：**注意Es6中简化了函数,变得更简单**
+
+```js
+sayName: function() {return "The name of this duck is " + duck.name + ".";}
+```
+
+虽然这是访问对象属性的有效方法，但是这里有一个陷阱。 如果对象名发生了改变，那么引用了原始名称的任何代码都需要更新。 在一个简短的对象定义中，这并不是问题，但是如果对象有很多对其属性的引用，那么发生错误的可能性就更大了。
+
+我们可以使用 `this` 关键字来避免这一问题：
+
+```js
+let duck = {
+  name: "Aflac",
+  numLegs: 2,
+  sayName: function() {return "The name of this duck is " + this.name + ".";}
+};
+```
+
+`this` 是一个很复杂的知识点，而上面那个例子也只是使用它的一种方法而已。 **在当前的上下文环境中，`this` 指向的就是与这个方法有关联的 `duck` 对象。 如果把对象名改为 `mallard`，那使用 this 后就没有必要在代码中找到所有指向 `duck` 的部分。** 这样可以使得代码更具有可读性和复用性。
 
 ## 正则化
 
