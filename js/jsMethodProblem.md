@@ -374,6 +374,39 @@ console.log(result); // 输出 true，因为所有元素都大于 10
 
 如果数组为空（没有元素），`every()` 方法也会返回 `true`，因为没有元素不满足条件。如果需要处理空数组的情况，可以在回调函数中添加适当的逻辑。
 
+#### reduce  对数组各元素执行方法
+
+`reduce()` 方法是 JavaScript 数组对象的一个高阶函数，用于对数组中的每个元素执行一个指定的回调函数（也称为 reducer 函数），将数组中的元素归约成单个值。它接受一个回调函数和一个可选的初始值作为参数，并返回最终的归约结果。
+
+`reduce()` 方法的基本语法如下：
+
+```js
+array.reduce(callback[, initialValue]);
+```
+
+- `callback` 是一个用于处理数组元素的函数，它接受四个参数：accumulator（累加器），currentValue（当前元素的值），currentIndex（当前元素的索引），和 array（原始数组）。
+  - `accumulator`：累加器，它是归约的中间结果，从左到右依次累积。
+  - `currentValue`：当前元素的值。
+  - `currentIndex`：当前元素的索引（可选参数）。
+  - `array`：原始数组（可选参数）。
+- `initialValue`（可选）：作为归约的初始值。如果不提供初始值，那么第一次调用回调函数时，`accumulator` 的值将是数组的第一个元素的值，`currentValue` 将是数组的第二个元素的值。
+
+下面是一个使用 `reduce()` 方法计算数组元素之和的示例：
+
+```js
+const numbers = [1, 2, 3, 4, 5];
+
+const sum = numbers.reduce((accumulator, currentValue) => {
+    return accumulator + currentValue;
+}, 0);
+
+console.log(sum); // 输出 15
+```
+
+在这个示例中，`reduce()` 方法接受一个初始值 `0`，然后将每个数组元素依次加到累加器 `accumulator` 中，最终返回了数组元素的总和 `15`。
+
+`reduce()` 方法可以用于各种归约操作，例如计算最大值、最小值、平均值，拼接字符串等等。它的强大之处在于可以灵活应用于不同的问题，通过自定义回调函数来实现各种归约逻辑。
+
 ### 字符串
 
 #### parseInt 字符串转整数

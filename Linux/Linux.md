@@ -115,3 +115,78 @@ reboot [选项]
 ### vim
 
 ![image-20231008184645192](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202310081846737.png)
+
+![image-20231009164008063](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202310091640997.png)
+
+#### 正常模式快捷键
+
+##### 拷贝当前行，或多行
+
+```shell
+yy
+```
+
+拷贝当前行
+
+```shell
+数字+yy 如5yy
+```
+
+拷贝包括当前行向下的5行
+
+##### 删除当前行，或多行
+
+```shell
+dd
+```
+
+删除当前行
+
+```sh
+数字+dd 如5dd
+```
+
+删除包括当前行向下的5行
+
+##### 光标移至首行或尾行
+
+```sh
+G
+```
+
+移至首行
+
+```sh
+gg
+```
+
+移至尾行
+
+##### 光标移至指定行
+
+```sh
+行数+shift+g
+```
+
+##### 撤销
+
+```sh
+u
+```
+
+#### 命令模式快捷键
+
+##### 查找单词
+
+```sh
+/+查找的单词+回车 按n转到下一个
+如/hello
+```
+
+##### 设置文件行号
+
+```sh
+:+set nu  //设置行号
+:+set nonu //取消行号
+```
+

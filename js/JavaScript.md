@@ -895,9 +895,9 @@ console.log(myBreed);
 
 请注意，我们在使用变量名访问属性时，*不要*使用引号引起来，因为我们使用的是 ***值***，而不是 ***属性名***。
 
-### 对象添加属性
+### 对象添加属性/方法
 
-你也可以像更改属性一样给 JavaScript 对象添加属性。
+你也可以像更改属性一样给 JavaScript 对象添加属性。**方法的添加也是一样的**
 
 这里展示了如何给 `ourDog` 添加一个属性 `bark`：
 
@@ -1342,37 +1342,167 @@ duck.fly();
 
 ##### 重写继承方法
 
-从超类构造函数继承其 `prototype` 对象的构造函数，除了继承的方法外，还可以拥有自己的方法。
+在上一个挑战中，我们学习了一个对象可以通过引用另一个对象的 `prototype` 来继承其属性和行为（或方法）：
 
-请看举例：`Bird` 是一个构造函数，它继承了 `Animal` 的 `prototype`：
+```js
+ChildObject.prototype = Object.create(ParentObject.prototype);
+```
+
+然后，`ChildObject` 将自己的方法链接到它的 `prototype`中：
+
+```js
+ChildObject.prototype.methodName = function() {...};
+```
+
+我们还可以重写继承的方法。 以同样的方式 - 通过使用一个与需要重写的方法相同的方法名，向`ChildObject.prototype` 中添加方法。 请看下面的举例：`Bird` 重写了从 `Animal` 继承来的 `eat()` 方法：
 
 ```js
 function Animal() { }
 Animal.prototype.eat = function() {
-  console.log("nom nom nom");
+  return "nom nom nom";
 };
 function Bird() { }
+
 Bird.prototype = Object.create(Animal.prototype);
-Bird.prototype.constructor = Bird;
-```
 
-除了从 `Animal` 构造函数继承的行为之外，还需要给 `Bird` 对象添加它独有的行为。 这里，我们给 `Bird` 对象添加一个 `fly()` 函数。 函数会以一种与其他构造函数相同的方式添加到 `Bird's` 的 `prototype` 中：
-
-```js
-Bird.prototype.fly = function() {
-  console.log("I'm flying!");
+Bird.prototype.eat = function() {
+  return "peck peck peck";
 };
 ```
 
-现在 `Bird` 的实例中就有了 `eat()` 和 `fly()` 这两个方法：
+如果你有一个实例：`let duck = new Bird();`，然后你调用了 `duck.eat()`，以下就是 JavaScript 在 `duck` 的 `prototype` 链上寻找方法的过程：
+
+1. `duck` => `eat()` 是定义在这里吗？ 不是。
+2. `Bird` => `eat()` 是定义在这里吗？ => 是的。 执行它并停止往上搜索。
+3. `Animal` => 这里也定义了 `eat()` 方法，但是 JavaScript 在到达这层原型链之前已停止了搜索。
+4. Object => JavaScript 在到达这层原型链之前也已经停止了搜索。
+
+#### 不相关对象之间添加共同行为
+
+正如你所见，行为是可以通过继承来共享的。 然而，在有些情况下，继承不是最好的解决方案。 继承不适用于不相关的对象，比如 `Bird` 和 `Airplane`。 虽然它们都可以飞行，但是 `Bird` 并不是一种 `Airplane`，反之亦然。
+
+对于不相关的对象，更好的方法是使用 mixins。 mixin 允许其他对象使用函数集合。
 
 ```js
-let duck = new Bird();
-duck.eat();
-duck.fly();
+let flyMixin = function(obj) {
+  obj.fly = function() {
+    console.log("Flying, wooosh!");
+  }
+};
 ```
 
-`duck.eat()` 将在控制台中显示字符串 `nom nom nom`， `duck.fly()` 将显示字符串 `I'm flying!`。
+`flyMixin` 能接受任何对象，并为其提供 `fly` 方法。
+
+```js
+let bird = {
+  name: "Donald",
+  numLegs: 2
+};
+
+let plane = {
+  model: "777",
+  numPassengers: 524
+};
+
+flyMixin(bird);
+flyMixin(plane);
+```
+
+这里的 `flyMixin` 接收了`bird` 和 `plane` 对象，然后将 `fly` 方法分配给了每一个对象。 现在 `bird` 和 `plane` 都可以飞行了：
+
+```js
+bird.fly();
+plane.fly();
+```
+
+控制台将显示字符串 `Flying, wooosh!` 两次，每次 `.fly()` 调用都会显示。
+
+注意观察 mixin 是如何允许相同的 `fly` 方法被不相关的对象 `bird` 和 `plane` 重用的。
+
+#### 立即调用函数表达（IIFE）
+
+JavaScript 中的一个常见模式就是，函数在声明后立刻执行：
+
+```js
+(function () {
+  console.log("Chirp, chirp!");
+})();
+```
+
+这是一个匿名函数表达式，立即执行并输出 `Chirp, chirp!`。
+
+请注意，函数没有名称，也不存储在变量中。 函数表达式末尾的两个括号（）会让它被立即执行或调用。 这种模式被叫做立即调用函数表达式（immediately invoked function expression) 或者IIFE。
+
+#### IIFE 创建一个模块
+
+> https://blog.csdn.net/HelloWord176/article/details/119457977 立即执行函数详解
+
+一个立即调用函数表达式（IIFE）通常用于将相关功能分组到单个对象或者是 module 中。 例如，先前的挑战中定义了两个 mixins：
+
+```js
+function glideMixin(obj) {
+  obj.glide = function() {
+    console.log("Gliding on the water");
+  };
+}
+function flyMixin(obj) {
+  obj.fly = function() {
+    console.log("Flying, wooosh!");
+  };
+}
+```
+
+我们可以将这些 mixins 分成以下模块：
+
+```js
+let motionModule = (function () {
+  return {
+    glideMixin: function(obj) {
+      obj.glide = function() {
+        console.log("Gliding on the water");
+      };
+    },
+    flyMixin: function(obj) {
+      obj.fly = function() {
+        console.log("Flying, wooosh!");
+      };
+    }
+  }
+})();
+```
+
+注意：一个立即调用函数表达式（IIFE）返回了一个 `motionModule` 对象。 返回的这个对象包含了作为对象属性的所有 mixin 行为。 module 模式的优点是，所有的运动相关的行为都可以打包成一个对象，然后由代码的其他部分使用。 下面是一个使用它的例子：
+
+```js
+motionModule.glideMixin(duck);
+duck.glide();
+```
+
+#### 闭包
+
+在上一次挑战中，`bird` 有一个公共属性 `name`。 公共属性的定义就是：它可以在 `bird` 的定义范围之外被访问和更改。
+
+```js
+bird.name = "Duffy";
+```
+
+因此，代码的任何地方都可以轻松地将 `bird` 的 name 属性更改为任意值。 想想密码和银行账户之类的东西，如果代码库的任何部分都可以轻易改变它们， 那将会引起很多问题。
+
+使属性私有化最简单的方法就是在构造函数中创建变量。 可以将该变量范围限定在构造函数中，而不是全局可用。 这样，属性只能由构造函数中的方法访问和更改。
+
+```js
+function Bird() {
+  let hatchedEgg = 10;
+
+  this.getHatchedEggCount = function() { 
+    return hatchedEgg;
+  };
+}
+let ducky = new Bird();
+ducky.getHatchedEggCount();
+```
+
+**这里的 `getHatchedEggCount` 是一种特权方法，因为它可以访问私有属性 `hatchedEgg`。 这是因为 `hatchedEgg` 是在与 `getHatchedEggCount` 相同的上下文中声明的。 在 JavaScript 中，函数总是可以访问创建它的上下文。 这就叫做 `closure`（闭包）。**
 
 ## 数据结构 
 
