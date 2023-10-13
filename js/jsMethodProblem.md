@@ -374,6 +374,52 @@ console.log(result); // 输出 true，因为所有元素都大于 10
 
 如果数组为空（没有元素），`every()` 方法也会返回 `true`，因为没有元素不满足条件。如果需要处理空数组的情况，可以在回调函数中添加适当的逻辑。
 
+#### some 对数组各元素综合判断返回
+
+在 JavaScript 中，`some()` 方法用于检查数组中的元素是否满足指定条件。它会对数组中的每个元素执行一个测试函数，**如果任何一个元素满足条件，`some()` 方法将返回 `true`，否则返回 `false`**。以下是 `some()` 方法的语法和示例：
+
+**语法**：
+
+```js
+array.some(callback(element[, index[, array]])[, thisArg])
+```
+
+- `array`：要检查的数组。
+
+- ```
+  callback
+  ```
+
+  ：一个用于测试每个元素的函数，该函数可以接受三个参数：
+
+  - `element`：当前正在测试的元素。
+  - `index`（可选）：当前元素的索引。
+  - `array`（可选）：正在被测试的数组。
+
+- `thisArg`（可选）：可选的参数，用于指定在调用 `callback` 函数时使用的 `this` 值。
+
+**示例**：
+
+```js
+const numbers = [1, 2, 3, 4, 5];
+
+// 检查是否有元素大于 3
+const result1 = numbers.some(function(element) {
+  return element > 3;
+});
+console.log(result1); // 输出 true
+
+// 使用箭头函数检查是否有元素小于 1
+const result2 = numbers.some(element => element < 1);
+console.log(result2); // 输出 false
+```
+
+在第一个示例中，`some()` 方法检查数组 `numbers` 是否有元素大于 3，因为有元素满足这个条件（4 和 5），所以 `result1` 返回 `true`。
+
+在第二个示例中，使用箭头函数来检查数组中是否有元素小于 1，因为没有任何元素满足这个条件，所以 `result2` 返回 `false`
+
+**`some()` 方法通常用于检查数组中是否存在满足某种条件的元素，例如在过滤数据或搜索数据时非常有用。**
+
 #### reduce  对数组各元素执行方法
 
 `reduce()` 方法是 JavaScript 数组对象的一个高阶函数，用于对数组中的每个元素执行一个指定的回调函数（也称为 reducer 函数），将数组中的元素归约成单个值。它接受一个回调函数和一个可选的初始值作为参数，并返回最终的归约结果。
@@ -385,7 +431,7 @@ array.reduce(callback[, initialValue]);
 ```
 
 - `callback` 是一个用于处理数组元素的函数，它接受四个参数：accumulator（累加器），currentValue（当前元素的值），currentIndex（当前元素的索引），和 array（原始数组）。
-  - `accumulator`：累加器，它是归约的中间结果，从左到右依次累积。
+  - `accumulator`：累加器，它是归约的中间结果，从左到右依次累积，不仅是数字，也可以是对象。
   - `currentValue`：当前元素的值。
   - `currentIndex`：当前元素的索引（可选参数）。
   - `array`：原始数组（可选参数）。
@@ -406,6 +452,24 @@ console.log(sum); // 输出 15
 在这个示例中，`reduce()` 方法接受一个初始值 `0`，然后将每个数组元素依次加到累加器 `accumulator` 中，最终返回了数组元素的总和 `15`。
 
 `reduce()` 方法可以用于各种归约操作，例如计算最大值、最小值、平均值，拼接字符串等等。它的强大之处在于可以灵活应用于不同的问题，通过自定义回调函数来实现各种归约逻辑。
+
+在另一个例子里，查看如何返回一个包含用户名称作为属性，其年龄作为值的对象。
+
+```js
+const users = [
+  { name: 'John', age: 34 },
+  { name: 'Amy', age: 20 },
+  { name: 'camperCat', age: 10 }
+];
+
+const usersObj = users.reduce((obj, user) => {
+  obj[user.name] = user.age;
+  return obj;
+}, {});
+console.log(usersObj);
+```
+
+控制台将显示值 `{ John: 34, Amy: 20, camperCat: 10 }`。
 
 ### 字符串
 
@@ -429,6 +493,8 @@ const a = parseInt("11", 2);
 
 变量 radix 表示 `11` 是在二进制系统中。 这个示例将字符串 `11` 转换为整数 `3`。
 
+其余的类似使用，例如`parseFloat`
+
 #### split 分割字符串
 
 **String.prototype.split()方法通过传入的参数符号，将一个字符串对象分割成一个字符串数组，这个传入的参数符号决定着字符串在什么位置进行分割。**
@@ -443,6 +509,31 @@ str.split([separator[, limit]])
 该参数指定字符串在什么地方进行分割。separator参数可以是一个字符串或者一个正则表达式。如果separator是一个字符串，那在分割时必须完全匹配separator字符串才执行分割。如果separator参数没有传或者separator参数没有在被调用的字符串中匹配到，返回值将是一个包含整个被调用字符串的数组。如果separator**参数是空字符串，split()函数将会把被调用字符串分割成一个个字符组成的数组**。
 **limit | 可选**
 limit参数是一个整数，他决定了split()函数的分割次数。如果limit参数存在，返回的数组的数组长度将小于等于limit。如果在分割时还有未分割完的字符串，但是数组长度已经到达了limit的值，那么剩余的字符串将被丢弃，不会在结果中返回。
+
+**如果分隔符是空格，您将得到一个单词数组，如果分隔符是空字符串，您将得到字符串中每个字符的数组。**
+
+#### trim 去除两端空格
+
+JavaScript 中的 `trim()` 方法用于去除字符串两端的空格（空格、制表符、换行符等），**并返回一个新的字符串。**这可以用于清理用户输入或处理从外部源获取的文本数据。以下是 `trim()` 方法的语法和示例：
+
+**语法**：
+
+```js
+string.trim()
+```
+
+- `string`：要处理的字符串。
+
+**示例**：
+
+```js
+const text = "   Hello, World!   ";
+const trimmedText = text.trim();
+
+console.log(trimmedText); // 输出 "Hello, World!"
+```
+
+在这个示例中，我们首先定义了一个包含前导和尾随空格的字符串 `text`。然后，我们使用 `trim()` 方法对该字符串进行处理，得到一个去除了空格的新字符串 `trimmedText`。最后，我们输出 `trimmedText`，显示去除了空格的字符串。
 
 #### toUpperCase 字母转大写
 
@@ -694,6 +785,51 @@ console.log(getArrayOfUsers(users));
 ```json
 [ 'Alan', 'Jeff', 'Sarah', 'Ryan' ]
 ```
+
+#### bind 创建函数绑定this
+
+JavaScript 中的 `bind()` 方法用于**创建一个新的函数，该函数在调用时将指定的对象绑定为其 `this` 值**。这个方法常用于确保函数在特定上下文中执行，以及将函数的参数预先设置。以下是 `bind()` 方法的语法和示例：
+
+**语法**：
+
+```js
+function.bind(thisArg[, arg1[, arg2[, ...]]])
+```
+
+- `thisArg`：绑定到函数的 `this` 值的对象。
+- `arg1`, `arg2`, ...：可选的参数，这些参数将被预先设置到绑定的函数中。
+
+**示例**：
+
+```js
+const person = {
+  firstName: "John",
+  lastName: "Doe"
+};
+
+function greet() {
+  console.log(`Hello, ${this.firstName} ${this.lastName}`);
+}
+
+// 使用 bind() 方法将函数绑定到 person 对象
+const greetPerson = greet.bind(person);
+
+greetPerson(); // 输出 "Hello, John Doe"
+
+// 绑定函数并预先设置参数
+function multiply(x, y) {
+  return x * y;
+}
+
+const double = multiply.bind(null, 2); // 绑定函数并预先设置 x 为 2
+console.log(double(5)); // 输出 10
+```
+
+在第一个示例中，我们有一个 `person` 对象和一个 `greet` 函数。使用 `bind()` 方法，我们将 `greet` 函数绑定到 `person` 对象，使函数在调用时的 `this` 值指向 `person` 对象，从而能够访问 `firstName` 和 `lastName` 属性。
+
+在第二个示例中，我们使用 `bind()` 方法绑定了一个带有两个参数的函数 `multiply`，并预先设置了一个参数（`x` 的值为 2）。这意味着在调用 `double` 函数时，只需要提供一个参数（`y` 的值），而 `x` 的值已经预先设置为 2。
+
+**`bind()` 方法对于在事件处理程序、回调函数中绑定上下文或预先设置参数的情况非常有用。它创建一个新的函数，不会修改原始函数。**
 
 ## js题目
 

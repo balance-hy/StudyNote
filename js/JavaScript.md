@@ -1847,34 +1847,86 @@ myPromise.catch(error => {
 
 ## this 关键字
 
-```js
-let duck = {
-  name: "Aflac",
-  numLegs: 2,
-  sayName: function() {return "The name of this duck is " + duck.name + ".";}
+JavaScript `this` 关键词指的是它所属的对象。
+
+它拥有不同的值，具体取决于它的使用位置：
+
+- 在方法中，`this` 指的是所有者对象。
+- 单独的情况下，`this` 指的是全局对象。
+- 在函数中，`this` 默认指的是全局对象。严格模式下，`this` 是 undefined。
+- 在事件中，`this` 指的是接收事件的元素。
+
+像 `call()` 和 `apply()` 这样的方法可以将 this 引用到任何对象。
+
+### 方法中的this
+
+在对象方法中，`this` 指的是此方法的“拥有者”。
+
+在本页的例子中，`this` 指的是 person 对象。
+
+person 对象是 fullName 方法的拥有者。
+
+```
+var person = {
+  firstName: "Bill",
+  lastName : "Gates",
+  id       : 678,
+  fullName : function() {
+    return this.firstName + " " + this.lastName;
+  }
 };
-duck.sayName();
 ```
 
-在上一个挑战中我们了解了该如何给 `duck` 对象设置一个方法。 然后在 return 语句里，我们通过使用 “点号表示法” `duck.name` 来获取 `name` 的属性值：**注意Es6中简化了函数,变得更简单**
+### 单独的this
+
+在单独使用时，拥有者是全局对象，因此 `this` 指的是全局对象。
+
+在浏览器窗口中，全局对象是 `[object Window]`：
 
 ```js
-sayName: function() {return "The name of this duck is " + duck.name + ".";}
+var x = this;
 ```
 
-虽然这是访问对象属性的有效方法，但是这里有一个陷阱。 如果对象名发生了改变，那么引用了原始名称的任何代码都需要更新。 在一个简短的对象定义中，这并不是问题，但是如果对象有很多对其属性的引用，那么发生错误的可能性就更大了。
+### 函数中的this
 
-我们可以使用 `this` 关键字来避免这一问题：
+在 JavaScript 函数中，函数的拥有者默认绑定 `this`。
+
+因此，在函数中，`this` 默认指的是全局对象 `[object Window]`。
+
+JavaScript 严格模式不允许默认绑定。因此，在函数中使用时，在严格模式下，`this` 是未定义的（`undefined`）。
+
+### 事件处理程序中的this
+
+在 HTML 事件处理程序中，`this` 指的是接收此事件的 HTML 元素：
+
+```this
+<button onclick="this.style.display='none'">
+  点击来删除我！
+</button>
+```
+
+### 显示函数绑定this
+
+`call()` 和 `apply()` 方法是预定义的 JavaScript 方法。
+
+它们都可以用于将另一个对象作为参数调用对象方法。
+
+您可以在本教程后面阅读有关 `call()` 和 `apply()` 的更多内容。
+
+在下面的例子中，当使用 person2 作为参数调用 person1.fullName 时，`this` 将引用 person2，即使它是 person1 的方法：
 
 ```js
-let duck = {
-  name: "Aflac",
-  numLegs: 2,
-  sayName: function() {return "The name of this duck is " + this.name + ".";}
-};
+var person1 = {
+  fullName: function() {
+    return this.firstName + " " + this.lastName;
+  }
+}
+var person2 = {
+  firstName:"Bill",
+  lastName: "Gates",
+}
+person1.fullName.call(person2);  // 会返回 "Bill Gates"
 ```
-
-`this` 是一个很复杂的知识点，而上面那个例子也只是使用它的一种方法而已。 **在当前的上下文环境中，`this` 指向的就是与这个方法有关联的 `duck` 对象。 如果把对象名改为 `mallard`，那使用 this 后就没有必要在代码中找到所有指向 `duck` 的部分。** 这样可以使得代码更具有可读性和复用性。
 
 ## 正则化
 
