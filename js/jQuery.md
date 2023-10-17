@@ -78,6 +78,36 @@ $("button").addClass("animated bounce");
 
 总之，`$` 符号是 jQuery 的核心标识符，用于引用 jQuery 对象、执行 DOM 操作和处理事件等。它有助于简化和提高 JavaScript 代码的可读性。请注意，虽然 `$` 符号通常用于 jQuery，但它本质上只是一个 JavaScript 变量，因此你可以在代码中自定义 `$` 变量，但这可能导致冲突，所以谨慎使用。
 
+### $使用
+
+三种选取标签的方法：用元素选择器：`$("button")`、用类选择器：`$(".btn")` 以及用 id 选择器：`$("#target1")` 。
+
+#### 选择第n个子元素
+
+已经看到了 id 属性对于 jQuery 选择器选取标签的便利， 但这并不适用于所有情景。
+
+幸运的是，jQuery 有一些其他的方法可以选取正确的标签。
+
+jQuery 可以用 CSS 选择器（CSS Selectors）选取标签。 `target:nth-child(n)` CSS 选择器可以选取指定 class 或者元素类型的的第 n 个标签。
+
+下面的代码展示了给每个区域（well）的第 3 个标签设置弹跳（bounce）动画效果：
+
+```js
+$(".target:nth-child(3)").addClass("animated bounce");
+```
+
+#### 选择偶数或者奇数的子元素
+
+也可以用基于位置的奇 `:odd` 和偶 `:even` 选择器选取标签。
+
+注意**，jQuery 是零索引（zero-indexed）的，这意味着第 1 个标签的位置编号是 0。** 这有点混乱和反常——`:odd` 表示选择第 2 个标签（位置编号 1）、第 4 个标签（位置编号 3）……等等，以此类推。
+
+下面的代码展示了选取所有 `target` class 的奇数元素并给它们设置 class：
+
+```js
+$(".target:odd").addClass("animated shake");
+```
+
 ## Dom元素
 
 DOM 元素是文档对象模型（Document Object Model）中的基本构建块，代表网页中的各种元素或节点。DOM 元素是网页上可操作的基本单位，它们可以是 HTML 元素（如段落、标题、按钮等）或文档中的其他部分（如文本、属性等）。每个 DOM 元素都是文档树的一部分，可以通过 JavaScript 来访问、操作和修改。
@@ -98,3 +128,118 @@ DOM 元素是文档对象模型（Document Object Model）中的基本构建块�
 ### addClass 添加类
 
 jQuery 的 `.addClass()` 方法用来给标签添加类。
+
+### removeClass 移除类
+
+和用 jQuery 的 `addClass()` 方法给标签添加类一样，也可以利用 jQuery 的 `removeClass()` 方法移除它们。
+
+下面是为指定按钮执行上面的操作的代码：
+
+```js
+$("#target2").removeClass("btn-default");
+```
+
+### remove 移除html元素
+
+jQuery 有一个名为 `.remove()` 的函数，它将完全删除一个 HTML 元素。
+
+```js
+$("#target4").remove()
+```
+
+### css()改变标签的css
+
+下面的代码效果是把颜色变蓝：
+
+```js
+$("#target1").css("color", "blue");
+```
+
+这与通常的 CSS 声明略有不同，因为这个 **CSS 属性和它的值在英文引号里，并且它们用逗号而不是冒号间隔开**。
+
+### prop 调整标签的属性
+
+下面是禁用所有的按钮的代码：
+
+```js
+$("button").prop("disabled", true);
+```
+
+### html 在标签里添加Html内容
+
+jQuery 有一个 `.html()` 函数，能用其在标签里添加 HTML 标签和文本， 函数提供的内容将完全替换之前标签的内容。
+
+下面是重写并强调标题文本的代码：
+
+```js
+$("h3").html("<em>jQuery Playground</em>");
+```
+
+### text 获取或设置元素的文本
+
+在 jQuery 中，`.text()` 方法用于获取或设置元素的文本内容。它可以用于读取元素的文本内容或将新的文本内容设置给元素。以下是 `.text()` 方法的用法示例：
+
+**获取元素的文本内容**：
+
+```js
+// 获取元素的文本内容
+var text = $("p").text();
+console.log(text); // 输出段落元素的文本内容
+```
+
+上面的示例通过选择所有 `<p>` 元素，并使用 `.text()` 方法获取它们的文本内容。获取的文本内容将作为字符串返回。
+
+**设置元素的文本内容**：
+
+```js
+// 设置元素的文本内容
+$("p").text("新的文本内容");
+```
+
+上面的示例将所有 `<p>` 元素的文本内容设置为 "新的文本内容"。
+
+使用 `.text()` 方法是一种方便的方式来访问和修改元素的文本内容。这对于更新页面上的文本内容或读取用户输入的文本非常有用。**请注意，`.text()` 方法只会获取或设置元素的文本内容，不会处理 HTML 标签或解析 HTML，它会将任何包含在元素中的 HTML 标签作为纯文本对待。如果需要操作包含 HTML 标签的内容，可以考虑使用 `.html()` 方法。**
+
+### appendTo 将一个标签添加到另一个标签里面
+
+```js
+$("#target2").appendTo("#right-well");
+```
+
+### clone 复制标签
+
+例如，如果想把 `target2` 从 `left-well` 复制到 `right-well`，可以设置如下：
+
+```js
+$("#target2").clone().appendTo("#right-well");
+```
+
+是否注意到这两个 jQuery 函数连在一起了？ 这被称为链式调用（function chaining），是一种用 jQuery 实现效果的简便方法。
+
+### parent 访问被选取标签的父标签
+
+每个 HTML 标签都默认 `inherits`（继承）其 `parent`（父标签）的 CSS 属性。
+
+例如，你的 `jQuery Playground` 中的 `h3` 标签的父标签是 `<div class="container-fluid">`，而这个标签的父标签是 `body`。
+
+jQuery 有一个 `parent()` 方法，可以访问被选取标签的父标签。
+
+下面的代码展示了使用 `parent()` 方法把 `left-well` 标签的父标签背景色设置成蓝色（blue）：
+
+```js
+$("#left-well").parent().css("background-color", "blue")
+```
+
+### children 访问被选取标签的子标签
+
+把 HTML 标签放到另一个级别的标签里，这些 HTML 标签被称为该标签的子标签（children element）。 例如，本次挑战中文本为 `#target1`、`#target2` 和 `#target3` 的按钮都是 `<div class="well" id="left-well">` 标签的子标签。
+
+jQuery 有一个 `children()` 方法，可以访问被选取标签的子标签。
+
+下面的代码展示了用 `children()` 方法把 `left-well` 标签的子标签的颜色设置成 `blue`（蓝色）：
+
+```js
+$("#left-well").children().css("color", "blue")
+```
+
+ 
