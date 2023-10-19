@@ -348,6 +348,438 @@ Mustache （双括号）语法不能作用在 HTML attribute 上，遇到这种�
 
 - - https://v2.cn.vuejs.org/v2/guide/components-edge-cases.html#通过-v-once-创建低开销的静态组件)
 
+## 通过v-bind绑定class和style实例
+
+### 绑定class
+
+#### 对象绑定
+
+我们可以传给 `v-bind:class` 一个对象，以动态地切换 class：
+
+```html
+<div v-bind:class="{ active: isActive }"></div>
+```
+
+上面的语法表示 `active` 这个 class 存在与否将取决于数据 property `isActive` 的 [truthiness](https://developer.mozilla.org/zh-CN/docs/Glossary/Truthy)。
+
+你可以在对象中传入更多字段来动态切换多个 class。此外，`v-bind:class` 指令也可以与普通的 class attribute 共存。当有如下模板：
+
+```html
+<div
+  class="static"
+  v-bind:class="{ active: isActive, 'text-danger': hasError }"
+></div>
+```
+
+和如下 data：
+
+```js
+data: {
+  isActive: true,
+  hasError: false
+}
+```
+
+结果渲染为：
+
+```html
+<div class="static active"></div>
+```
+
+当 `isActive` 或者 `hasError` 变化时，class 列表将相应地更新。例如，如果 `hasError` 的值为 `true`，class 列表将变为 `"static active text-danger"`。
+
+绑定的数据对象不必内联定义在模板里：
+
+```html
+<div v-bind:class="classObject"></div>
+```
+
+```js
+data: {
+  classObject: {
+    active: true,
+    'text-danger': false
+  }
+}
+```
+
+渲染的结果和上面一样。我们也可以在这里绑定一个返回对象的[计算属性](https://v2.cn.vuejs.org/v2/guide/computed.html)。这是一个常用且强大的模式：
+
+```html
+<div v-bind:class="classObject"></div>
+```
+
+```js
+data: {
+  isActive: true,
+  error: null
+},
+computed: {
+  classObject: function () {
+    return {
+      active: this.isActive && !this.error,
+      'text-danger': this.error && this.error.type === 'fatal'
+    }
+  }
+}
+```
+
+#### 数组绑定
+
+我们可以把一个数组传给 `v-bind:class`，以应用一个 class 列表：
+
+```html
+<div v-bind:class="[activeClass, errorClass]"></div>
+```
+
+```js
+data: {
+  activeClass: 'active',
+  errorClass: 'text-danger'
+}
+```
+
+渲染为：
+
+```html
+<div class="active text-danger"></div>
+```
+
+如果你也想根据条件切换列表中的 class，可以用三元表达式：
+
+```html
+<div v-bind:class="[isActive ? activeClass : '', errorClass]"></div>
+```
+
+这样写将始终添加 `errorClass`，但是只有在 `isActive` 是 truthy[[1\]](https://v2.cn.vuejs.org/v2/guide/class-and-style.html#footnote-1) 时才添加 `activeClass`。
+
+不过，当有多个条件 class 时这样写有些繁琐。所以在数组语法中也可以使用对象语法：
+
+```html
+<div v-bind:class="[{ active: isActive }, errorClass]"></div>
+```
+
+#### 组件使用
+
+### 绑定样式-css
+
+#### 对象绑定
+
+`v-bind:style` 的对象语法十分直观——看着非常像 CSS，但其实是一个 JavaScript 对象。CSS property 名可以用驼峰式 (camelCase) 或短横线分隔 (kebab-case，记得用引号括起来) 来命名：
+
+```html
+<div v-bind:style="{ color: activeColor, fontSize: fontSize + 'px' }"></div>
+```
+
+```js
+data: {
+  activeColor: 'red',
+  fontSize: 30
+}
+```
+
+直接绑定到一个样式对象通常更好，这会让模板更清晰：
+
+```html
+<div v-bind:style="styleObject"></div>
+```
+
+```js
+data: {
+  styleObject: {
+    color: 'red',
+    fontSize: '13px'
+  }
+}
+```
+
+同样的，对象语法常常结合返回对象的计算属性使用。
+
+#### 数组绑定
+
+`v-bind:style` 的数组语法可以将多个样式对象应用到同一个元素上：
+
+```html
+<div v-bind:style="[baseStyles, overridingStyles]"></div>
+```
+
+#### 自动添加前缀
+
+当 `v-bind:style` 使用需要添加[浏览器引擎前缀](https://developer.mozilla.org/zh-CN/docs/Glossary/Vendor_Prefix)的 CSS property 时，如 `transform`，Vue.js 会自动侦测并添加相应的前缀。
+
+## 列表渲染-v-for
+
+### v-for 数组->一组元素
+
+我们可以用 `v-for` 指令基于一个数组来渲染一个列表。`v-for` 指令需要使用 `item in items` 形式的特殊语法，其中 `items` 是源数据数组，而 `item` 则是被迭代的数组元素的**别名**。
+
+```html
+<ul id="example-1">
+  <li v-for="item in items" :key="item.message">
+    {{ item.message }}
+  </li>
+</ul>
+```
+
+```js
+var example1 = new Vue({
+  el: '#example-1',
+  data: {
+    items: [
+      { message: 'Foo' },
+      { message: 'Bar' }
+    ]
+  }
+})
+```
+
+结果：
+
+```json
+ Foo
+ Bar
+```
+
+在 `v-for` 块中，我们可以访问所有父作用域的 property。`v-for` 还支持一个可选的第二个参数，**即当前项的索引。**
+
+```html
+<ul id="example-2">
+  <li v-for="(item, index) in items">
+    {{ parentMessage }} - {{ index }} - {{ item.message }}
+  </li>
+</ul>
+```
+
+```js
+var example2 = new Vue({
+  el: '#example-2',
+  data: {
+    parentMessage: 'Parent',
+    items: [
+      { message: 'Foo' },
+      { message: 'Bar' }
+    ]
+  }
+})
+```
+
+```json
+结果：
+Parent-0-Foo
+Parent-1-Bar
+```
+
+你也可以用 `of` 替代 `in` 作为分隔符，因为它更接近 JavaScript 迭代器的语法：
+
+```html
+<div v-for="item of items"></div>
+```
+
+### v-for 对象键值
+
+你也可以用 `v-for` 来遍历一个对象的 property。
+
+```html
+<ul id="v-for-object" class="demo">
+  <li v-for="value in object">
+    {{ value }}
+  </li>
+</ul>
+```
+
+```js
+new Vue({
+  el: '#v-for-object',
+  data: {
+    object: {
+      title: 'How to do lists in Vue',
+      author: 'Jane Doe',
+      publishedAt: '2016-04-10'
+    }
+  }
+})
+```
+
+结果：
+
+```json
+How to do lists in Vue
+Jane Doe
+2016-04-10
+```
+
+**你也可以提供第二个的参数为 property 名称 (也就是键名)：**
+
+```html
+<div v-for="(value, name) in object">
+  {{ name }}: {{ value }}
+</div>
+```
+
+```json
+title:How to do lists in Vue
+author:Jane Doe
+publishedAt:2016-04-10
+```
+
+**还可以用第三个参数作为索引：**
+
+```html
+<div v-for="(value, name, index) in object">
+  {{ index }}. {{ name }}: {{ value }}
+</div>
+```
+
+```json
+0.title:How to do lists in Vue
+1.author:Jane Doe
+2.publishedAt:2016-04-10
+```
+
+### 用key来维护更新时的状态
+
+当 Vue 正在更新使用 `v-for` 渲染的元素列表时，它默认使用“就地更新”的策略。如果数据项的顺序被改变，Vue 将不会移动 DOM 元素来匹配数据项的顺序，而是就地更新每个元素，并且确保它们在每个索引位置正确渲染。这个类似 Vue 1.x 的 `track-by="$index"`。
+
+这个默认的模式是高效的，但是**只适用于不依赖子组件状态或临时 DOM 状态 (例如：表单输入值) 的列表渲染输出**。
+
+为了给 Vue 一个提示，以便它能跟踪每个节点的身份，从而重用和重新排序现有元素，你需要为每项提供一个唯一 `key` attribute：
+
+```html
+<div v-for="item in items" v-bind:key="item.id">
+  <!-- 内容 -->
+</div>
+```
+
+建议尽可能在使用 `v-for` 时提供 `key` attribute，除非遍历输出的 DOM 内容非常简单，或者是刻意依赖默认行为以获取性能上的提升。
+
+因为它是 Vue 识别节点的一个通用机制，`key` 并不仅与 `v-for` 特别关联。后面我们将在指南中看到，它还具有其它用途。
+
+> 不要使用对象或数组之类的非基本类型值作为 `v-for` 的 `key`。请用字符串或数值类型的值。
+
+### 数组更新检测
+
+#### 数组变更
+
+Vue 将被侦听的数组的变更方法进行了包裹，所以它们也将会触发视图更新。这些被包裹过的方法包括：
+
+- `push()`
+- `pop()`
+- `shift()`
+- `unshift()`
+- `splice()`
+- `sort()`
+- `reverse()`
+
+你可以打开控制台，然后对前面例子的 `items` 数组尝试调用变更方法。比如 `example1.items.push({ message: 'Baz' })`。
+
+#### 数组替换
+
+变更方法，顾名思义，会变更调用了这些方法的原始数组。相比之下，也有非变更方法，例如 `filter()`、`concat()` 和 `slice()`。它们不会变更原始数组，而**总是返回一个新数组**。当使用非变更方法时，可以用新数组替换旧数组：
+
+```js
+example1.items = example1.items.filter(function (item) {
+  return item.message.match(/Foo/)
+})
+```
+
+你可能认为这将导致 Vue 丢弃现有 DOM 并重新渲染整个列表。幸运的是，事实并非如此。Vue 为了使得 DOM 元素得到最大范围的重用而实现了一些智能的启发式方法，所以用一个含有相同元素的数组去替换原来的数组是非常高效的操作
+
+#### 注意事项
+
+由于 JavaScript 的限制，Vue **不能检测**数组和对象的变化。[深入响应式原理](https://v2.cn.vuejs.org/v2/guide/reactivity.html#检测变化的注意事项)中有相关的讨论。
+
+### 显示过滤/排序后的结果
+
+有时，我们想要显示一个数组经过过滤或排序后的版本，而不实际变更或重置原始数据。在这种情况下，可以创建一个计算属性，来返回过滤或排序后的数组。
+
+例如：
+
+```html
+<li v-for="n in evenNumbers">{{ n }}</li>
+```
+
+```js
+data: {
+  numbers: [ 1, 2, 3, 4, 5 ]
+},
+computed: {
+  evenNumbers: function () {
+    return this.numbers.filter(function (number) {
+      return number % 2 === 0
+    })
+  }
+}
+```
+
+在计算属性不适用的情况(**计算属性无法传参或者说无法通过一般的手段传参**)下 (例如，在嵌套 `v-for` 循环中) 你可以使用方法：
+
+```html
+<ul v-for="set in sets">
+  <li v-for="n in even(set)">{{ n }}</li>
+</ul>
+```
+
+```js
+data: {
+  sets: [[ 1, 2, 3, 4, 5 ], [6, 7, 8, 9, 10]]
+},
+methods: {
+  even: function (numbers) {
+    return numbers.filter(function (number) {
+      return number % 2 === 0
+    })
+  }
+}
+```
+
+### v-for 使用整数值从而重复
+
+`v-for` 也可以接受整数。在这种情况下，它会把模板重复对应次数。
+
+```html
+<div>
+  <span v-for="n in 10">{{ n }} </span>
+</div>
+```
+
+### 在template上使用v-for
+
+类似于 `v-if`，你也可以利用带有 `v-for` 的 `<template>` 来循环渲染一段包含多个元素的内容。比如：
+
+```html
+<ul>
+  <template v-for="item in items">
+    <li>{{ item.msg }}</li>
+    <li class="divider" role="presentation"></li>
+  </template>
+</ul>
+```
+
+### v-for和v-if一起使用 不推荐
+
+当它们处于同一节点，`v-for` 的优先级比 `v-if` 更高，这意味着 `v-if` 将分别重复运行于每个 `v-for` 循环中。当你只想为*部分*项渲染节点时，这种优先级的机制会十分有用，如下：
+
+```html
+<li v-for="todo in todos" v-if="!todo.isComplete">
+  {{ todo }}
+</li>
+```
+
+上面的代码将只渲染未完成的 todo。
+
+而如果你的目的是有条件地跳过循环的执行，那么可以将 `v-if` 置于外层元素 (或 [`) 上。如：
+
+```html
+<ul v-if="todos.length">
+  <li v-for="todo in todos">
+    {{ todo }}
+  </li>
+</ul>
+<p v-else>No todos left!</p>
+```
+
+### 组件上使用v-for
+
 ## 计算属性 数据-computed
 
 模板内的表达式非常便利，但是设计它们的初衷是用于简单运算的。在模板中放入太多的逻辑会让模板过重且难以维护。例如：
@@ -440,7 +872,7 @@ computed: {
 
 相比之下，每当触发重新渲染时，调用方法将**总会**再次执行函数。
 
-我们为什么需要缓存？假设我们有一个性能开销比较大的计算属性 **A**，它需要遍历一个巨大的数组并做大量的计算。然后我们可能有其他的计算属性依赖于 **A**。如果没有缓存，我们将不可避免的多次执行 **A** 的 getter！如果你不希望有缓存，请用方法来替代。
+我们为什么需要缓存？假设我们有一个性能开销比较大的计算属性 **A**，它需要遍历一个巨大的数组并做大量的计算。然后我们可能有其他的计算属性依赖于 **A**。如果没有缓存，我们将不可避免的多次执行 **A** 的 getter！**如果你不希望有缓存，请用方法来替代**。
 
 ### 计算属性 vs 侦听属性
 
