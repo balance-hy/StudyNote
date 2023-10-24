@@ -105,6 +105,18 @@ var是**函数作用域**，let是**块作用域**。
 
 **而let由于是块作用域，所以如果在块作用域内定义的变量，比如说在for循环内，在其外面是不可被访问的，所以for循环推荐用let**
 
+>默认全局变量（比如最外部定义的变量，比如alert函数，实际上可以windows.alert）绑定在windows对象下,这也是js唯一的全局作用域。但不同的js文件使用相同全局变量时，会产生冲突，所以把自己的代码所需全局变量放在自己定义的作用域中，这也是很多框架的写法，比如jQuery，使用时候，jQuery.xxx。为简便用$符号代替了。
+
+如何定义自己定义的作用域呢?其实就是自己创建对象。
+
+```js
+var balance={};
+balacne.name="balance";
+balance.add=function(a,b){
+    return a+b;
+}
+```
+
 ### const
 
 关键字 `let` 并不是声明变量的唯一新方法。 在 ES6 中，你还可以使用 `const` 关键字声明变量。`const` 具有 `let` 的所有出色功能，另外还有一个额外的好处，即使用 `const` 声明的变量是只读的。 它们是一个常量值，这意味着一旦一个变量被赋值为 `const`，它就不能被重新赋值：
@@ -346,6 +358,10 @@ function howMany(...args) {
 }
 console.log(howMany(0, 1, 2));
 console.log(howMany("string", null, [1, 2, 3], { }));
+
+function howMany(a,b,...args) {//args接收除a,b之外的所有参数，这也是和arguments不同的地方
+  return "You have passed " + args.length + " arguments.";
+}
 ```
 
 控制台将显示字符串 `You have passed 3 arguments.` 和 `You have passed 4 arguments.`。
@@ -363,6 +379,27 @@ const sum = (...args) => { //匿名函数和可变参数实例
 ```
 
 **可变参数无法用默认参数初始化**
+
+### arguments
+
+`arguments`是一个js给定的关键字，**用于标识函数接收到的所有参数**。是一个类数组对象
+
+由于js是一种弱类型的语言，没有重载机制，当我们重写函数时，会将原来的函数直接覆盖，这里我们能利用arguments，来判断传入的实参类型与数量进行不同的操作，然后返回不同的数值。
+
+```js
+function add() {
+    var len = arguments.length,
+        sum = 0;
+    for(;len--;){
+        sum += arguments[len];
+    }
+    return sum;
+}
+ 
+console.log( add(1,2,3) );   //6
+console.log( add(1,3) );     //4
+console.log( add(1,2,3,5,6,2,7) );   //26
+```
 
 ### 展开运算符 ...
 
@@ -668,7 +705,7 @@ addSum(3);
 
 `addSum` 是一个没有 `return` 语句的函数。 该函数将更改全局变量 `sum`，函数的返回值为 `undefined`。
 
-### ==和=== 
+### `==`和`=== `
 
 严格相等运算符（`===`）是相对相等操作符（`==`）的另一种比较操作符。 与相等操作符转换数据两类型不同，严格相等运算符不会做类型转换。
 
@@ -753,6 +790,8 @@ console.log(greeting);
 
 有时候你需要遍历一个对象中的所有键。 你可以使用 for...in 循环来做这件事。 for...in 循环是这样的：
 
+**也可以用于遍历数组，不过取出来的值是数组下标**
+
 ```javascript
 const refrigerator = {
   'milk': 1,
@@ -769,6 +808,99 @@ for (const food in refrigerator) {
 我们在循环头中定义了变量 `food` ，这个变量被设置为每次迭代上对象的每个键值，将每个食物的名称打印到控制台。
 
 **注意：**对象中的**键是无序的**，这与数组不同。 因此，一个对象中**某个属性的位置，或者说它出现的相对顺序，在引用或访问该属性时是不确定的。**
+
+### iterable
+
+遍历`Array`可以采用下标循环，遍历`Map`和`Set`就无法使用下标。为了统一集合类型，ES6标准引入了新的`iterable`类型，`Array`、`Map`和`Set`都属于`iterable`类型。
+
+具有`iterable`类型的集合可以通过新的`for ... of`循环来遍历。遍历`Array`可以采用下标循环，遍历`Map`和`Set`就无法使用下标。为了统一集合类型，ES6标准引入了新的`iterable`类型，**`Array`、`Map`和`Set`都属于`iterable`类型**。
+
+**具有`iterable`类型的集合可以通过新的`for ... of`循环来遍历。**
+
+用`for ... of`循环遍历集合（数组、map、Set），用法如下：
+
+```js
+var a = ['A', 'B', 'C'];
+var s = new Set(['A', 'B', 'C']);
+var m = new Map([[1, 'x'], [2, 'y'], [3, 'z']]);
+for (var x of a) { // 遍历Array
+    console.log(x);
+}
+for (var x of s) { // 遍历Set
+    console.log(x);
+}
+for (var x of m) { // 遍历Map
+    console.log(x[0] + '=' + x[1]);
+}
+```
+
+#### for of 和 for in
+
+`for ... in`循环由于历史遗留问题，它遍历的实际上是对象的属性名称。一个`Array`数组实际上也是一个对象，它的每个元素的索引被视为一个属性。
+
+当我们手动给`Array`对象添加了额外的属性后，`for ... in`循环将带来意想不到的意外效果：
+
+```js
+var a = ['A', 'B', 'C'];
+a.name = 'Hello';
+for (var x in a) {
+    console.log(x); // '0', '1', '2', 'name'
+}
+```
+
+`for ... in`循环将把`name`包括在内，但`Array`的`length`属性却不包括在内。
+
+`for ... of`循环则完全修复了这些问题，它只循环集合本身的元素：
+
+```js
+var a = ['A', 'B', 'C'];
+a.name = 'Hello';
+for (var x of a) {
+    console.log(x); // 'A', 'B', 'C'
+}
+```
+
+这就是为什么要引入新的`for ... of`循环。
+
+然而，更好的方式是直接使用`iterable`内置的`forEach`方法，它接收一个函数，每次迭代就自动回调该函数。以`Array`为例：
+
+```js
+'use strict';
+var a = ['A', 'B', 'C'];
+a.forEach(function (element, index, array) {
+    // element: 指向当前元素的值
+    // index: 指向当前索引
+    // array: 指向Array对象本身
+    console.log(element + ', index = ' + index);
+});
+```
+
+**`Set`与`Array`类似，但`Set`没有索引，因此回调函数的前两个参数都是元素本身**：
+
+```js
+var s = new Set(['A', 'B', 'C']);
+s.forEach(function (element, sameElement, set) {
+    console.log(element);
+});
+```
+
+**`Map`的回调函数参数依次为`value`、`key`和`map`本身：**
+
+```js
+var m = new Map([[1, 'x'], [2, 'y'], [3, 'z']]);
+m.forEach(function (value, key, map) {
+    console.log(value);
+});
+```
+
+如果对某些参数不感兴趣，由于JavaScript的函数调用不要求参数必须一致，因此可以忽略它们。例如，只需要获得`Array`的`element`：
+
+```js
+var a = ['A', 'B', 'C'];
+a.forEach(function (element) {
+    console.log(element);
+});
+```
 
 ### instanceof
 
@@ -1504,6 +1636,102 @@ ducky.getHatchedEggCount();
 
 **这里的 `getHatchedEggCount` 是一种特权方法，因为它可以访问私有属性 `hatchedEgg`。 这是因为 `hatchedEgg` 是在与 `getHatchedEggCount` 相同的上下文中声明的。 在 JavaScript 中，函数总是可以访问创建它的上下文。 这就叫做 `closure`（闭包）。**
 
+### class Es6
+
+**为解决之前原型的复杂设置**
+
+类中由四种方法构成：
+
+- 构造方法：定义属性，解决入参问题
+- 实例方法：将被挂载到原型对象上
+- 访问器方法：拦截某个属性的get和set
+- 静态方法：直接挂载到类对象上
+
+```js
+class Person {
+	// 1 构造方法
+	// 对应ES5中来调用new构造函数后，执行的5步操作
+	constructor(name, age) {
+		this.name = name;
+		this.age = age;
+		this._address = "上海市";
+	}
+
+	// 2 实例方法
+	eat() {
+		console.log(this.name + ' is eating');
+	}
+
+	// 3 访问器方法
+	get address() {
+		console.log("拦截访问操作");
+		return this._address;
+	}
+	set address(value) {
+		console.log("拦截赋值操作");
+		this._address = value;
+	}
+
+	// 4 静态方法
+	static randomPerson() {
+		const names = ["sd", "fr", "re", "weee"];
+    	const nameIdx = Math.floor(Math.random() * names.length);
+   		const name = names[nameIdx];
+   		const age = Math.floor(Math.random() * 100);
+    	return new Person(name, age);
+	}
+}
+```
+
+创建实例对象
+
+```js
+// 创建对象实例
+const p = new Person('zs', 18);
+console.log(p); // {name: 'zs', age: 18, _address: '上海市'};
+
+// 调用实例方法
+p.eat() // 'zs is eating'
+
+// 测试访问器方法
+// 注意address属性挂载到是Person原型对象上的
+console.log(p.address) // '拦截访问操作'
+p.address = '北京市'; // '拦截赋值操作'
+
+// 测试静态方法
+// 注意：静态方法的调用方式
+const p2 = Person.randomPerson()
+```
+
+#### extend
+
+类继承涉及到关键字`extends`，下面演示创建子类Student继承父类Person，涉及到两个关键字extends和super
+
+```js
+class Student extends Person {
+	// 构造方法
+	constructor(name, age, id) {
+		// JS引擎在解析子类的时候要求:如果使用了继承extends，那么子类的构造方法中，使用this之前必须调用父类的构造方法
+		super(name, age); 
+		this.id = id;
+	}
+
+	// 实例方法
+	// 和父类方法同名，属于方法重写
+	eat() {
+		// 借助super关键字来调用父类方法
+		super.eat();
+		console.log('Student' + this.name + ' is eating');
+	}
+	// 访问器方法 同样可以定义，不再赘述
+	// 静态方法
+ 	static staticMethod() {
+    	super.randomPerson(); // 只有在子类静态方法中才可以调用父类的静态方法，子类其他方法不可
+    	console.log("student static method");
+  }
+}
+```
+
 ## 数据结构 
 
 ### 对象嵌套
@@ -1617,6 +1845,126 @@ var fruits = ["Banana", "Orange", "Apple", "Mango"];
 fruits.myUcase();
 ```
 
+## 常用对象
+
+### Date
+
+```js
+let now=new Date();
+now.getFullYear();//年
+now.getMonth();//月
+now.getDate();//日
+now.getDay();//星期几
+now.getHours();//时
+now.getMinutes();//分
+now.getSeconds();//秒
+
+now.getTime();//时间戳 全世界统一 为距离 1970 1.1 0:00:00毫秒数
+```
+
+转换：
+
+```js
+let now= new Date(1472048779952);//时间戳转换
+console.log(now) //2016-08-24T14:26:19.952Z
+console.log(now.toString());//Wed Aug 24 2016 22:26:19 GMT+0800 (中国标准时间)
+```
+
+### Json
+
+将对象序列化成json字符串： JSON.stringify(json对象)；
+
+反序列化：将json字符串反序列化为对象:  JSON.parse(str)
+
+#### parse
+
+```js
+JSON.parse(str, reviver);
+```
+
+- `str`：要解析的 JSON字符串
+- `reviver`：可选的函数 `function(key,value)`，该函数的第一个参数和第二个参数分别代表键值对的键和值，并可以对值进行转换（函数返回值当做处理后的value）
+
+```js
+let json = '{"name": ["js", "webpack"], "age": 22, "gridFriend": "ljj"}';
+console.log(JSON.parse(json)); 
+// {name: Array(2), age: 22, gridFriend: 'ljj'}
+
+// 第二个参数是一个函数，key和value代表每个key/value对
+let result = JSON.parse(json, (key, value) => {
+    if (key == "age") {
+        return `年龄：${value}`;
+    }
+    return value;
+});
+console.log(result);
+//{name: Array(2), age: '年龄：22', gridFriend: 'ljj'}
+
+```
+
+#### stringify
+
+```js
+JSON.stringify(value, replacer, space)
+```
+
+value：将要序列化成 一个 JSON 字符串的值
+
+replacer：
+
+- 如果该参数是一个函数，则在序列化过程中，被序列化的值的每个属性都会经过该函数的转换和处理
+- 如果该参数是一个**数组**，则**只有包含在这个数组中的属性名才会被序列化**到最终的 JSON 字符串中
+- 如果该参数为 null 或者未提供，则对象所有的属性都会被序列化
+
+space：指定缩进用的空白字符串，用于美化输出
+
+- 如果参数是个数字，它代表有多少的空格；上限为10。该值若小于1，则意味着没有空格
+- 如果该参数为字符串（当字符串长度超过10个字母，取其前10个字母），该字符串将被作为空格
+- 如果该参数没有提供（或者为 null），将没有空格
+
+```js
+let obj = {
+    name: "jsx",
+    age: 22,
+    lesson: ["html", "css", "js"],
+};
+let json = JSON.stringify(obj);
+console.log(json);
+// {"name":"jsx","age":22,"lesson":["html","css","js"]}
+
+// 第二个参数replacer 为函数时，被序列化的值得属性都会经过该函数转换处理
+function replacer(key, value) {
+    if (typeof value === "string") {
+        return undefined;
+    }
+    return value;
+}
+let result = JSON.stringify(obj, replacer);
+console.log(result);
+// {"age":22,"lesson":[null,null,null]}
+
+// 当replacer参数为数组，数组的值代表将被序列化成 JSON 字符串的属性名
+let result1 = JSON.stringify(obj, ["name", "lesson"]);
+// 只保留 “name” 和 “lesson” 属性值
+console.log(result1);
+// {"name":"jsx","lesson":["html","css","js"]}
+
+// 第三个参数spcae,用来控制结果字符串里面的间距
+let result2 = JSON.stringify(obj, null, 4);
+console.log(result2);
+/*{
+      "name": "jsx",
+      "age": 22,
+      "lesson": [
+           "html",
+           "css",
+           "js"
+        ]
+}*/
+```
+
+
+
 ## Es6新特性
 
 ### x:x冗余
@@ -1701,6 +2049,333 @@ console.log(novel.writer);
 请注意用于调用 getter 和 setter 的语法。 它们甚至看起来不像是函数。 getter 和 setter 非常重要，因为它们隐藏了内部的实现细节。
 
 **注意：** 通常会在私有变量前添加下划线（`_`）。 然而，这种做法本身**并不是将变量变成私有的**。
+
+### Map
+
+#### map和对象（Object）的区别
+
+Map 是用于保存键值对，似乎与 Object 非常类似
+
+- 键值
+
+  Object 的键只能是字符串或者 Symbols(ES6 新增基础类型)，但 Map 的键可以是任意值–包括对象、函数等
+
+- 键值顺序
+
+  Map 中的键值是有序的（FIFO 原则），而添加到对象中的键则不是
+
+- 键值个数
+
+  Map 的键值对个数可以从 size 属性获取，而 Object 的键值对个数只能手动或其它自定义方法计算
+
+并且 Object 都有原型，原型链上的键名(保留键)有可能和你在对象上的设置的键名产生冲突。
+
+#### map初始化
+
+Map 的设置与应用也可查看[Typescript 的 Map 对象](https://blog.csdn.net/tjj3027/article/details/126874373)，这部分简单介绍了键是字符串的 Map 的用法
+
+```js
+//方法1
+let myMap = new Map();
+/*这样也可以
+const m1 = new Map([['a', 111], ['b', 222]])
+console.log(m1) // {"a" => 111, "b" => 222}
+*/
+// 设置 Map 对象
+myMap.set("key1", value1);
+myMap.set("key2", value2);
+myMap.set("key3", value3);
+
+//方法2
+let myMap = new Map([
+  ["key1", "value1"],
+  ["key2", "value2"]
+]);
+```
+
+##### 键值是对象与函数的情况
+
+用变量表示对象与函数，应用 Map 的情况与字符串是一样的，但是有一些特殊情况需要注意：
+
+```js
+let myMap = new Map();
+let keyObj = {};
+myMap.set(keyObj, "和键 keyObj 关联的值");
+myMap.get(keyObj); // "和键 keyObj 关联的值"
+myMap.get({}); // undefined, 因为 keyObj !== {}
+```
+
+> 函数也类似，所以复杂类型的键值并不是形式看着一样就是同一个值，必须是指针指向的是同一个地址的键值才能获取到对应值
+
+##### 键值是 NaN
+
+```js
+let myMap = new Map();
+myMap.set(NaN, "Key is NaN");
+myMap.get(NaN); // "Key is NaN"
+
+let otherNaN = Number("foo"); //Number(undefined)
+myMap.get(otherNaN); // "Key is NaN"
+```
+
+我们知道 **NAN 是和任意值都不相等的，甚至它自己**，但是在上述的测试中发现 Map 中，**Map 认为 NaN 作为键值的时候被认为是相等**并且当 **Number()的参数是 string 类型与 undefined 的时候，myMap.get(otherNaN)的结果也和 NaN 是相同的其它的情况，包括myMap.get(undefined),myMap.get(null)直接获取**，设置otherNaN其它可能与 NaN 相等的情况均是 undefined
+
+```js
+let otherNaN = Number(true); //Number(false)
+myMap.get(undefined); //undefined
+myMap.get(null); //undefined
+myMap.get(otherNaN); //undefined
+```
+
+#### map 方法
+
+| Map           | 方法                                                         |
+| ------------- | ------------------------------------------------------------ |
+| map.set()     | 设置键值对，返回 Map  对象                                   |
+| map.get()     | 返回键对应的值，如果不存在，则返回  undefined                |
+| map.has()     | 返回布尔值，用于判断  Map  中是否包含键对应的值              |
+| map.clear()   | 移除  Map  对象的**所有键/值对**                             |
+| map.delete()  | 删除键对应元素,成功返回  true,失败或不存在返回 false         |
+| map.size      | 返回  Map  对象键/值对的数量                                 |
+| map.keys()    | 返回  Iterator  对象，  包含了  Map  对象中每个元素的**键**  |
+| map.values()  | 返回 Iterator 对象，包含了 Map 对象中每个元素的**值**        |
+| map.entries() | 返回键值对数组迭代对象. map.entries().next().value 可返回每个值 |
+
+##### 方法的使用
+
+```js
+let nameSiteMapping = new Map();
+
+// 设置 Map 对象
+nameSiteMapping.set("Google", 1);
+nameSiteMapping.set("Runoob", 2);
+nameSiteMapping.set("Taobao", 3);
+
+// 获取键对应的值
+console.log(nameSiteMapping.get("Runoob")); // 2
+
+// 判断 Map 中是否包含键对应的值
+console.log(nameSiteMapping.has("Taobao")); // true
+console.log(nameSiteMapping.has("Zhihu")); // false
+
+// 返回 Map 对象键/值对的数量
+console.log(nameSiteMapping.size); // 3
+
+// 删除 Runoob
+console.log(nameSiteMapping.delete("Runoob")); // true
+console.log(nameSiteMapping);
+// 移除 Map 对象的所有键/值对
+nameSiteMapping.clear(); // 清除 Map
+console.log(nameSiteMapping);
+```
+
+#### map的遍历/迭代
+
+Map 对象中的元素是按顺序插入的，迭代 Map 对象也是按顺序迭代，每一次迭代返回 [key, value] 数组
+
+```js
+let nameSiteMapping = new Map();
+
+nameSiteMapping.set("Google", 1);
+nameSiteMapping.set("Runoob", 2);
+nameSiteMapping.set("Taobao", 3);
+
+// 迭代 Map 中的 key
+for (let key of nameSiteMapping.keys()) {
+  console.log(key);
+}
+
+// 迭代 Map 中的 value
+for (let value of nameSiteMapping.values()) {
+  console.log(value);
+}
+
+// 迭代 Map 中的 key => value
+for (let entry of nameSiteMapping.entries()) {
+  console.log(entry[0], entry[1]);
+}
+
+// 使用对象解析
+for (let [key, value] of nameSiteMapping) {
+  console.log(key, value);
+}
+
+nameSiteMapping.forEach(function (value, key) {
+  console.log(key + " = " + value);
+}, nameSiteMapping);
+```
+
+> forEach 方法的第二个参数，表示绑定处理函数内部的 this 对象，如果省略则表示是调用对象本身，上述可省略第二个参数
+
+#### map 对象操作
+
+##### map和数组转化
+
+```js
+let array = [
+  ["key1", "value1"],
+  ["key2", "value2"]
+];
+// Map 构造函数可以将 二维 键值对数组转换成Map 对象
+let myMap = new Map(array);
+// 使用 Array.from 函数可以将Map 对象转换成二维键值对数组
+let outArray = Array.from(myMap);
+```
+
+##### map的克隆
+
+Map 的克隆是 Map 对象构造函数生成实例，迭代出**新的对象**
+
+```js
+let myMap1 = new Map([
+  ["key1", "value1"],
+  ["key2", "value2"]
+]);
+let myMap2 = new Map(myMap1);
+console.log(myMap1 === myMap2); //  false
+```
+
+##### map的合并
+
+合并两个 Map 对象时，如果有重复的键值，则后面的会覆盖前面的
+
+```js
+let first = new Map([
+  [1, "one"],
+  [2, "two"],
+  [3, "three"]
+]);
+let second = new Map([
+  [1, "uno"],
+  [2, "dos"]
+]);
+// 对应值即 uno，dos，three
+let merged = new Map([...first, ...second]);
+```
+
+### Set
+
+Set 对象允许你存储任何类型的唯一值，无论是原始值或者是对象引用。
+
+> Set 结构的键名就是键值
+
+#### Set 中的特殊值
+
+Set [对象存储](https://so.csdn.net/so/search?q=对象存储&spm=1001.2101.3001.7020)的**值总是唯一的**，所以需要判断两个值是否恒等,恒等则不能同时存在。有几个特殊值需要特殊对待：
+
+- +0 与 -0 在存储判断唯一性的时候是恒等的，所以不重复；
+- undefined 与 undefined 是恒等的，所以不重复；
+- NaN 与 NaN 是不恒等的，但是在 Set 中只能存一个 NaN，不重复。
+
+#### Set 的初始化
+
+```js
+let mySet = new Set(); //Set(0) {}
+mySet.add(1); // Set(1) {1}
+mySet.add(5); // Set(2) {1, 5}
+mySet.add(5); // Set(2) {1, 5} 这里体现了值的唯一性
+mySet.add("some text"); // Set(3) {1, 5, "some text"} 这里体现了类型的多样性
+let o = { a: 1, b: 2 };
+mySet.add(o); // Set(5) {1, 5, "some text", {…}}
+mySet.add({ a: 1, b: 2 }); // Set(5) {1, 5, "some text", {…}, {…}}
+// 这里体现了对象之间引用不同不恒等，即使值相同，内存地址并不相同
+```
+
+以上是先创建空集合，使用了 add 方法设置 Set 的值
+
+new Set()通过直接传递参数初始化的方式 请查看下面的类型转换
+
+#### 类型转换
+
+##### Array 与 Set 互相转换
+
+```js
+let mySet = new Set(["value1", "value2", "value3"]); // Array 转 Set
+console.log(mySet); //Set(3) { 'value1', 'value2', 'value3' }
+let myArray = [...mySet]; // 用...操作符，将 Set 转 Array
+```
+
+##### String 转 Set
+
+```js
+let mySet = new Set("hello"); // Set(4) {"h", "e", "l", "o"}
+// 注：Set 中 toString 方法不能将 Set 转换成 String
+```
+
+#### Set方法
+
+| Set 方法      | 描述                                   |
+| ------------- | -------------------------------------- |
+| set.add()     | 添加 set 成员                          |
+| set.has()     | Set 是否包含成员，包含返回 true        |
+| set.delete()  | 删除成员,成功返回  true,其它返回 false |
+| set.size      | 返回  Map  对象键/值对的数量           |
+| set.clear()   | **清空 set 实例**，无返回值            |
+| set.keys()    | 返回键名的  Iterator  对象             |
+| set.values()  | 返回键值的 Iterator 对象               |
+| set.entries() | 返回键值对迭代对象                     |
+| set.forEach() | 回调函数遍历每个成员                   |
+
+#### Set 迭代
+
+Set 结构的键名就是键值，因此两者相同
+
+```js
+let set = new Set(["value1", "value2", "value3"]);
+
+for (let item of set.keys()) {
+  console.log(item);
+}
+
+for (let item of set.values()) {
+  console.log(item);
+}
+
+for (let item of set.entries()) {
+  console.log(item);
+}
+
+set.forEach((value, key) => console.log(value));
+//打印
+//value1
+//value2
+//value3
+```
+
+#### Set 作用
+
+> 利用 Set 值的唯一性
+
+##### 数组去重
+
+```js
+let mySet = new Set([1, 2, 3, 4, 4]);
+[...mySet]; // [1, 2, 3, 4]
+```
+
+##### Set 的合并-并集
+
+```js
+let a = new Set([1, 2, 3]);
+let b = new Set([4, 3, 2]);
+let union = new Set([...a, ...b]); // {1, 2, 3, 4}
+```
+
+##### 交集
+
+```js
+let a = new Set([1, 2, 3]);
+let b = new Set([4, 3, 2]);
+let intersect = new Set([...a].filter((x) => b.has(x))); // {2, 3}
+```
+
+##### 差集
+
+```js
+let a = new Set([1, 2, 3]);
+let b = new Set([4, 3, 2]);
+let difference = new Set([...a].filter((x) => !b.has(x))); // {1}
+```
 
 ### js共享代码
 
@@ -1866,7 +2541,7 @@ JavaScript `this` 关键词指的是它所属的对象。
 
 person 对象是 fullName 方法的拥有者。
 
-```
+```js
 var person = {
   firstName: "Bill",
   lastName : "Gates",
@@ -1909,9 +2584,9 @@ JavaScript 严格模式不允许默认绑定。因此，在函数中使用时，
 
 `call()` 和 `apply()` 方法是预定义的 JavaScript 方法。
 
-它们都可以用于将另一个对象作为参数调用对象方法。
+它们都可以用于将另一个对象作为参数调用对象方法。apply`的第二个参数接受的是**数组**。
 
-您可以在本教程后面阅读有关 `call()` 和 `apply()` 的更多内容。
+而`call`不是，它的参数接受的是**分别地提供的参数**，这就是它们最大的区别，其他用法一致。
 
 在下面的例子中，当使用 person2 作为参数调用 person1.fullName 时，`this` 将引用 person2，即使它是 person1 的方法：
 
@@ -1927,6 +2602,98 @@ var person2 = {
 }
 person1.fullName.call(person2);  // 会返回 "Bill Gates"
 ```
+
+#### apply
+
+语法：apply([thisObj[,argArray]])
+
+定义：应用某一对象的一个方法，用另一个对象替换当前对象。
+
+说明：
+
+- 如果 argArray 不是一个有效的数组或者不是 arguments 对象，那么将导致一个 TypeError。
+- 如果没有提供 argArray 和 thisObj 任何一个参数，那么 Global 对象将被用作 thisObj， 并且无法被传递任何参数。
+
+#### call
+
+语法：call([thisObj[,arg1[, arg2[, [,.argN]]]]])
+
+定义：调用一个对象的一个方法，以另一个对象替换当前对象。
+
+说明：
+
+- call 方法可以用来代替另一个对象调用一个方法。call 方法可将一个函数的对象上下文从初始的上下文改变为由 thisObj 指定的新对象。
+- 如果没有提供 thisObj 参数，那么 Global 对象被用作 thisObj。
+
+#### bind
+
+bind的区别要同时与apply、call比较。
+
+bind是创造了一个新的函数，apply、call是直接执行。
+
+```js
+var person = {
+    fullName: function (city, country) {
+        return this.firstName + " " + this.lastName + "," + city + "," + country;
+    }
+}
+var person1 = {
+    firstName: "John",
+    lastName: "Doe"
+}
+// apply
+const bindFun = person.fullName.bind(person1);
+```
+
+我们分析一下bindFun这个新函数，其实就是绑定了person1的person.fullName，入参有就是person.fullName的入参，
+
+我们可以直接使用
+
+```js
+console.log(bindFun("Oslo", "Norway")) // John Doe,Oslo,Norway
+```
+
+`bind`同时可以添加后面的入参，入参形式与`call`一样。
+
+但是不同的是bind可以在创造时添加**固定入参**，后续调用新函数时的入参会加在**固定入参**后面。
+
+```js
+var person = {
+    fullName: function (city, country) {
+        return this.firstName + " " + this.lastName + "," + city + "," + country;
+    }
+}
+var person1 = {
+    firstName: "John",
+    lastName: "Doe"
+}
+// apply
+const bindFun = person.fullName.bind(person1,"Oslo");// 固定第一个入参"Oslo"
+console.log(bindFun()) // John Doe,Oslo,undefined
+
+//这里传递的是第二个入参"Norway"，加在固定入参"Oslo"的后面
+console.log(bindFun("Norway")) // John Doe,Oslo,Norway
+```
+
+```js
+var person = {
+    fullName: function (city, country) {
+        return this.firstName + " " + this.lastName + "," + city + "," + country;
+    }
+}
+var person1 = {
+    firstName: "John",
+    lastName: "Doe"
+}
+// apply
+const bindFun = person.fullName.bind(person1,"Oslo", "Norway"); //固定了两个入参
+console.log(bindFun()) // John Doe,Oslo,Norway
+
+// 两个入参都已经被固定了，这里传递的入参已经无效了
+console.log(bindFun("newOslo", "newNorway")) // John Doe,Oslo,Norway
+```
+
+
 
 ## 正则化
 
