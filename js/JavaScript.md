@@ -1963,6 +1963,252 @@ console.log(result2);
 }*/
 ```
 
+## BOM对象
+
+Browser Object Model：浏览器对象模型
+
+### [windows](https://www.runoob.com/jsref/obj-window.html)
+
+> https://blog.csdn.net/xiaoyangzhu/article/details/121664579
+
+![](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202310251002324.png)
+
+```js
+window.alert(xxx) //弹出提示框
+
+window.innerHeight //内部窗口高度
+
+window.innerWidth //内部窗口宽度
+
+window.outerHeight //外部窗口高度
+
+window.outerWidth //外部窗口宽度
+```
+
+上面的图片显示了所有windows对象的方法,代码显示了常用的方法
+
+### [navigator](https://www.runoob.com/jsref/obj-navigator.html) 不建议使用
+
+Navigator 对象包含有关浏览器的信息。
+
+**注意：** 没有应用于 navigator 对象的公开标准，不过所有浏览器都支持该对象。
+
+#### Navigator 对象属性
+
+| 属性                                                         | 说明                                              |
+| :----------------------------------------------------------- | :------------------------------------------------ |
+| [appCodeName](https://www.runoob.com/jsref/prop-nav-appcodename.html) | 返回浏览器的代码名                                |
+| [appName](https://www.runoob.com/jsref/prop-nav-appname.html) | 返回浏览器的名称                                  |
+| [appVersion](https://www.runoob.com/jsref/prop-nav-appversion.html) | 返回浏览器的平台和版本信息                        |
+| [cookieEnabled](https://www.runoob.com/jsref/prop-nav-cookieenabled.html) | 返回指明浏览器中是否启用 cookie 的布尔值          |
+| [platform](https://www.runoob.com/jsref/prop-nav-platform.html) | 返回运行浏览器的操作系统平台                      |
+| [userAgent](https://www.runoob.com/jsref/prop-nav-useragent.html) | 返回由客户机发送服务器的user-agent 头部的值       |
+| [geolocation](https://www.runoob.com/jsref/prop-nav-geolocation.html) | 返回浏览器的地理位置信息                          |
+| [language](https://www.runoob.com/jsref/prop-nav-language.html) | 返回浏览器使用的语言                              |
+| [onLine](https://www.runoob.com/jsref/prop-nav-online.html)  | 返回浏览器是否在线，在线返回 ture，否则返回 false |
+| [product](https://www.runoob.com/jsref/prop-nav-product.html) | 返回浏览器使用的引擎（产品）                      |
+
+```js
+navigator.appName
+//'Netscape'
+navigator.appVersion
+//'5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'
+navigator.userAgent
+//'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'
+navigator.platform
+//'Win32'
+```
+
+因为会被人为修改，所以不建议使用
+
+#### Navigator 对象方法
+
+| 方法                                                         | 描述                                      |
+| :----------------------------------------------------------- | :---------------------------------------- |
+| [javaEnabled()](https://www.runoob.com/jsref/met-nav-javaenabled.html) | 指定是否在浏览器中启用Java                |
+| [taintEnabled()](https://www.runoob.com/jsref/met-nav-taintenabled.html) | 规定浏览器是否启用数据污点(data tainting) |
+
+### [screen](https://www.runoob.com/jsref/obj-screen.html)
+
+Screen 对象包含有关客户端显示屏幕的信息。
+
+#### Screen 对象属性
+
+| 属性                                                         | 说明                                     |
+| :----------------------------------------------------------- | :--------------------------------------- |
+| [availHeight](https://www.runoob.com/jsref/prop-screen-availheight.html) | 返回屏幕的高度（不包括Windows任务栏）    |
+| [availWidth](https://www.runoob.com/jsref/prop-screen-availwidth.html) | 返回屏幕的宽度（不包括Windows任务栏）    |
+| [colorDepth](https://www.runoob.com/jsref/prop-screen-colordepth.html) | 返回目标设备或缓冲器上的调色板的比特深度 |
+| [height](https://www.runoob.com/jsref/prop-screen-height.html) | 返回屏幕的总高度                         |
+| [pixelDepth](https://www.runoob.com/jsref/prop-screen-pixeldepth.html) | 返回屏幕的颜色分辨率（每象素的位数）     |
+| [width](https://www.runoob.com/jsref/prop-screen-width.html) | 返回屏幕的总宽度                         |
+
+```js
+screen.width
+//2048
+screen.height
+//1152
+```
+
+### [location](https://www.runoob.com/jsref/obj-location.html)
+
+Location 对象包含有关当前 URL 的信息。
+
+Location 对象是 window 对象的一部分，可通过 **window.location.****xxx** 格式的相关属性对其进行访问
+
+#### Location 对象属性
+
+| 属性                                                         | 描述                          |
+| :----------------------------------------------------------- | :---------------------------- |
+| [hash](https://www.runoob.com/jsref/prop-loc-hash.html)      | 返回一个URL的锚部分           |
+| [host](https://www.runoob.com/jsref/prop-loc-host.html)      | 返回一个URL的主机名和端口     |
+| [hostname](https://www.runoob.com/jsref/prop-loc-hostname.html) | 返回URL的主机名               |
+| [href](https://www.runoob.com/jsref/prop-loc-href.html)      | 返回完整的URL                 |
+| [pathname](https://www.runoob.com/jsref/prop-loc-pathname.html) | 返回的URL路径名。             |
+| [port](https://www.runoob.com/jsref/prop-loc-port.html)      | 返回一个URL服务器使用的端口号 |
+| [protocol](https://www.runoob.com/jsref/prop-loc-protocol.html) | 返回一个URL协议               |
+| [search](https://www.runoob.com/jsref/prop-loc-search.html)  | 返回一个URL的查询部分         |
+
+```js
+// 创建 a 标签并设置 href 属性
+var url = document.createElement('a');
+url.href = 'https://www.runoob.com/?s=python#test';
+console.log(url.href);      // https://www.runoob.com/?s=python
+console.log(url.protocol);  // https:
+console.log(url.host);      // www.runoob.com
+console.log(url.hostname);  // www.runoob.com
+console.log(url.port);      // (输出为空 - https 默认端口为 443)
+console.log(url.pathname);  // /
+console.log(url.search);    // en-US/search
+console.log(url.hash);      // #test
+console.log(url.origin);    // https://www.runoob.com
+```
+
+#### Location 对象方法
+
+| 方法                                                         | 说明                   |
+| :----------------------------------------------------------- | :--------------------- |
+| [assign()](https://www.runoob.com/jsref/met-loc-assign.html) | 载入一个新的文档       |
+| [reload()](https://www.runoob.com/jsref/met-loc-reload.html) | 重新载入当前文档       |
+| [replace()](https://www.runoob.com/jsref/met-loc-replace.html) | 用新的文档替换当前文档 |
+
+```js
+location.reload() //刷新页面
+
+location.assign('https://www.runoob.com/jsref/obj-location.html') //重新加载新页面 ，可以点击后退返回上一个页面
+window.location.replace(url) //这个方法是替换当前窗口页面，前后两个页面共用一个窗口，所以是没有后退返回上一页的
+```
+
+### [history](https://www.runoob.com/jsref/obj-history.html)
+
+History 对象包含用户（在浏览器窗口中）访问过的 URL。
+
+#### History 对象属性
+
+| 属性                                                        | 说明                   |
+| :---------------------------------------------------------- | :--------------------- |
+| [length](https://www.runoob.com/jsref/prop-his-length.html) | 返回历史列表中的网址数 |
+
+#### History 对象方法
+
+| 方法                                                         | 说明                                              |
+| :----------------------------------------------------------- | :------------------------------------------------ |
+| [back()](https://www.runoob.com/jsref/met-his-back.html)     | 加载 history 列表中的前一个 URL                   |
+| [forward()](https://www.runoob.com/jsref/met-his-forward.html) | 加载 history 列表中的下一个 URL                   |
+| [go()](https://www.runoob.com/jsref/met-his-go.html)         | 加载 history 列表中的某个具体页面History 对象属性 |
+
+## [DOM](https://www.runoob.com/jsref/dom-obj-document.html)
+
+HTML文档中可以使用以下属性和方法:
+
+| 属性 / 方法                                                  | 描述                                                         |
+| :----------------------------------------------------------- | :----------------------------------------------------------- |
+| [document.activeElement](https://www.runoob.com/jsref/prop-document-activeelement.html) | 返回当前获取焦点元素                                         |
+| [document.addEventListener()](https://www.runoob.com/jsref/met-document-addeventlistener.html) | 向文档添加句柄                                               |
+| [document.adoptNode(node)](https://www.runoob.com/jsref/met-document-adoptnode.html) | 从另外一个文档返回 adapded 节点到当前文档。                  |
+| [document.anchors](https://www.runoob.com/jsref/coll-doc-anchors.html) | 返回对文档中所有 Anchor 对象的引用。                         |
+| [document.baseURI](https://www.runoob.com/jsref/prop-doc-baseuri.html) | 返回文档的绝对基础 URI                                       |
+| [document.body](https://www.runoob.com/jsref/prop-doc-body.html) | 返回文档的body元素                                           |
+| [document.close()](https://www.runoob.com/jsref/met-doc-close.html) | 关闭用 document.open() 方法打开的输出流，并显示选定的数据。  |
+| [document.cookie](https://www.runoob.com/jsref/prop-doc-cookie.html) | 设置或返回与当前文档有关的所有 cookie。                      |
+| [document.createAttribute()](https://www.runoob.com/jsref/met-document-createattribute.html) | 创建一个属性节点                                             |
+| [document.createComment()](https://www.runoob.com/jsref/met-document-createcomment.html) | createComment() 方法可创建注释节点。                         |
+| [document.createDocumentFragment()](https://www.runoob.com/jsref/met-document-createdocumentfragment.html) | 创建空的 DocumentFragment 对象，并返回此对象。               |
+| [document.createElement()](https://www.runoob.com/jsref/met-document-createelement.html) | 创建元素节点。                                               |
+| [document.createTextNode()](https://www.runoob.com/jsref/met-document-createtextnode.html) | 创建文本节点。                                               |
+| [document.doctype](https://www.runoob.com/jsref/prop-document-doctype.html) | 返回与文档相关的文档类型声明 (DTD)。                         |
+| [document.documentElement](https://www.runoob.com/jsref/prop-document-documentelement.html) | 返回文档的根节点                                             |
+| [document.documentMode](https://www.runoob.com/jsref/prop-doc-documentmode.html) | 返回用于通过浏览器渲染文档的模式                             |
+| [document.documentURI](https://www.runoob.com/jsref/prop-document-documenturi.html) | 设置或返回文档的位置                                         |
+| [document.domain](https://www.runoob.com/jsref/prop-doc-domain.html) | 返回当前文档的域名。                                         |
+| [document.embeds](https://www.runoob.com/jsref/coll-doc-embeds.html) | 返回文档中所有嵌入的内容（embed）集合                        |
+| [document.forms](https://www.runoob.com/jsref/coll-doc-forms.html) | 返回对文档中所有 Form 对象引用。                             |
+| [document.getElementsByClassName()](https://www.runoob.com/jsref/met-document-getelementsbyclassname.html) | 返回文档中所有指定类名的元素集合，作为 NodeList 对象。       |
+| [document.getElementById()](https://www.runoob.com/jsref/met-document-getelementbyid.html) | 返回对拥有指定 id 的第一个对象的引用。                       |
+| [document.getElementsByName()](https://www.runoob.com/jsref/met-doc-getelementsbyname.html) | 返回带有指定名称的对象集合。                                 |
+| [document.getElementsByTagName()](https://www.runoob.com/jsref/met-document-getelementsbytagname.html) | 返回带有指定标签名的对象集合。                               |
+| [document.images](https://www.runoob.com/jsref/coll-doc-images.html) | 返回对文档中所有 Image 对象引用。                            |
+| [document.implementation](https://www.runoob.com/jsref/prop-document-implementation.html) | 返回处理该文档的 DOMImplementation 对象。                    |
+| [document.importNode()](https://www.runoob.com/jsref/met-document-importnode.html) | 把一个节点从另一个文档复制到该文档以便应用。                 |
+| [document.inputEncoding](https://www.runoob.com/jsref/prop-document-inputencoding.html) | 返回用于文档的编码方式（在解析时）。                         |
+| [document.lastModified](https://www.runoob.com/jsref/prop-doc-lastmodified.html) | 返回文档被最后修改的日期和时间。                             |
+| [document.links](https://www.runoob.com/jsref/coll-doc-links.html) | 返回对文档中所有 Area 和 Link 对象引用。                     |
+| [document.normalize()](https://www.runoob.com/jsref/met-document-normalize.html) | 删除空文本节点，并连接相邻节点                               |
+| [document.normalizeDocument()](https://www.runoob.com/jsref/met-document-normalizedocument.html) | 删除空文本节点，并连接相邻节点的                             |
+| [document.open()](https://www.runoob.com/jsref/met-doc-open.html) | 打开一个流，以收集来自任何 document.write() 或 document.writeln() 方法的输出。 |
+| [document.querySelector()](https://www.runoob.com/jsref/met-document-queryselector.html) | 返回文档中匹配指定的CSS选择器的第一元素                      |
+| [document.querySelectorAll()](https://www.runoob.com/jsref/met-document-queryselectorall.html) | document.querySelectorAll() 是 HTML5中引入的新方法，返回文档中匹配的CSS选择器的所有元素节点列表 |
+| [document.readyState](https://www.runoob.com/jsref/prop-doc-readystate.html) | 返回文档状态 (载入中……)                                      |
+| [document.referrer](https://www.runoob.com/jsref/prop-doc-referrer.html) | 返回载入当前文档的文档的 URL。                               |
+| [document.removeEventListener()](https://www.runoob.com/jsref/met-document-removeeventlistener.html) | 移除文档中的事件句柄(由 addEventListener() 方法添加)         |
+| [document.renameNode()](https://www.runoob.com/jsref/met-document-renamenode.html) | 重命名元素或者属性节点。                                     |
+| [document.scripts](https://www.runoob.com/jsref/coll-doc-scripts.html) | 返回页面中所有脚本的集合。                                   |
+| [document.strictErrorChecking](https://www.runoob.com/jsref/prop-document-stricterrorchecking.html) | 设置或返回是否强制进行错误检查。                             |
+| [document.title](https://www.runoob.com/jsref/prop-doc-title.html) | 返回当前文档的标题。                                         |
+| [document.URL](https://www.runoob.com/jsref/prop-doc-url.html) | 返回文档完整的URL                                            |
+| [document.write()](https://www.runoob.com/jsref/met-doc-write.html) | 向文档写 HTML 表达式 或 JavaScript 代码。                    |
+| [document.writeln()](https://www.runoob.com/jsref/met-doc-writeln.html) | 等同于 write() 方法，不同的是在每个表达式之后写一个换行符。  |
+
+### 获得DOM节点
+
+```js
+let h1 = document.getElementsByTagName('h1');//通过标签名获取 返回带有指定标签名的对象集合。
+let p1 = document.getElementById('p1');//通过id名获取
+let p2 = document.getElementsByClassName('p2');//通过类名获取 返回文档中所有指定类名的元素集合
+let father = document.getElementById('father');
+let childrens = father.children;//获取父节点下所有子节点
+```
+
+### 更新DOM节点
+
+```html
+ <div id="father">
+     <h1>标题一</h1>
+     <p id="p1">p1</p>
+     <p class="p2">p2</p>
+</div>
+<script>
+    let h1 = document.getElementsByTagName('h1')[0];//通过标签名获取,注意因为是集合所以下标
+    h1.innerText='456';//修改内容
+    h1.innnHTML='<strong>456</strong>';//解析HTML标签
+    h1.style.color='color';//修改样式，等等....
+</script>	
+```
+
+### 删除DOM节点
+
+删除节点的步骤：先找到父节点，用父节点删除自己。
+
+```js
+let h1 = document.getElementsByTagName('h1')[0];//通过标签名获取
+let father = h1.parentElement;//找自己的父节点
+father.removeChild(h1);//父节点移除
+
+//也可以通过下标删除，但注意删除是动态的，下标是变化的
+let childrens = father.children;//获取父节点下所有子节点
+father.removeChild(father.children[0]);//删除第一个，注意删除完后第二个变成第一个
+```
+
 
 
 ## Es6新特性
