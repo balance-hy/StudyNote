@@ -362,3 +362,69 @@ blockquote标签定义摘自另一个源的块引用。
 
 **提示：**`<aside> `的内容可用作文章的侧栏。
 
+## HTML标签name id class 属性辨析
+
+HTML 标签中的 `name`、`id` 和 `class` 属性分别具有不同的作用，下面是它们的详细说明和示例：
+
+1. **`name` 属性**：
+
+   - `name` 属性通常用于表单元素，以定义元素的名称，这有助于在提交表单时标识表单字段。
+
+   - `name` 属性通常用于输入字段、单选按钮、复选框、下拉框等，以便将其值发送到服务器。
+
+   - 示例：
+
+     ```html
+     <form action="submit.php" method="post">
+       <label for="username">Username:</label>
+       <input type="text" id="username" name="username">
+       <input type="submit" value="Submit">
+     </form>
+     ```
+
+   在上面的示例中，`name` 属性用于标识用户名输入字段，以便在提交表单时将用户名值发送到服务器。
+
+   **如果一个表单字段（例如输入字段）没有 `name` 属性，那么在提交表单时，该字段的值将不会被发送到服务器。只有具有 `name` 属性的表单字段的值才会随表单一起提交。**
+
+2. **`id` 属性**：
+
+   - `id` 属性用于为 HTML 元素指定唯一的标识符，通常用于 JavaScript 和 CSS 中，以便能够通过标识符来访问或操作特定的元素。
+
+   - `id` 属性的值必须在整个 HTML 文档中是唯一的，不同的元素不应该拥有相同的 `id`。
+
+   - 示例：
+
+     ```html
+     <div id="myDiv">This is a div with an ID.</div>
+     <script>
+       var divElement = document.getElementById('myDiv');
+       // 使用 JavaScript 访问具有特定 ID 的元素
+     </script>
+     ```
+
+   在上面的示例中，`id` 属性用于标识特定的 `<div>` 元素，以便在 JavaScript 中访问该元素。
+
+3. **`class` 属性**：
+
+   - `class` 属性用于为 HTML 元素定义一个或多个类名，通常用于应用样式或选择一组相关的元素。
+
+   - `class` 属性的值可以在多个元素中共享，允许多个元素应用相同的样式或属性。
+
+   - 示例：
+
+     ```html
+     <ul>
+       <li class="menu-item">Item 1</li>
+       <li class="menu-item">Item 2</li>
+       <li class="menu-item">Item 3</li>
+     </ul>
+     <style>
+       .menu-item {
+         color: blue;
+       }
+     </style>
+     ```
+
+   在上面的示例中，`class` 属性用于为列表项 `<li>` 元素应用相同的类名，以便通过样式表将它们的文本颜色设置为蓝色。
+
+总之，`name` 属性用于标识表单字段的名称，`id` 属性用于唯一标识元素，而 `class` 属性用于将多个元素分组并应用相同的样式或属性。这些属性在 HTML、JavaScript 和 CSS 中有不同的用途，根据需要进行选择和使用。

@@ -2209,7 +2209,52 @@ let childrens = father.children;//获取父节点下所有子节点
 father.removeChild(father.children[0]);//删除第一个，注意删除完后第二个变成第一个
 ```
 
+### 创建和插入DOM节点
 
+当我们获得一个空的Dom节点时，我们通过innerHtml就可以增加一个元素了，若这个DOM节点已经存在元素了，就不能这么干，**这样会覆盖之前所有的元素。**
+
+#### 插入已有节点
+
+```html
+<p id="p3">p3</p>
+<div id="father">
+    <h1>标题一</h1>
+    <p id="p1">p1</p>
+    <p class="p2">p2</p>
+</div>
+
+
+<script>
+    let father = document.getElementById('father');
+    let p3 = document.getElementById('p3');
+    father.append(p3);//追加
+</script>
+```
+
+![image-20231026101115408](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202310261012357.png)
+
+
+
+```js
+let father = document.getElementById('father');
+let p3 = document.getElementById('p3');
+let p1 = document.getElementById('p1');
+father.insertBefore(p3,p1);//在指定节点前插入
+```
+
+#### 创建新标签并插入
+
+```js
+let father = document.getElementById('father');
+let p3 = document.getElementById('p3');
+let htmlScriptElement = document.createElement('script');
+htmlScriptElement.setAttribute('type','text/javascript');//设置属性
+father.append(htmlScriptElement);
+```
+
+## 操作表单
+
+> https://blog.csdn.net/pan_junbiao/article/details/98624439
 
 ## Es6新特性
 
