@@ -5,9 +5,9 @@
 > https://blog.csdn.net/weixin_41619240/article/details/109787518
 
 ```shell
-npm init  //自己选择
+npm init  #自己选择
 
-npm init -y //默认生成
+npm init -y #默认生成
 ```
 
 ![image-20231027123117926](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202310271231243.png)
@@ -37,10 +37,10 @@ npm init -y //默认生成
 
 ```shell
 npm install xxx
-//或者
+#或者
 npm i xxx
 
-//若要指定版本 后面加@版本号
+#若要指定版本 后面加@版本号
 npm i redis@3.0.2
 ```
 
@@ -125,3 +125,95 @@ npm uninstall xxx
 **当package.json与package-lock.json都不存在**。
 
 执行"npm install"时，node会重新生成package-lock.json文件，然后把node_modules中的模块信息全部记入package-lock.json文件，但不会生成package.json文件。但是，你可以通过"npm init --yes"来生成package.json文件
+
+## Babel Es6->Es5
+
+> [babel安装及使用详解](https://blog.csdn.net/caiqian97/article/details/129726671)
+>
+> [babel官方中文文档](https://www.babeljs.cn/docs/configuration)
+
+Es6的语法无法在一些浏览器甚至node.js中使用，Babel(转码器)用于将Es6的代码转换成Es5。
+
+### 安装
+
+Babel 提供babel-cli工具，用于命令行转码。安装命令如下
+
+```shell
+npm install --save-dev @babel/core @babel/cli @babel/preset-env
+#注意早期版本包括视频都是 npm install -g babel-cli
+#这表示在全局安装-g(-global) 现在用上面的命令，现在也不要使用-g，这样会导致项目对环境的依赖，全集成到项目中即可。
+
+# 查看是否安装成功
+babel --version
+```
+
+### 配置
+
+> [配置](https://www.babeljs.cn/docs/configuration)
+
+新建.babelrc.json文件在根目录下，复制下列配置进去
+
+```json
+{
+  "presets": ["@babel/env"],
+  "plugins": []
+}
+```
+
+或者，还可以选择将 [`.babelrc.json`](https://www.babeljs.cn/docs/configuration#babelrcjson) 中的配置信息作为 `babel` 键（key）的值添加到 `package.json` 文件中，如下所示：
+
+```json
+{
+  "name": "my-package",
+  "version": "1.0.0",
+  "babel": {
+    "presets": [ ... ],
+    "plugins": [ ... ],
+  }
+}
+```
+
+更多详见配置和babel安装及使用详解
+
+这里解释一下presets属性，其实就是预设，也就是转码器，之前的版本是直接指定比如es2015，现在只需要@babel/env，这集成了之前的很多插件，可以向里传递参数。
+
+### 使用
+
+安装完成后，执行下面的命令进行转码，该命令含义是把main.js转码生成compiled.js文件
+
+```shell
+npx babel main.js -o compiled.js
+```
+
+也可以指定目录下的所有文件转码到指定目录,下面的命令是把src目录下文件转码到dist目录下
+
+```shell
+npx babel src --out-dir dist
+```
+
+#### 自定义脚本使用
+
+每次都需要输入使用的命令无疑很长也很容易输错
+
+可以增加package.json中script对象中属性，为其取一个名字，比如build
+
+```json
+"scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "babel src\\example.js -o dist\\compiled.js"
+},
+```
+
+或者,上面是指定文件写法，下面是目录写法
+
+```json
+"build": "babel src -o dist"
+```
+
+转码时候，执行下面的命令
+
+```shell
+mkdir dist # 若无dist目录，先创建
+npm run build
+```
+
