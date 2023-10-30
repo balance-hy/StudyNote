@@ -2756,9 +2756,18 @@ export default function add(x, y) {
 export default function(x, y) {
   return x + y;
 }
+
+export default{
+    add(x, y) {
+      return x + y;
+	},
+    add2(x, y) {
+      return x + y+y;
+    }
+}
 ```
 
-第一个是命名函数，第二个是匿名函数。
+第一个是命名函数，第二个是匿名函数。第三个是整体默认导出，所有需要的导出的模块都放在export default中
 
 `export default` 用于为模块或文件声明一个返回值，在每个文件或者模块中应当只默认导出一个值。 此外，你不能将 `export default` 与 `var`、`let` 或 `const` 同时使用。
 

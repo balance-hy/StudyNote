@@ -217,3 +217,135 @@ mkdir dist # 若无dist目录，先创建
 npm run build
 ```
 
+## webpack
+
+> [webpack安装与使用](https://blog.csdn.net/qq_43812504/article/details/125455896)
+>
+> [官方文档](https://webpack.docschina.org/guides/getting-started/#basic-setup)
+
+### 安装
+
+首先我们创建一个目录，初始化 npm，然后 [在本地安装 webpack](https://webpack.docschina.org/guides/installation#local-installation)，接着安装 [`webpack-cli`](https://github.com/webpack/webpack-cli)（此工具用于在命令行中运行 webpack）：
+
+```shell
+npm install webpack webpack-cli --save-dev
+```
+
+安装一个将被打包到生产环境 bundle 的 package 时，应该使用 `npm install --save`；而在安装一个用于开发环境的 package 时（例如，linter、测试库等），应该使用 `npm install --save-dev`。更多信息请查看 [npm 文档](https://docs.npmjs.com/cli/install)。
+
+### 配置
+
+在 webpack v4 中，无须任何配置即可运行，然而大多数项目会需要很复杂的设置，这就是为什么 webpack 仍然要支持 [配置文件](https://webpack.docschina.org/concepts/configuration)。这比在 terminal（终端）中手动输入大量命令要更加高效，所以让我们创建一个配置文件：
+
+在根目录下创建**webpack.config.js**
+
+```js
+const path = require('path');
+
+module.exports = {
+  entry: './src/main.js',//指定入口
+  output: {
+    filename: 'index.js',//制定出口
+    path: path.resolve(__dirname, 'dist'),//__dirname具体查看node文档，意思是在根目录dist目录
+  },
+};
+```
+
+构建
+
+```shell
+webpack --config webpack.config.js
+# 默认直接webpack即可
+```
+
+如果 `webpack.config.js` 存在，则 `webpack` 命令将默认选择使用它。我们在这里使用 `--config` 选项只是向你表明可以传递任何名称的配置文件。这对于需要拆分成多个文件的复杂配置是非常有用的。
+
+### 使用
+
+在配置了webpack.config.js之后,直接运行
+
+```shell
+webpack
+```
+
+即可
+
+### 合并其他类型文件
+
+在上面的代码中，我们主要是用webpack来处理我们写的js代码，并且webpack会自动处理js之间的相关的依赖。但是，在开发中我们不仅仅有基本的js代码处理，我们也需要加载css/图片，也包括一些高级的将ES6 转为ES5代码，将TypeScript转为ES5代码，将scss/less转为css,将.jsx、.vue文件转为js文件等等
+对于webpack本身的能力来说，对于这些转化是不支持的；
+
+**给webpack扩展对应的loader就可以了**
+
+loader使用过程：
+
+- 步骤一：通过npm安装需要使用的loader
+
+- 步骤二：在webpack.config.js中的modules关键字下进行配置
+
+#### 步骤-以css为例
+
+在src目录下新建css文件夹，以及文件normal.css,修改一下上面的文件：（修改main.js里面的导入路径）
+
+```css
+body{
+  /* background-color:rgb(36, 114, 118); */
+  background-image: url('../img/girl.jpg');
+}
+```
+
+main.js中添加导入css
+
+```js
+// 依赖css模块 
+require('./css/normal.css')
+```
+
+**安装css-loader**
+
+```shell
+npm install --save-dev css-loader
+```
+
+**注意**,css-loader只负责将css文件进行加载,style-loader负责将样式添加到dom中
+
+安装style-loader
+
+```shell
+npm install --save-dev style-loader
+```
+
+配置：webpack.config.js
+**注意**：使用多个loader时，是从右向左使用
+
+```js
+const path = require('path');
+//需要使用包  npm init生成package.json文件
+
+module.exports = {
+  entry: './src/main.js', //入口
+  output: {
+    path: path.resolve(__dirname, 'dist'), //动态获取路径,需要使用包path,   __dirname node中的全局变量
+    filename: 'index.js'
+  }, //出口
+  module:{
+    rules:[
+      {
+        // 正则表达式 匹配所有的css文件，css-
+        test:/\.css$/,
+        // css-loader只负责将css文件进行加载
+        //style-loader负责将样式添加到DOM中
+        //使用多个loader时，是从右向左使用
+        use:['style-loader','css-loader']
+      }
+    ]
+  }
+}
+```
+
+
+
+
+
+
+
