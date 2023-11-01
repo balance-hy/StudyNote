@@ -1171,9 +1171,6 @@ Vue 还对应 [`addEventListener` 中的 `passive` 选项](https://developer.moz
 <p>Message is: {{ message }}</p>
 ```
 
-```js
-```
-
 v-model会自动监听我们的输入值并赋值给message在页面上予以展示
 
 #### 多行文本
@@ -1183,10 +1180,6 @@ v-model会自动监听我们的输入值并赋值给message在页面上予以展
 <p style="white-space: pre-line;">{{ message }}</p>
 <br>
 <textarea v-model="message" placeholder="add multiple lines"></textarea>
-```
-
-```js
-
 ```
 
 注意在 `<textarea>` 中是不支持插值表达式的。请使用 `v-model` 来替代：注意在 `<textarea>` 中是不支持插值表达式的。请使用 `v-model` 来替代：
@@ -1232,6 +1225,8 @@ v-model会自动监听我们的输入值并赋值给message在页面上予以展
 > [vue表单绑定](https://www.cnblogs.com/landuo629/p/12420677.html)
 
 #### 单选按钮
+
+绑定value
 
 ```html
 <div id="example-4">
@@ -1282,6 +1277,8 @@ new Vue({
 ```
 
 > 如果 `v-model` 表达式的初始值未能匹配任何选项，`<select>` 元素将被渲染为“未选中”状态。在 iOS 中，这会使用户无法选择第一个选项。因为这样的情况下，iOS 不会触发 change 事件。因此，更推荐像上面这样提供一个值为空的禁用选项。
+
+disabled 属性是一个布尔属性。disabled 属性规定某个选项应该被禁用。被禁用的选项既不可用，也不可点击。
 
 多选时 (绑定到一个数组)：
 
