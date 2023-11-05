@@ -792,7 +792,7 @@ methods: {
 
 在这个地方，模板不再是简单的声明式逻辑。你必须看一段时间才能意识到，这里是想要显示变量 `message` 的翻转字符串。当你想要在模板中的多处包含此翻转字符串时，就会更加难以处理。
 
-所以，对于任何复杂逻辑，你都应当使用**计算属性**。
+所以，对于任何复杂逻辑，你都应当使用**计算属性**。**注意调用时，不需要带括号**
 
 ### 示例
 
@@ -1427,4 +1427,509 @@ vm.selected.number // => 123
 
 ```html
 <input v-model.trim="msg">
+```
+
+## 组件基础
+
+其实就类似于自定义一个标签
+
+### 基本示例
+
+这里有一个 Vue 组件的示例：
+
+```js
+// 定义一个名为 button-counter 的新组件
+Vue.component('button-counter', {
+  data: function () {
+    return {
+      count: 0
+    }
+  },
+  template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
+});
+
+new Vue({ el: '#components-demo' });
+```
+
+组件是可复用的 Vue 实例，且带有一个名字：在这个例子中是 `<button-counter>`。我们可以在一个通过 `new Vue` 创建的 Vue 根实例中，把这个组件作为自定义元素来使用：
+
+```html
+<div id="components-demo">
+  <button-counter></button-counter>
+</div>
+```
+
+因为组件是可复用的 Vue 实例，所以它们与 `new Vue` 接收相同的选项，例如 `data`、`computed`、`watch`、`methods` 以及生命周期钩子等。**仅有的例外是像 `el` 这样根实例特有的选项。**
+
+### 组件复用
+
+你可以将组件进行任意次数的复用：
+
+```html
+<div id="components-demo">
+  <button-counter></button-counter>
+  <button-counter></button-counter>
+  <button-counter></button-counter>
+</div>
+```
+
+注意当点击按钮时，每个组件都会各自独立维护它的 `count`。因为你每用一次组件，就会有一个它的新**实例**被创建。也就是维护单独的变量空间。
+
+#### data 必须是一个函数
+
+当我们定义这个 `<button-counter>` 组件时，你可能会发现它的 `data` 并不是像这样直接提供一个对象：
+
+```js
+data: {
+  count: 0
+}
+```
+
+取而代之的是，**一个组件的 `data` 选项必须是一个函数**，因此每个实例可以维护一份被返回对象的独立的拷贝：
+
+```js
+data: function () {
+  return {
+    count: 0
+  }
+}
+```
+
+如果 Vue 没有这条规则，点击一个按钮就可能会像如下代码一样影响到*其它所有实例*
+
+### prop 向子组件传递数据
+
+**注意：prop中属性需小写**
+
+Prop 是你可以在组件上注册的一些自定义 attribute。当一个值传递给一个 prop attribute 的时候，它就变成了那个组件实例的一个 property。为了给博文组件传递一个标题，我们可以用一个 `props` 选项将其包含在该组件可接受的 prop 列表中：
+
+```js
+Vue.component('blog-post', {
+  props: ['title'],
+  template: '<h3>{{ title }}</h3>'
+})
+```
+
+一个组件默认可以拥有任意数量的 prop，任何值都可以传递给任何 prop。在上述模板中，你会发现我们能够在组件实例中访问这个值，就像访问 `data` 中的值一样。
+
+一个 prop 被注册之后，你就可以像这样把数据作为一个自定义 attribute 传递进来：
+
+```html
+<blog-post title="My journey with Vue"></blog-post>
+<blog-post title="Blogging with Vue"></blog-post>
+<blog-post title="Why Vue is so fun"></blog-post>
+```
+
+然而在一个典型的应用中，你可能在 `data` 里有一个博文的数组：
+
+```js
+new Vue({
+  el: '#blog-post-demo',
+  data: {
+    posts: [
+      { id: 1, title: 'My journey with Vue' },
+      { id: 2, title: 'Blogging with Vue' },
+      { id: 3, title: 'Why Vue is so fun' }
+    ]
+  }
+})
+```
+
+并想要为每篇博文渲染一个组件：
+
+```html
+<blog-post
+  v-for="post in posts"
+  v-bind:key="post.id"
+  v-bind:title="post.title"
+></blog-post>
+```
+
+如上所示，你会发现我们可以使用 `v-bind` 来动态传递 prop。这在你一开始不清楚要渲染的具体内容，比如[从一个 API 获取博文列表](https://codesandbox.io/s/github/vuejs/v2.vuejs.org/tree/master/src/v2/examples/vue-20-component-blog-post-example)的时候，是非常有用的。
+
+### template 渲染多个元素时包裹父元素
+
+当构建一个 `<blog-post>` 组件时，你的模板最终会包含的东西远不止一个标题：
+
+```html
+<h3>{{ title }}</h3>
+```
+
+最最起码，你会包含这篇博文的正文：
+
+```html
+<h3>{{ title }}</h3>
+<div v-html="content"></div>
+```
+
+然而如果你在模板中尝试这样写，Vue 会显示一个错误(**现在2.7没有显示了**)，并解释道 **every component must have a single root element (每个组件必须只有一个根元素)**。你可以将模板的内容包裹在一个父元素内，来修复这个问题，例如：
+
+```html
+<div class="blog-post">
+  <h3>{{ title }}</h3>
+  <div v-html="content"></div>
+</div>
+```
+
+看起来当组件变得越来越复杂的时候，我们的博文不只需要标题和内容，还需要发布日期、评论等等。为每个相关的信息定义一个 prop 会变得很麻烦：
+
+```html
+<blog-post
+  v-for="post in posts"
+  v-bind:key="post.id"
+  v-bind:title="post.title"
+  v-bind:content="post.content"
+  v-bind:publishedAt="post.publishedAt"
+  v-bind:comments="post.comments"
+></blog-post>
+```
+
+所以是时候重构一下这个 `<blog-post>` 组件了，让它变成接受一个单独的 `post` prop：
+
+```html
+<blog-post
+  v-for="post in posts"
+  v-bind:key="post.id"
+  v-bind:post="post"
+></blog-post>
+```
+
+```js
+Vue.component('blog-post', {
+  props: ['post'],
+  template: `
+    <div class="blog-post">
+      <h3>{{ post.title }}</h3>
+      <div v-html="post.content"></div>
+    </div>
+  `
+})
+```
+
+### 监听子组件事件
+
+在我们开发 `<blog-post>` 组件时，它的一些功能可能要求我们和父级组件进行沟通。例如我们可能会引入一个辅助功能来放大博文的字号，同时让页面的其它部分保持默认的字号。
+
+在其父组件中，我们可以通过添加一个 `postFontSize` 数据 property 来支持这个功能：
+
+```js
+new Vue({
+  el: '#blog-posts-events-demo',
+  data: {
+    posts: [/* ... */],
+    postFontSize: 1
+  }
+})
+```
+
+它可以在模板中用来控制所有博文的字号：
+
+```html
+<div id="blog-posts-events-demo">
+  <div :style="{ fontSize: postFontSize + 'em' }">
+    <blog-post
+      v-for="post in posts"
+      v-bind:key="post.id"
+      v-bind:post="post"
+    ></blog-post>
+  </div>
+</div>
+```
+
+现在我们在每篇博文正文之前添加一个按钮来放大字号：
+
+```js
+Vue.component('blog-post', {
+  props: ['post'],
+  template: `
+    <div class="blog-post">
+      <h3>{{ post.title }}</h3>
+      <button>
+        Enlarge text
+      </button>
+      <div v-html="post.content"></div>
+    </div>
+  `
+})
+```
+
+问题是这个按钮不会做任何事：
+
+```html
+<button>
+  Enlarge text
+</button>
+```
+
+#### $emit 触发事件
+
+当点击这个按钮时，我们需要告诉父级组件放大所有博文的文本。幸好 **Vue 实例提供了一个自定义事件的系统**来解决这个问题。父级组件可以像处理 native DOM 事件一样通过 `v-on` 监听子组件实例的任意事件：
+
+```html
+<blog-post
+  ...
+  v-on:enlarge-text="postFontSize += 0.1"
+></blog-post>
+```
+
+同时子组件可以通过调用内建的 [**`$emit`** 方法](https://v2.cn.vuejs.org/v2/api/#vm-emit)并传入事件名称来触发一个事件：
+
+```html
+<button v-on:click="$emit('enlarge-text')">
+  Enlarge text
+</button>
+```
+
+有了这个 `v-on:enlarge-text="postFontSize += 0.1"` 监听器，父级组件就会接收该事件并更新 `postFontSize` 的值。
+
+#### $emit 传递参数
+
+有的时候用一个事件来抛出一个特定的值是非常有用的。例如我们可能想让 `<blog-post>` 组件决定它的文本要放大多少。这时可以使用 `$emit` 的第二个参数来提供这个值：
+
+```html
+<button v-on:click="$emit('enlarge-text', 0.1)">
+  Enlarge text
+</button>
+```
+
+然后当在父级组件监听这个事件的时候，**我们可以通过 `$event` 访问到被抛出的这个值：**
+
+```html
+<blog-post
+  ...
+  v-on:enlarge-text="postFontSize += $event"
+></blog-post>
+```
+
+或者，如果这个事件处理函数是一个方法：
+
+```html
+<blog-post
+  ...
+  v-on:enlarge-text="onEnlargeText"
+></blog-post>
+```
+
+那么这个值将会作为第一个参数传入这个方法：
+
+```js
+methods: {
+  onEnlargeText: function (enlargeAmount) {
+    this.postFontSize += enlargeAmount
+  }
+}
+```
+
+#### v-model 和事件
+
+自定义事件也可以用于创建支持 `v-model` 的自定义输入组件。记住：
+
+```html
+<input v-model="searchText">
+```
+
+等价于：
+
+```html
+<input
+  v-bind:value="searchText"
+  v-on:input="searchText = $event.target.value"
+>
+```
+
+**当用在组件上时，`v-model` 则会这样：**
+
+```html
+<custom-input
+  v-bind:value="searchText"
+  v-on:input="searchText = $event"
+></custom-input>
+```
+
+为了让它正常工作，这个组件内的 `<input>` 必须：
+
+- 将其 `value` attribute 绑定到一个名叫 `value` 的 prop 上
+- 在其 `input` 事件被触发时，将新的值通过自定义的 `input` 事件抛出
+
+写成代码之后是这样的：
+
+- $event 指代当前触发的事件对象;
+- $event.target 指代当前触发的事件对象的dom;
+- $event.target.value 就是当前dom的value值;
+
+```js
+Vue.component('custom-input', {
+  props: ['value'],
+  template: `
+    <input
+      v-bind:value="value"
+      v-on:input="$emit('input', $event.target.value)"
+    >
+  `
+})
+```
+
+现在 `v-model` 就应该可以在这个组件上完美地工作起来了：
+
+```html
+<custom-input v-model="searchText"></custom-input>
+```
+
+### slot 插槽分发内容
+
+和 HTML 元素一样，我们经常需要向一个组件传递内容，像这样：
+
+```html
+<alert-box>
+  Something bad happened.
+</alert-box>
+```
+
+可能会渲染出这样的东西：
+
+**Error!** Something bad happened.
+
+幸好，Vue 自定义的 `<slot>` 元素让这变得非常简单：
+
+```js
+Vue.component('alert-box', {
+  template: `
+    <div class="demo-alert-box">
+      <strong>Error!</strong>
+      <slot></slot>
+    </div>
+  `
+})
+```
+
+如你所见，我们只要在需要的地方加入插槽就行了——就这么简单！
+
+### 解析Dom模板的注意事项
+
+有些 HTML 元素，诸如 `<ul>`、`<ol>`、`<table>` 和 `<select>`，对于哪些元素可以出现在其内部是有严格限制的。而有些元素，诸如 `<li>`、`<tr>` 和 `<option>`，只能出现在其它某些特定的元素内部。
+
+这会导致我们使用这些有约束条件的元素时遇到一些问题。例如：
+
+```
+<table>
+  <blog-post-row></blog-post-row>
+</table>
+```
+
+这个自定义组件 `<blog-post-row>` 会被作为无效的内容提升到外部，并导致最终渲染结果出错。幸好这个特殊的 `is` attribute 给了我们一个变通的办法：
+
+```
+<table>
+  <tr is="blog-post-row"></tr>
+</table>
+```
+
+需要注意的是**如果我们从以下来源使用模板的话，这条限制是\*不存在\*的**：
+
+- 字符串 (例如：`template: '...'`)
+- [单文件组件 (`.vue`)](https://v2.cn.vuejs.org/v2/guide/single-file-components.html)
+- [`<script type="text/x-template">`](https://v2.cn.vuejs.org/v2/guide/components-edge-cases.html#X-Templates)
+
+到这里，你需要了解的解析 DOM 模板时的注意事项——实际上也是 Vue 的全部*必要内容*，大概就是这些了。
+
+## 单文件组件
+
+在很多 Vue 项目中，我们使用 `Vue.component` 来定义全局组件，紧接着用 `new Vue({ el: '#container '})` 在每个页面内指定一个容器元素。
+
+这种方式在很多中小规模的项目中运作的很好，在这些项目里 JavaScript 只被用来加强特定的视图。但当在更复杂的项目中，或者你的前端完全由 JavaScript 驱动的时候，下面这些缺点将变得非常明显：
+
+- **全局定义 (Global definitions)** 强制要求每个 component 中的命名不得重复
+- **字符串模板 (String templates)** 缺乏语法高亮，在 HTML 有多行的时候，需要用到丑陋的 `\`
+- **不支持 CSS (No CSS support)** 意味着当 HTML 和 JavaScript 组件化时，CSS 明显被遗漏
+- **没有构建步骤 (No build step)** 限制只能使用 HTML 和 ES5 JavaScript，而不能使用预处理器，如 Pug (formerly Jade) 和 Babel
+
+文件扩展名为 `.vue` 的 **single-file components (单文件组件)** 为以上所有问题提供了解决方法，并且还可以使用 webpack 或 Browserify 等构建工具。
+
+这是一个文件名为 `Hello.vue` 的简单实例：
+
+
+
+## [axios](http://www.axios-js.com/zh-cn/docs/)
+
+### 安装
+
+使用 npm:
+
+```shell
+npm install axios
+```
+
+使用 cdn:
+
+```html
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+```
+
+### 使用
+
+```html
+<div id="vue">
+    <p>{{info.name}}</p>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.14"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="js/index.js"></script>
+<script>
+    let vm=new Vue({
+        el:"#vue",
+        data(){//返回函数，隔离作用域
+            return {
+                info:{//注意，要属性和response.data中一一对应
+                    name:null
+                }
+            }
+        },
+        mounted(){ //钩子函数
+            axios.get('../data.json').then(response=>this.info=response.data);
+        }
+    });
+</script>
+```
+
+### 响应结构
+
+某个请求的响应包含以下信息
+
+```json
+{
+  // `data` 由服务器提供的响应
+  data: {},
+
+  // `status` 来自服务器响应的 HTTP 状态码
+  status: 200,
+
+  // `statusText` 来自服务器响应的 HTTP 状态信息
+  statusText: 'OK',
+
+  // `headers` 服务器响应的头
+  headers: {},
+
+   // `config` 是为请求提供的配置信息
+  config: {},
+ // 'request'
+  // `request` is the request that generated this response
+  // It is the last ClientRequest instance in node.js (in redirects)
+  // and an XMLHttpRequest instance the browser
+  request: {}
+}
+```
+
+使用 `then` 时，你将接收下面这样的响应 :
+
+```js
+axios.get('/user/12345')
+  .then(function(response) {
+    console.log(response.data);
+    console.log(response.status);
+    console.log(response.statusText);
+    console.log(response.headers);
+    console.log(response.config);
+  });
 ```

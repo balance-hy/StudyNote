@@ -1,4 +1,4 @@
-# Vue-Api
+# [Vue-Api](https://v2.cn.vuejs.org/v2/api/)
 
 ## 指令
 
@@ -532,4 +532,44 @@ var app6 = new Vue({
   ```
 
 > 注意，**不应该使用箭头函数来定义 watcher 函数** (例如 `searchQuery: newValue => this.updateAutocomplete(newValue)`)。理由是箭头函数绑定了父级作用域的上下文，所以 `this` 将不会按照期望指向 Vue 实例，`this.updateAutocomplete` 将是 undefined。
+
+## 实例方法/事件
+
+#### [vm.$emit](https://v2.cn.vuejs.org/v2/api/#vm-emit)( eventName, […args\] )
+
+- **参数**：
+
+  - `{string} eventName`
+  - `[...args]`
+
+  触发当前实例上的事件。附加参数都会传给监听器回调。
+
+- **示例：**
+
+  只配合一个事件名使用 `$emit`：
+
+  ```js
+  Vue.component('welcome-button', {
+    template: `
+      <button v-on:click="$emit('welcome')">
+        Click me to be welcomed
+      </button>
+    `
+  });
+  
+  new Vue({
+    el: '#emit-example-simple',
+    methods: {
+      sayHi: function () {
+        alert('Hi!')
+      }
+    }
+  });
+  ```
+
+```html
+<div id="emit-example-simple">
+  <welcome-button v-on:welcome="sayHi"></welcome-button>
+</div>
+```
 

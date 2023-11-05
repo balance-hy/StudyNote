@@ -189,3 +189,175 @@ RENAME TABLE `user` TO user01
 ALTER TABLE user01 CHARACTER SET utf8
 ```
 
+## 增删改查
+
+### insert
+
+![](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202310301305775.png)
+
+```sql
+CREATE TABLE `goods`(
+	id INT,
+	goods_name VARCHAR(10),
+	price DOUBLE
+)CHARACTER SET utf8mb3 COLLATE utf8mb3_bin ENGINE INNODB;
+
+-- Insert添加数据
+INSERT INTO goods (id,goods_name,price) VALUES(10,'huawei',2000);
+
+-- Insert添加多条数据
+INSERT INTO goods (id,goods_name,price) VALUES(10,'huawei',2000),(20,'vivo',3000),(30,'wei',4000);
+
+-- 若是给表中所有列添加数据，可以不写列名
+INSERT INTO goods VALUES(40,'oppo',4000);
+```
+
+![image-20231102132211504](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311021322148.png)
+
+### delete
+
+![image-20231102135903373](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311021359807.png)
+
+```sql
+-- 删掉 goods_name='huawei'的记录
+delete from goods where goods_name='huawei';
+-- 删掉所有记录
+delete from goods;
+```
+
+### update
+
+![image-20231102135241756](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311021352313.png)
+
+```sql
+UPDATE goods SET price=10000 where goods_name='huawei';
+
+-- 若无where限制，会更改所有
+UPDATE goods SET price=10000;
+-- 可以用基本运算
+UPDATE goods SET price=price+1100;
+-- 可以同时更改多个
+UPDATE goods SET price=price+1100,id=id+100;
+```
+
+### select
+
+![image-20231102140639387](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311021406415.png)
+
+![image-20231102142410050](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311021424708.png)
+
+```sql
+-- select 使用运算
+SELECT `goods_name`,(id+price) FROM goods;
+
+-- (id+price)会直接在结果里显示，可以取别名
+SELECT `goods_name`,(id+price) AS total FROM goods;
+```
+
+#### 条件查询
+
+![image-20231102143154908](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311021431602.png)
+
+| like 中通配符 | 作用                                                         |
+| ------------- | :----------------------------------------------------------- |
+| `%`           | 匹配零个或多个字符的任意字符串，like’Mc%’ 将搜索以字母 Mc 开头的所有字符串 |
+| `_`           | 匹配任何单个字符，like’_heryl’ 将搜索以字母 heryl 结尾的所有六个字母的名称 |
+| `[]`          | 指定范围 ([a-f]) 或集合 ([abcdef]) 中的任何单个字符          |
+| `[^]`         | 不属于指定范围 ([a-f]) 或集合 ([abcdef]) 的任何单个字符      |
+| `*`           | 同于DOS命令中的通配符，代表多个字符                          |
+| `?`           | 同于DOS命令中的？通配符，代表单个字符                        |
+| `#`           | 大致同上，不同的是代只能代表单个数字。k#k代表k1k,k8k,k0k     |
+
+#### 排序
+
+![image-20231102144433348](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311021444583.png)
+
+```sql
+-- price降序显示
+SELECT * FROM goods ORDER BY price DESC;
+```
+
+#### 分组 groupby having
+
+![image-20231105154055054](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311051540746.png)
+
+```sql
+#演示group by + having
+GROUPby用于对查询的结果分组统计，(示意图)
+-- having子句用于限制分组显示结果.
+-- ?如何显示每个部门的平均工资和最高工资
+-- avg(sal) max(sal)
+-- 按照部门来分组查询
+ SELECT AVG(sal), MAX(sal),deptno
+ FROM emp GROUP BY deptno;
+-- ?显示每个部门的每种岗位的平均工资和最低工资
+#分组的标准变成两个,先按照部门再按照岗位分
+SELECT AVG(sal),MIN(sal),deptno,job
+FROM emp GROUP BY deptno,job
+
+
+-- ?显示平均工资低于2000的部门号和它的平均工资//别名
+SELECT AVG(sal),deptno
+FROM emp GROUP BY deptno
+ HAVING AVG(sal)<2000
+#使用别名,效率更高,函数不用计算两次
+SELECT AVG(sal) AS avg_sal,deptno
+FROM emp GROUP BY deptno 
+HAVING avg_sal<2000
+```
+
+##### having 和 where
+
+- having是对一个表的数据进行分组之后，对组信息进行相应条件筛选
+
+  having筛选时，只能根据select子句中可出现的字段（数据）来进行条件设定
+
+  having子句与where子句一样，都是用于条件判断
+
+- where是判断数据从磁盘读入内存的时候，having是判断分组统计之前的所有条件
+
+- having子句中可以使用字段别名，而where不能使用
+
+## 各类函数
+
+### 统计函数count
+
+![image-20231105152243004](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311051522391.png)
+
+```sql
+-- 统计有多少条记录
+SELECT COUNT(*) FROM goods;
+
+-- 条件过滤
+SELECT COUNT(*) FROM goods WHERE price>9999;
+
+-- count(*)和count(列)的区别
+-- count(*)是返回满足条件的记录数
+-- count(列)是返回列满足条件的记录数，但排除NULL的情况
+```
+
+### 和函数 sum
+
+![image-20231105153059797](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311051531508.png)
+
+```sql
+-- 单列的统计，并取别名
+SELECT SUM(price) AS total FROM goods;
+
+-- 多列的统计，并取别名
+SELECT SUM(id) AS id_total,SUM(price) AS price_total FROM goods;
+```
+
+### 最大最小值 max/min
+
+![image-20231105153736765](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311051537021.png)
+
+### 平均值 avg
+
+![image-20231105153810461](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311051538770.png)
+
+### 字符串函数
+
+标红意味着常使用
+
+![image-20231105162228386](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311051622664.png)
