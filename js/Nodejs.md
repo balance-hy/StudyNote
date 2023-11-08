@@ -37,6 +37,9 @@ npm init -y #默认生成
 
 ```shell
 npm install xxx
+
+#指定淘宝仓库，加速下载
+npm install --registry=https://registry.npm.taobao.org
 #或者
 npm i xxx
 
@@ -233,6 +236,12 @@ npm install webpack webpack-cli --save-dev
 
 安装一个将被打包到生产环境 bundle 的 package 时，应该使用 `npm install --save`；而在安装一个用于开发环境的 package 时（例如，linter、测试库等），应该使用 `npm install --save-dev`。更多信息请查看 [npm 文档](https://docs.npmjs.com/cli/install)。
 
+```
+当你为你的模块安装一个依赖模块时，正常情况下你得先安装他们（在模块根目录下npm install module-name），然后连同版本号手动将他们添加到模块配置文件package.json中的依赖里（dependencies）。
+
+-save和save-dev可以省掉你手动修改package.json文件的步骤。
+```
+
 ### 配置
 
 在 webpack v4 中，无须任何配置即可运行，然而大多数项目会需要很复杂的设置，这就是为什么 webpack 仍然要支持 [配置文件](https://webpack.docschina.org/concepts/configuration)。这比在 terminal（终端）中手动输入大量命令要更加高效，所以让我们创建一个配置文件：
@@ -258,7 +267,9 @@ webpack --config webpack.config.js
 # 默认直接webpack即可
 ```
 
-如果 `webpack.config.js` 存在，则 `webpack` 命令将默认选择使用它。我们在这里使用 `--config` 选项只是向你表明可以传递任何名称的配置文件。这对于需要拆分成多个文件的复杂配置是非常有用的。
+如果 `webpack.config .js` 存在，则 `webpack` 命令将默认选择使用它。我们在这里使用 `--config` 选项只是向你表明可以传递任何名称的配置文件。这对于需要拆分成多个文件的复杂配置是非常有用的。
+
+![image-20231106142012529](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311061420584.png)
 
 ### 使用
 

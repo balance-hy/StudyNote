@@ -160,3 +160,108 @@ maven项目之webapp项目结构，只有web应用才会有
 </project>
 ```
 
+## Servlet
+
+Servlet就是Sun公司开发动态web的一门技术
+
+Sun在这些API中提供一个接口叫做：Servlet，如果你想开发一个Servlet程序，只需要两个步骤
+
+- 编写一个类，实现Servlet接口
+- 把开发好的java类部署到web服务器中
+
+把实现了Servlet接口的java程序叫做：Servlet
+
+### 第一个servlet程序
+
+创建一个空maven项目，若没有空项目maven选项，创建一个webapp原型项目，删除不需要的文件即可。
+
+在该项目pom.xml中添加servlet依赖
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>4.0.1</version>
+    </dependency>
+</dependencies>
+```
+
+之后根项目右键创建module，命名为servlet-01，webapp原型项目
+
+**上面的操作创建了父子项目，父项目的依赖子项目可以直接用**
+
+之后在src/main/java包下，新建包，servlet，在其中创建HelloServlet类，完成后目录如下
+
+![image-20231106161327792](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311061613364.png)
+
+HelloServlet类**继承默认实现的HttpServlet类**，重写doGet方法
+
+```java
+public class HelloServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        PrintWriter writer = resp.getWriter();
+        writer.print("this is servlet");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.doPost(req, resp);
+    }
+}
+```
+
+**在WEB-INF目录下修改web.xml让其和tomcat中xml一致**
+
+再在web.xml的web-app标签中编写servlet的映射如下
+
+```xml
+
+<servlet>
+    <servlet-name>hello</servlet-name>
+    <servlet-class>com.balance.servlet.HelloServlet</servlet-class>
+</servlet>
+<!--servlet的请求路径-->
+<servlet-mapping>
+    <servlet-name>hello</servlet-name>
+    <url-pattern>/hello</url-pattern>
+</servlet-mapping>
+```
+
+**为什么需要编写这个映射：**
+
+- 我们写的是java程序，但是要通过浏览器访问，浏览器需要连接web服务器，所以我们需要再web服务中即web.xml中注册我们所写的Servlet,并且要给他一个浏览器可以访问的路径
+
+最后配置Tomcat，运行
+
+```sql
+http://localhost:8080/servlet_01_war/hello
+
+# /servlet_01_war 配置tomcat指定的访问路径
+# /hello 我们定义的Servlet请求路径
+```
+
+### mapping相关问题
+
+可以使用通配符来响应不在定义之内的页面
+
+```
+<servlet-mapping>
+    <servlet-name>error</servlet-name>
+    <url-pattern>/*</url-pattern>
+</servlet-mapping>
+```
+
+设定了固有的路径优先级最高，若找不到才会返回通配符响应的页面。
+
+还可以使用如下形式
+
+```xml
+<servlet-mapping>
+    <servlet-name>hello</servlet-name>
+    <url-pattern>*.xxx</url-pattern>
+</servlet-mapping>
+```
+
+以上述方式进行映射，注意前面不能加具体路径，如/hello/*.xxx，会报错。

@@ -1847,8 +1847,6 @@ Vue.component('alert-box', {
 
 这是一个文件名为 `Hello.vue` 的简单实例：
 
-
-
 ## [axios](http://www.axios-js.com/zh-cn/docs/)
 
 ### 安装

@@ -361,3 +361,109 @@ SELECT SUM(id) AS id_total,SUM(price) AS price_total FROM goods;
 标红意味着常使用
 
 ![image-20231105162228386](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311051622664.png)
+
+```sql
+-- CHARSET(str)    返回字串字符集
+SELECT CHARSET(ename) FROM emp #utf8
+-- CONCAT (string2 [,... ])    连接字串
+SELECT CONCAT(ename,' job is ',job) FROM emp; #把名字和工作连接在一起
+
+-- INSTR (string ,substring )    返回substring在string中出现的位置，没有返回0，下标从1开始
+# DUAL叫亚元表,系统表,可以作为测试使用
+SELECT INSTR('balance','an') FROM DUAL; #返回4
+
+-- UCASE (string2 )    转换成大写
+SELECT UCASE(ename) FROM emp
+
+-- LCASE (string2 )    转换成小写
+SELECT LCASE(ename) FROM emp
+
+-- LEFT (string2,length )    从string2中的左边起取length个字符
+-- RIGHT 右边也可以，类似
+SELECT LEFT(ename,1) FROM emp
+
+-- SUBSTRING (str，position [, length]) 从str的position开始[从1开始计算] ,取length个字符
+SELECT SUBSTRING(ename,2,2) FROM emp #从第二个开始获取两个字符 注意最后一个参数不给，
+														# 选取结尾所有
+
+-- LENGTH (string )    string长度[按照字节]
+SELECT LENGTH (ename) FROM emp
+
+-- REPLACE (str ,search_ str,replace__str )     在str中用replace_ str 替换search_ str
+SELECT REPLACE('balance','ance','high') FROM DUAL; # balhigh
+
+-- STRCMP (string1 ,string2 )    逐字符比较两字串大小，
+SELECT STRCMP('balance','ance') FROM DUAL;  #返回1,-1,0
+
+-- LTRIM (string2 ) RTRIM (string2 )    去除左端空格或右端空格
+-- trim 去除左端和右端空格
+#去除左端空格
+SELECT LTRIM('  张无忌学java') FROM DUAL
+#去除右端空格
+SELECT RTRIM('  张无忌学java   ') FROM DUAL
+
+SELECT TRIM(' 张无忌学java ') FROM DUAL
+#细节1:即使没有空格也不会报错
+#注意:函数后面不要带空格再接括号
+```
+
+以首字母小写的方式显示所有员工emp表的姓名
+
+```sql
+# 截取拼接-left right
+SELECT CONCAT(LCASE(LEFT(ename,1)),RIGHT(ename,LENGTH(ename)-1)) FROM emp;
+# 截取拼接-substring
+SELECT CONCAT(LCASE(SUBSTRING(ename,1,1)),SUBSTRING(ename,2)) FROM emp;
+```
+
+### 数学函数
+
+| 函数                               | 功能                             |
+| ---------------------------------- | -------------------------------- |
+| CEIL(x)                            | 向上取整                         |
+| FLOOR(x)                           | 向下取整                         |
+| MOD(x, y)                          | 返回x/y的模                      |
+| RAND()                             | 返回0~1内的随机数                |
+| ROUND(x, y)                        | 求参数x的四舍五入值，保留y位小数 |
+| ABS(num)                           | 绝对值                           |
+| BIN (decimal number)               | 十进制转二进制                   |
+| FORMAT (number,decimal _places )   | 保留小数位数                     |
+| CONV( number2,from_ base,to_ base) | 进制转换                         |
+| HEX (DecimalNumber)                | 转十六进制                       |
+| LEAST (number , number2…)          | 求最小值                         |
+
+### 时间函数
+
+| 函数                               | 功能                                              |
+| ---------------------------------- | ------------------------------------------------- |
+| CURDATE()                          | 返回当前日期                                      |
+| CURRENT_DATE ( )                   | 当前日期                                          |
+| CURRENT_TIME ( )                   | 当前时间                                          |
+| DATE(datetime)                     | 返回datetime的日期部分                            |
+| CURTIME()                          | 返回当前时间                                      |
+| NOW()                              | 返回当前日期和时间                                |
+| YEAR(date)                         | 获取指定date的年份                                |
+| MONTH(date)                        | 获取指定date的月份                                |
+| DAY(date)                          | 获取指定date的日期                                |
+| DATE_ADD(date, INTERVAL expr type) | 返回一个日期/时间值加上一个时间间隔expr后的时间值 |
+| DATE_SUB(date，INTERVAL expr type) | 在date上减去一个时间                              |
+| DATEDIFF(date1, date2)             | 返回起始时间date1和结束时间date2之间的天数        |
+| TIMEDIFF(date1,date2)              | 两个时间差(多少小时多少分钟多少秒)                |
+
+### 加密和系统函数
+
+| 函数                                  | 功能                                                         |
+| ------------------------------------- | ------------------------------------------------------------ |
+| USER()                                | 查询用户                                                     |
+| DATABASE()                            | 查询当前数据库名称                                           |
+| MD5(str)                              | 为字符串算出一个MD5，32位的字符串，可用于密码加密            |
+| PASSWORD(str)select * from mysql.user | 从原文密码str计算并返回密码字符串，通常用于对mysqI数据库的用户密码加密 |
+
+### 流程函数
+
+| 函数                                                         | 功能                                                    |
+| ------------------------------------------------------------ | ------------------------------------------------------- |
+| IF(value, t, f)                                              | 如果value为true，则返回t，否则返回f                     |
+| IFNULL(value1, value2)                                       | 如果value1不为空，返回value1，否则返回value2            |
+| CASE WHEN [ val1 ] THEN [ res1 ] … ELSE [ default ] END      | 如果val1为true，返回res1，… 否则返回default默认值       |
+| CASE [ expr ] WHEN [ val1 ] THEN [ res1 ] … ELSE [ default ] END | 如果expr的值等于val1，返回res1，… 否则返回default默认值 |
