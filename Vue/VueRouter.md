@@ -2,6 +2,27 @@
 
 ## 快速入门
 
+vue-router 是一个插件包，使用前先安装
+
+```shell
+npm install vue-router --save-dev
+
+# npm install  vue-router@3.1.3 --save-dev
+```
+
+[--save 和 --save-dev 的作用和区别](https://blog.csdn.net/cvper/article/details/88728505)
+
+    使用命令 --save 或者说不写命令 --save  ,都会把信息记录到 dependencies 中；
+    dependencies 中记录的都是项目在运行时需要的文件；
+    
+    使用命令 --save-dev 则会把信息记录到 devDependencies  中；
+    
+    devDependencies 中记录的是项目在开发过程中需要使用的一些文件，在项目最终运行时是不需要的；
+    
+    也就是说我们开发完成后，最终的项目中是不需要这些文件的；
+    
+    -S 即--save（保存）
+    -D 即--dev（生产）
 ### 项目结构
 
 一个刚创建的vue-webpack项目如下图所示
@@ -186,4 +207,93 @@ export default {
 ```
 
 完成
+
+### 去除url中的#号
+
+要去掉井号#，只需在定义路由时配置mode为history即可。
+
+> vue2和vue3不相同，详见https://blog.csdn.net/qq_38870145/article/details/132520250
+>
+> 参考官网文档为准
+
+```js
+import Vue from 'vue'
+import VueRouter from "vue-router";//使用VueRouter
+import Content from "../components/content.vue";//导入跳转的组件
+import Main from "../components/main.vue";//导入跳转的组件
+
+//安装路由
+Vue.use(VueRouter);
+
+export default new VueRouter({
+  mode: 'history',
+  routes:[
+    {
+      //路由路径
+      path:'/main',
+      name:'main',
+      //跳转的组件
+      component:Main
+    },
+    {
+      path:'/content',
+      name:'content',
+      component:Content
+    }
+  ]
+})
+```
+
+需要注意的是，使用history模式时，需要保证后端服务器能够正确响应路由请求。不然，会出现404错误或者页面无法正常显示的情况。因此，我们需要针对后端服务器进行相应的配置。
+
+## 嵌套路由
+
+实际生活中的应用界面，通常由多层嵌套的组件组合而成。同样地，URL 中各段动态路径也按某种结构对应嵌套的各层组件，例如：
+
+```
+/user/foo/profile                     /user/foo/posts
++------------------+                  +-----------------+
+| User             |                  | User            |
+| +--------------+ |                  | +-------------+ |
+| | Profile      | |  +------------>  | | Posts       | |
+| |              | |                  | |             | |
+| +--------------+ |                  | +-------------+ |
++------------------+                  +-----------------+
+```
+
+在 `VueRouter` 的参数中使用 `children` 配置：
+
+```js
+import Vue from "vue";
+import VueRouter from "vue-router";
+import Main from "../views/main.vue";
+import Login from "../views/Login.vue";
+import UserList from "../views/user/List.vue";
+import UserProfile from "../views/user/Profile.vue";
+
+Vue.use(VueRouter);
+
+export default new VueRouter({
+  routes:[
+    {
+      path:'/main',
+      component:Main,
+      children:[
+        {
+          path:'/user/profile',//    请求链接
+          component:UserProfile// 路由（转发）到此组件
+        },
+        {
+          path:'/user/list',//    请求链接
+          component:UserList// 路由（转发）到此组件
+        }
+      ]
+    },
+    {
+      path:'/login',
+      component:Login
+    }
+  ]
+});
+```
 
