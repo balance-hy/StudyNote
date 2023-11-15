@@ -445,7 +445,7 @@ public class GetParams extends HttpServlet {
 
 #### **请求转发**
 
-**servletContext可以帮助我们完成请求转发功能。注意，这不是重定向，不会改变路径**
+**servletContext可以帮助我们完成请求转发(307)功能。注意，这不是重定向(302)，不会改变路径**
 
 ```java
 public class ServletDispatcher extends HttpServlet {
@@ -704,4 +704,76 @@ public class RedirectHtml extends HttpServlet {
 ```
 
 ### **HttpServletRequest**
+
+#### 获取前端传递的参数，请求转发
+
+![image-20231115134108238](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311151341161.png)
+
+```java
+public class LoginServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //后台中文乱码问题 后面会学过滤器预处理请求，这部分会放在那里
+        req.setCharacterEncoding("utf-8");
+        resp.setCharacterEncoding("utf-8");
+
+        String username=req.getParameter("username");
+        String password=req.getParameter("password");
+        String[] hobbies= req.getParameterValues("hobbies");//获得同名多个值用这个
+        System.out.println("========================");
+        System.out.println(username);
+        System.out.println(password);
+        System.out.println(Arrays.toString(hobbies));
+        System.out.println("========================");
+
+        //通过请求转发
+        //这里的 / 代表当前的web应用
+        req.getRequestDispatcher("/success.jsp").forward(req,resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doGet(req, resp);
+    }
+}
+```
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+<h1>登录</h1>
+    <div style="text-align: center">
+        <%--这里表单表示的意思：以post方式提交表单，提交到我们的login请求--%>
+        <form action="${pageContext.request.contextPath}/loginServlet" method="post">
+            用户名：<input type="text" name="username"> <br>
+            密码：<input type="password" name="password"> <br>
+            爱好：
+            <input type="checkbox" name="hobbies" value="concert">演唱会
+            <input type="checkbox" name="hobbies" value="sing">唱歌
+            <input type="checkbox" name="hobbies" value="draw">画画
+            <input type="checkbox" name="hobbies" value="dance">跳舞
+            <br>
+            <input type="submit">
+        </form>
+    </div>
+</body>
+</html>
+```
+
+```xml
+<servlet>
+        <servlet-name>loginServlet</servlet-name>
+        <servlet-class>LoginServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>loginServlet</servlet-name>
+        <url-pattern>/loginServlet</url-pattern>
+    </servlet-mapping>
+```
+
+## Cookie & Session
 
