@@ -777,3 +777,267 @@ public class LoginServlet extends HttpServlet {
 
 ## Cookie & Session
 
+### Cookie
+
+Cookie是浏览器在本地存储数据的一种方式，理论上是可以存储任何数据的，前提是数据的类型必须是String类型。
+
+关于Cookie的三个问题：Cookie从哪来？Cookie到哪去？Cookie有什么用？
+
+- **Cookie从哪来**：Cookie是从浏览器来的，服务器在响应时就会通过Set-Cookie字段将Cookie返回给浏览器，浏览器在下次访问服务器时，就会带上Cookie；
+- **Cookie到哪去**：Cookie还是到服务器去，在下一次的浏览器访问服务器的时候，浏览器会带上服务器返回的Cookie去访问服务器；
+- **Cookie有什么用**：Cookie是可以携带任何数据的，一般情况下我们是令Cookie来保存用户的登录信息，用来识别用户的身份，这样用户就不需要一直执行登录操作了。
+
+#### **常用操作**
+
+```java
+Cookie[] cookies=req.getCookies();//获得cookie
+cookie.getName();//获得cookie中的key
+cookie.getValue();//获得cookie中的Value
+Cookie cookie=new Cookie("lastLoginTime",System.currentTimeMillis()+"");//新建一个cookie
+cookie.setMaxAge(24*60*60);//设置cookie的有效期
+resp.addCookie(cookie);//响应给客户端一个cookie
+```
+
+#### **示例**
+
+```java
+public class SetCookies extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //解决中文乱码
+        req.setCharacterEncoding("utf-8");
+        resp.setCharacterEncoding("utf-8");
+        resp.setHeader("Content-Type","text/html;charset=utf-8");
+
+        PrintWriter out = resp.getWriter();
+        //服务器从客户端获取cookie，有多个数组接收
+        Cookie[] cookies = req.getCookies();
+
+        //判断是否有cookie，第一次是没有的，需要设置
+        if(cookies!=null){
+            out.write("你上次访问的时间是：");
+            for (int i = 0; i < cookies.length; i++) {
+                Cookie cookie=cookies[i];
+                //获取cookie的名字
+                if(cookie.getName().equals("lastLoginTime")){
+                    //获取cookie中的值
+                    long lastLoginTime=Long.parseLong(cookie.getValue());
+                    Date date=new Date(lastLoginTime);
+                    out.write(date.toLocaleString());
+                }
+            }
+        }else{
+            out.print("这是第一次访问");
+        }
+        //添加最新的cookie
+        Cookie lastLoginTime = new Cookie("lastLoginTime", System.currentTimeMillis() + "");
+        resp.addCookie(lastLoginTime);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doGet(req, resp);
+    }
+}
+```
+
+```xml
+<servlet>
+    <servlet-name>setCookies</servlet-name>
+    <servlet-class>SetCookies</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>setCookies</servlet-name>
+    <url-pattern>/s1</url-pattern>
+</servlet-mapping>
+```
+
+**注意上述代码中设置了 Content-Type ，因为仅仅设置 setCharacterEncoding ，只是响应回去的编码规则为utf-8，但是浏览会按默认规则进行解释，依旧会导致乱码**
+
+#### 一些问题
+
+**一个网站cookie是否存在上限！细节问题**
+
+- 一个cookie只能保存一个信息
+- 一个Web站点可以给浏览器发送多个cookie，IE5-IE6:20个，IE7:50个
+- cookie大小限制为4kb
+
+**删除cookie**：
+
+- 不设置有效期，关闭浏览器，自动失效
+- 设置有效期为0
+
+**编解码问题：**
+
+`URLDecoder` 和 `URLEncoder` 是 Java 中用于处理 URL 编码和解码的两个类。
+
+1. **`URLEncoder`：**
+
+   - 用于将字符串编码为符合 URL 规范的格式。主要用途是将字符串转换成适合放置在 URL 中的安全字符串。
+
+   - 在 URL 中，一些字符（例如空格、问号、等号等）是不允许直接出现的，需要通过编码替换。`URLEncoder` 提供了 `encode(String s, String encoding)` 方法，将字符串进行 URL 编码。
+
+     ```java
+     String encodedString = URLEncoder.encode("This is a test string", "UTF-8");
+     ```
+
+   - 在上面的例子中，`encodedString` 将包含被替换成 `%` 后跟两位十六进制值的字符，以确保在 URL 中的正确传输。
+
+2. **`URLDecoder`：**
+
+   - 用于解码已经在 URL 中编码的字符串。当你从 URL 中获取参数时，这些参数可能已经被编码，需要使用 `URLDecoder` 将其还原。
+
+   - 提供了 `decode(String s, String encoding)` 方法，将已编码的字符串进行解码。
+
+     ```java
+     String decodedString = URLDecoder.decode("This%20is%20a%20test%20string", "UTF-8");
+     ```
+
+   - 在上面的例子中，`decodedString` 将包含被还原成空格的原始字符串。
+
+这些类是在处理涉及 URL 的网络编程或者 Web 开发时非常有用的工具，确保 URL 中的参数和数据正确传输，同时避免由于特殊字符而导致的问题。
+
+### Session
+
+上面的Cookie中，我们说到Cookie从服务器来，到服务器去，可以保存任何数据，一般是用来保存用户的登录信息。但是，服务器这边到底具体如何来区分用户的信息的呢？这里就需要用到Session(也称为会话)了，**Session就是服务器这边用来实现用户身份区分的一种机制**，一般和Cookie配合使用（也可以不和Cookie配合使用）。
+
+什么是Session:
+
+- 服务器会给每一个用户（浏览器）创建一个Session对象；
+- 一个Session独占一个浏览器，只要浏览器没有关闭，这个Session就存在
+- 用户登录后，整个网站它都可以访问！—>保存用户的信息；保存购物车的信息
+
+#### 示例
+
+**增加session属性，得到session id**
+
+```java
+public class SessionDemo01 extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //解决乱码问题
+        req.setCharacterEncoding("utf-8");
+        resp.setCharacterEncoding("utf-8");
+        resp.setContentType("text/html;charset=utf-8");
+
+        //得到Session
+        HttpSession session=req.getSession();
+        //给Session中存东西
+        session.setAttribute("name",new Person("balance",20));
+        //获取Session的id
+        String sessionId=session.getId();
+        //判断Session是不是新创建
+        if(session.isNew()){
+            resp.getWriter().write("session创建成功，ID为："+sessionId);
+        }else{
+            resp.getWriter().write("session已经存在，ID为："+sessionId);
+        }
+
+        // Session创建的时候做了什么事情
+        // Cookie cookie=new Cookie("name","达西");
+        // resp.addCookie(cookie);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.doPost(req, resp);
+    }
+}
+```
+
+```xml
+<servlet-mapping>
+    <servlet-name>sessionDemo01</servlet-name>
+    <url-pattern>/session01</url-pattern>
+</servlet-mapping>
+```
+
+**获得刚刚设置的session属性**
+
+```java
+public class SessionDemo02 extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //解决乱码问题
+        req.setCharacterEncoding("utf-8");
+        resp.setCharacterEncoding("utf-8");
+        resp.setContentType("text/html;charset=utf-8");
+
+        //得到Session
+        HttpSession session = req.getSession();
+        //取session存储的属性值
+        Person person = (Person) session.getAttribute("name");
+        System.out.println(person.toString());
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.doPost(req, resp);
+    }
+}
+```
+
+**移除Session中属性，设置Session为无效**
+
+```java
+public class SessionDemo03 extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //解决乱码问题
+        req.setCharacterEncoding("utf-8");
+        resp.setCharacterEncoding("utf-8");
+        resp.setContentType("text/html;charset=utf-8");
+
+        //得到Session
+        HttpSession session = req.getSession();
+        //移除session中属性
+        session.removeAttribute("name");
+        //注销session
+        session.invalidate();
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.doPost(req, resp);
+    }
+}
+
+```
+
+**还可以在web.xml中设置session有效时间**
+
+```xml
+<!--设置Session默认的失效时间-->
+<session-config>
+    <!--15分钟之后Session自动失效，以分钟为单位-->
+    <session-timeout>15</session-timeout>
+</session-config>
+```
+
+### 两者区别
+
+**相同点：**
+
+1. **状态维护：** Cookies和Session都是用于在不同的HTTP请求之间维护状态信息的机制。
+2. **存储信息：** 两者都可以用于存储用户的特定信息，以便在用户访问网站的不同页面时使用。
+
+**不同点：**
+
+1. **存储位置：**
+   - **Cookie：** 存储在客户端（浏览器）中，以文本文件的形式存储在用户的计算机上。
+   - **Session：** 存储在服务器上，通常存储在内存中，尽管有时也可能被持久化到数据库或文件系统中。
+2. **安全性：**
+   - **Cookie：** 相对较不安全，因为存储在客户端，可以被用户查看或修改。
+   - **Session：** 相对较安全，因为存储在服务器端，客户端无法直接访问或修改。
+3. **存储容量：**
+   - **Cookie：** 有限制，通常每个域名下的Cookie总大小限制为4KB。
+   - **Session：** 理论上可以存储更多的数据，取决于服务器的配置和可用资源。
+4. **生命周期：**
+   - **Cookie：** 可以设置过期时间，可以是会话级别（浏览器关闭即失效）或持久性的（在一定时间内有效）。
+   - **Session：** 通常与用户的会话周期相同，**会话结束时失效**。
+5. **使用场景：**
+   - **Cookie：** 适用于需要在客户端保持状态信息的场景，例如记住用户登录状态、用户偏好设置等。
+   - **Session：** 适用于需要在服务器端保持状态信息的场景，例如跟踪用户在网站上的活动、购物车信息等。
+
+在实际应用中，通常会结合使用Cookies和Session，以发挥它们各自的优势。例如，可以使用Session来存储敏感信息，而使用Cookie来标识会话。
+
