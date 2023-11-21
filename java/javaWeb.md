@@ -775,7 +775,7 @@ public class LoginServlet extends HttpServlet {
     </servlet-mapping>
 ```
 
-## Cookie & Session
+## Cookie & Session 重点
 
 ### Cookie
 
@@ -1040,4 +1040,355 @@ public class SessionDemo03 extends HttpServlet {
    - **Session：** 适用于需要在服务器端保持状态信息的场景，例如跟踪用户在网站上的活动、购物车信息等。
 
 在实际应用中，通常会结合使用Cookies和Session，以发挥它们各自的优势。例如，可以使用Session来存储敏感信息，而使用Cookie来标识会话。
+
+## Jsp
+
+### **什么是JSP**
+
+Java Sever Page : Java服务器端页面，也和Servlet一样，用于动态Web技术
+
+最大的特点：
+
+- 写JSP就像在写HTML
+
+- 区别：
+
+  - HTML只给用户提供静态的数据
+
+  - JSP页面可以嵌入JAVA代码，为用户提供动态数据
+
+### **jsp原理**
+
+tomcat中有一个work目录
+
+idea中使用tomcat的会在idea的tomcat中生产一个work目录
+
+我电脑的地址：
+
+```shell
+C:\Users\122618942\AppData\Local\JetBrains\IntelliJIdea2021.3\tomcat\3f0acb11-4dc0-4295-b330-eafb4ba540e6\work\Catalina\localhost\Javaweb01_war_exploded\org\apache\jsp
+```
+
+发现页面转变成了Java程序,浏览器向服务器发送请求，不管访问什么资源，其实都是在访问Servlet
+
+**JSP最终也会被转换成一个 JAVA类,JSP本质就是servlet**
+
+```java
+//初始化
+public void _jspInit() {
+}
+//销毁
+public void _jspDestroy() {
+}
+//JSPServlet
+public void _jspService(HttpServletRequest request, HttpServletResponse response) {
+}
+```
+
+1. 判断请求
+
+2. 内置一些对象
+
+   ```java
+   final javax.servlet.jsp.PageContext pageContext; //页面上下文
+   javax.servlet.http.HttpSession session = null; //session
+   final javax.servlet.ServletContext application; //applicationContext
+   final javax.servlet.ServletConfig config; //config
+   javax.servlet.jsp.JspWriter out = null; //out
+   final java.lang.Object page = this; //page:当前
+   HttpServletRequest request //请求
+   HttpServletResponse response //响应
+   ```
+
+3. 输出页面前增加的代码
+
+   ```java
+   response.setContentType("text/html; charset=utf-8");//设置响应的页面类型
+   pageContext = _jspxFactory.getPageContext(this, request, response,
+                                             null, true, 8192, true);
+   _jspx_page_context = pageContext;
+   application = pageContext.getServletContext();
+   config = pageContext.getServletConfig();
+   session = pageContext.getSession();
+   out = pageContext.getOut();
+   _jspx_out = out;
+   ```
+
+4. 以上的这些对象我们可以在JSP页面中直接使用
+
+![image-20231120135346669](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311201355714.png)
+
+**在JSP页面中：**
+
+只要是JAVA代码就会原封不动的输出；
+
+![image-20231120135243797](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311201352415.png)
+
+如果是HTML代码，就会被转换为：
+
+```
+out.write("<html>\n");
+```
+
+这样的格式，输出到前端
+
+## javaBean
+
+**javaBean也就是java实体类**
+
+JavaBean有特定的写法：
+
+- 必须要有一个无参构造
+- 属性必须私有化
+- 必须有对应的get,set方法
+
+一般用来和数据库的字段做映射 ORM
+
+ORM：对象关系映射
+
+- 表 —> 类
+- 字段 —> 属性
+- 行记录 —> 对象
+
+## MVC
+
+什么是MVC：Model view Controller
+
+Servlet和 Jsp 都可以写JAVA代码，为了易于维护和使用，Servlet专注于处理请求以及控制视图跳转，Jsp专注于显示数据
+
+### 早些年的架构
+
+控制器：Controller Servlet
+
+- 接收用户的请求
+
+- 响应给客户端的内容
+- 重定向或者转发
+
+视图层：View Jsp
+
+- 展示数据
+
+- 提供可以供我们操作的请求
+
+JavaBean (pojo) (entity)
+
+JDBC
+
+用户直接访问控制层，控制层就可以直接操作数据库
+```
+servlet-->CRUD(增删改查)-->数据库
+弊端：程序十分臃肿，不利于维护
+Servlet的代码中：处理请求，响应，视图跳转，处理JDBC，处理业务代码，处理逻辑代码
+    
+架构：没有什么是加一层解决不了的
+程序员调用
+    |
+   JDBC
+    |
+Mysql Oracle SqlServer ...
+```
+
+### MVC三层架构
+
+![image-20231120150458952](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311201505150.png)
+
+Model
+
+- 业务处理：业务逻辑（Service）
+
+- 数据持久层：CRUD (Dao)
+
+View
+
+- 展示数据
+
+- 提供链接发起Servlet请求（a,form,img…）
+
+Controller (Servlet)
+
+- 接收用户的请求 : ( req:请求参数，session信息… )
+- 交给业务层处理对应的代码
+- 控制视图的跳转
+
+```
+登录-->接收用户的登录请求-->处理用户的请求(获取用户登陆的参数，username,password...)-->交给业务层处理登录业务(判断用户名密码是否正确，事务)-->Dao层查询用户名和密码是否正确-->数据库
+```
+
+## Filter 过滤器 重点
+
+Filter:过滤器，用来过滤网站的数据
+
+- 处理中文乱码
+- 登录验证…
+
+![image-20231120152607374](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311201526465.png)
+
+### Filter实现步骤
+
+先新建项目，在pom.xml中加入如下依赖
+
+```xml
+<dependencies>
+    <!--Servlet 依赖-->
+    <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>servlet-api</artifactId>
+        <version>2.5</version>
+    </dependency>
+    <!--jsp 依赖-->
+    <dependency>
+        <groupId>javax.servlet.jsp</groupId>
+        <artifactId>javax.servlet.jsp-api</artifactId>
+        <version>2.3.3</version>
+    </dependency>
+    <!--连接数据库-->
+    <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>8.0.31</version>
+    </dependency>
+</dependencies>
+```
+
+### 导包
+
+新建类，实现Filter接口，导包不要导错
+
+​		![image-20231120153518798](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311201535221.png)
+
+### 编写过滤器
+
+实现Filter接口，重写对应的方法即可
+
+```java
+public class FilterDemo01 implements Filter {
+    public FilterDemo01() {
+        super();
+    }
+
+    //初始化：web服务器启动，就完成初始化了，随时等待过滤对象出现
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+
+    }
+
+    /*
+    chain：链
+    1. 过滤中的所有代码，在过滤特定请求的时候都会执行
+    2. 必须要让过滤器继续执行下去
+    */
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        servletRequest.setCharacterEncoding("UTF-8");
+        servletResponse.setCharacterEncoding("UTF-8");
+        servletResponse.setContentType("text/html;charset=UTF-8");
+
+        System.out.println("FilterDemo01 执行前");
+        filterChain.doFilter(servletRequest,servletResponse);
+        System.out.println("FilterDemo01 执行后");
+    }
+
+    //销毁：web服务器在关闭的时候，过滤会销毁
+    @Override
+    public void destroy() {
+        System.out.println("FilterDemo01 销毁");
+    }
+}
+```
+
+在servlet中写入如下代码
+
+```java
+protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    resp.getWriter().write("世界这么大");
+}
+```
+
+### 在web.xml中配置Filter
+
+```xml
+<servlet>
+    <servlet-name>showServlet</servlet-name>
+    <servlet-class>com.balance.servlet.ShowServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>showServlet</servlet-name>
+    <url-pattern>/servlet/show</url-pattern>
+</servlet-mapping>
+<servlet-mapping>
+    <servlet-name>showServlet</servlet-name>
+    <url-pattern>/show</url-pattern>
+</servlet-mapping>
+
+<filter>
+    <filter-name>filterDemo01</filter-name>
+    <filter-class>com.balance.FilterDemo01</filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>filterDemo01</filter-name>
+    <!--只要是/servlet的任何请求，都会经过这个过滤器，不要图省事直接 /* 全部都走过滤器-->
+    <url-pattern>/servlet/*</url-pattern>
+</filter-mapping>
+```
+
+### 效果
+
+访问/servlet/show时正常显示
+
+![image-20231120155019250](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311201550460.png)
+
+访问/show时未走过滤器，导致乱码
+
+![image-20231120155100264](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311201551319.png)
+
+## 监听器
+
+实现一个监听器的接口；（有N种），以 HttpSessionListener 为例
+
+### 编写一个监听器
+
+```java
+//统计网站在线人数：统计session
+public class OnlineCountListener implements HttpSessionListener {
+    //创建session监听：创建session就会触发
+    @Override
+    public void sessionCreated(HttpSessionEvent httpSessionEvent) {
+        ServletContext servletContext = httpSessionEvent.getSession().getServletContext();
+        Integer onlineCount = (Integer) servletContext.getAttribute("OnlineCount");
+        if(onlineCount==null){
+            onlineCount = new Integer(1);
+        }else{
+            int count=onlineCount.intValue();
+            onlineCount=new Integer(count+1);
+        }
+        servletContext.setAttribute("OnlineCount",onlineCount);
+    }
+
+    //销毁session监听
+    @Override
+    public void sessionDestroyed(HttpSessionEvent httpSessionEvent) {
+        ServletContext servletContext = httpSessionEvent.getSession().getServletContext();
+        Integer onlineCount = (Integer) servletContext.getAttribute("OnlineCount");
+        if(onlineCount==null){
+            onlineCount = new Integer(0);
+        }else{
+            int count=onlineCount.intValue();
+            onlineCount=new Integer(count-1);
+        }
+        servletContext.setAttribute("OnlineCount",onlineCount);
+    }
+}
+```
+
+### xml中注册监听器
+
+```xml
+<!-- 注册监听器   -->
+<listener>
+    <listener-class>com.balance.listener.OnlineCountListener</listener-class>
+</listener>
+```
+
+
 
