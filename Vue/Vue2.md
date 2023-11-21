@@ -1847,6 +1847,58 @@ Vue.component('alert-box', {
 
 这是一个文件名为 `Hello.vue` 的简单实例：
 
+
+
+### 组件中使用其他组件 局部注册
+
+组件中使用其他组件分三步：
+
+1. import导入
+
+2. components属性中声明(此步也称注入组件)
+3. template中使用其他组件
+
+在App.vue中使用helloworld.vue
+
+```vue
+<script>
+  import HelloWorld from "@/components/helloworld.vue";//导入
+  export default {
+    components: {
+      HelloWorld   //注入
+    }
+  }
+</script>
+
+<template>
+  <hello-world></hello-world> <!--使用-->
+</template>
+
+<style scoped>
+
+</style>
+```
+
+```vue
+<script>
+export default {
+  name: "helloworld"
+}
+</script>
+
+<template>
+  <h1>Hello World</h1>
+</template>
+
+<style scoped>
+h1{
+  color: red;
+}
+</style>
+```
+
+注意一下，html标签会将名字首字母小写，驼峰处改连接线。直接使用HelloWorld，会帮我们隐式转换
+
 ## [axios](http://www.axios-js.com/zh-cn/docs/)
 
 ### 安装

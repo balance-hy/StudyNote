@@ -48,7 +48,7 @@ DROP DATABASE [IF EXISTS] balance01;
 mysqldump -u 用户名 -p 数据库 表1 表2 表n > 文件名.sql
 ```
 
-## 创建表
+## 创建表/删除表
 
 ![image-20231026151805639](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202310261518054.png)
 
@@ -59,6 +59,9 @@ CREATE TABLE `user`(
 	`password` VARCHAR(255),
 	birthday DATE
 )CHARACTER SET utf8mb3 COLLATE utf8mb3_bin ENGINE INNODB;
+
+# 删除表
+drop table xxx.xxx;# 第一个xxx为数据库名，第二个xxx为表名
 ```
 
 ## [数据类型](https://www.cnblogs.com/xrq730/p/8446246.html)
@@ -240,7 +243,7 @@ UPDATE goods SET price=price+1100;
 UPDATE goods SET price=price+1100,id=id+100;
 ```
 
-### select
+### select 单表
 
 ![image-20231102140639387](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311021406415.png)
 
@@ -317,6 +320,14 @@ HAVING avg_sal<2000
 - where是判断数据从磁盘读入内存的时候，having是判断分组统计之前的所有条件
 
 - having子句中可以使用字段别名，而where不能使用
+
+#### 单表查询加强
+
+
+
+### select 多表
+
+
 
 ## 各类函数
 
@@ -432,23 +443,118 @@ SELECT CONCAT(LCASE(SUBSTRING(ename,1,1)),SUBSTRING(ename,2)) FROM emp;
 | HEX (DecimalNumber)                | 转十六进制                       |
 | LEAST (number , number2…)          | 求最小值                         |
 
+```sql
+-- 数学函数
+-- ABS(num)        绝对值
+SELECT ABS(-10) FROM DUAL #10
+-- BIN (decimal_ number )    十进制转二进制
+SELECT BIN(20) FROM DUAL #10100
+
+-- CEILING (number2 )    向上取整，得到比num2大的最小整数
+SELECT CEILING(1.3) FROM DUAL #2
+
+-- CONV( number2,from_ base,to_ bas)    进制转换
+#把12从10进制转成8进制
+SELECT CONV(12,10,8) FROM DUAL #14
+
+-- FLOOR (number2 )    向下取整，得到比num2小的最大整数
+SELECT FLOOR(-1.2) FROM DUAL #-2
+
+-- FORMAT (number,decimal_ places )    保留小数位数(四舍五入)
+SELECT FORMAT(12.3456,2) FROM DUAL #把12.3456保留两位小数 12.34
+
+-- HEX (DecimalNumber )        转十六进制
+SELECT HEX(22) FROM DUAL #16
+-- LEAST (number，number2 [..])    求最小值
+SELECT LEAST(2,5,1,6) FROM DUAL #1
+-- MOD (numerator ,denominator )    求余
+#10对3取余,得到1
+SELECT MOD(10,3) FROM DUAL
+
+-- RAND( [seed] )    RAND([seed])    其范围为0≤v≤1.0
+
+SELECT RAND() FROM DUAL #随机生成0-1之间的小数,再次运行会改变
+SELECT RAND(10) FROM DUAL #放了种子之后生成随机数之后再运行不会改变,要重新切换种子
+```
+
 ### 时间函数
 
 | 函数                               | 功能                                              |
 | ---------------------------------- | ------------------------------------------------- |
-| CURDATE()                          | 返回当前日期                                      |
 | CURRENT_DATE ( )                   | 当前日期                                          |
 | CURRENT_TIME ( )                   | 当前时间                                          |
 | DATE(datetime)                     | 返回datetime的日期部分                            |
-| CURTIME()                          | 返回当前时间                                      |
-| NOW()                              | 返回当前日期和时间                                |
-| YEAR(date)                         | 获取指定date的年份                                |
-| MONTH(date)                        | 获取指定date的月份                                |
-| DAY(date)                          | 获取指定date的日期                                |
 | DATE_ADD(date, INTERVAL expr type) | 返回一个日期/时间值加上一个时间间隔expr后的时间值 |
 | DATE_SUB(date，INTERVAL expr type) | 在date上减去一个时间                              |
 | DATEDIFF(date1, date2)             | 返回起始时间date1和结束时间date2之间的天数        |
 | TIMEDIFF(date1,date2)              | 两个时间差(多少小时多少分钟多少秒)                |
+| NOW()                              | 返回当前日期和时间                                |
+| YEAR(date)                         | 获取指定date的年份                                |
+| MONTH(date)                        | 获取指定date的月份                                |
+| DAY(date)                          | 获取指定date的日期                                |
+| unix_timestamp()                   | 返回的是1970-1-1到现在的秒数                      |
+| FROM_UNIXTIME()                    | 可以把一个 秒数[时间戳],转换成指定格式的日期      |
+
+上面函数的细节说明:
+
+- DATE ADD()中的interval 后面可以是 year minute second day等
+
+- DATE SUB()中的interval 后面可以是 year minute second hour day等
+
+- DATEDIFF(date1,date2) 得到的是天数，而且是date1-date2 的天数，因此可以取负数
+
+- 这四个函数(还有一个Date)的日期类型可以是date, datetime或者timestamp
+
+```sql
+-- 日期时间相关函数
+-- CURRENT_DATE() 当前日期 括号可以有也可以没有
+SELECT CURRENT_DATE FROM DUAL #2023-02-04
+
+-- CURRENT_TIME() 当前时间
+SELECT CURRENT_TIME FROM DUAL #12:03:19
+
+-- CURRENT_TIMESTAMP()当前时间戳
+SELECT CURRENT_TIMESTAMP FROM DUAL #2023-02-04 12:03:57
+
+-- DATE(datetime)返回datetime的日期部分
+SELECT DATE(CURRENT_TIMESTAMP) FROM DUAL #2023-02-04
+
+-- 在date2加上日期或者时间
+#在当前日期加上了10天
+SELECT DATE_ADD(CURRENT_DATE,INTERVAL 10 DAY) FROM DUAL #2023-02-14
+
+-- 在date2减去日期或者时间
+#在当前时间减去10分钟
+SELECT DATE_SUB(CURRENT_TIME,INTERVAL 10 MINUTE) FROM DUAL #12:02:45
+
+-- DATEDIFF(date1,date2)两个日期相差的天数
+#是date1减去date2得到结果
+SELECT DATEDIFF(CURRENT_DATE,DATE_ADD(CURRENT_DATE,INTERVAL 10 DAY)) FROM DUAL #-10
+
+-- 两个时间差,精确到时分秒
+SELECT TIMEDIFF(CURRENT_TIME,DATE_SUB(CURRENT_TIME,INTERVAL 10 MINUTE)) FROM DUAL #00:10:00
+
+-- now() 当前时间
+SELECT NOW() FROM DUAL #2023-02-04 12:18:11
+
+-- YEAR MONTH DATE(DATETIME) 获取年月日
+#获取NOW()的月份
+SELECT MONTH (NOW()) FROM DUAL
+
+ -- 如果你能活80岁，求出你还能活多少天. [练习]
+#先求出活到80岁是什么日期
+SELECT DATE_ADD('1999-8-8',INTERVAL 80 YEAR) FROM DUAL
+#再用80岁的日期减去现在的日期就是还能活的天数
+SELECT DATEDIFF(DATE_ADD('1999-8-8',INTERVAL 80 YEAR),NOW()) FROM DUAL #20639
+
+-- unix_timestamp() : 返回的是1970-1-1到现在的秒数
+SELECT UNIX_TIMESTAMP() FROM DUAL; #1675524073
+
+-- FROM_UNIXTIME() :可以把一个 秒数[时间戳],转换成指定格式的日期
+#细节:指定格式为 %Y-%m-%d %H:%m:%s ,这里就是年月日时分秒的格式
+#意义:在开发中,可以存放一个整数,然后表示时间,通过它来转换
+SELECT FROM_UNIXTIME(1675524073) FROM DUAL #2023-02-04 23:21:13
+```
 
 ### 加密和系统函数
 
@@ -459,6 +565,26 @@ SELECT CONCAT(LCASE(SUBSTRING(ename,1,1)),SUBSTRING(ename,2)) FROM emp;
 | MD5(str)                              | 为字符串算出一个MD5，32位的字符串，可用于密码加密            |
 | PASSWORD(str)select * from mysql.user | 从原文密码str计算并返回密码字符串，通常用于对mysqI数据库的用户密码加密 |
 
+```sql
+-- 加密函数
+-- USER()查询用户
+SELECT USER() FROM DUAL #root@localhost
+
+-- DATABASE () 当前数据库名称
+SELECT DATABASE() FROM DUAL #yjm_db02
+
+-- MD5 (str)为字符串算出一个MD5 32的字符串，(用户密码)加密
+SELECT MD5('123456') FROM DUAL #e10adc3949ba59abbe56e057f20f883e
+SELECT LENGTH(MD5('123456')) FROM DUAL # MD5之后的密码长度为32位
+-- PASSWORD (str)  加密函数
+#细节:MYSql默认使用PASSWORD (str) 函数对数据库用户进行加密
+SELECT PASSWORD('123456') FROM DUAL #*6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9
+
+-- select * from mysql.user \G从原文密码str计算并返回密码字符串,
+-- 通常用于对mysql数据用户密码进行加密
+SELECT * FROM mysql.user #*6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9
+```
+
 ### 流程函数
 
 | 函数                                                         | 功能                                                    |
@@ -467,3 +593,40 @@ SELECT CONCAT(LCASE(SUBSTRING(ename,1,1)),SUBSTRING(ename,2)) FROM emp;
 | IFNULL(value1, value2)                                       | 如果value1不为空，返回value1，否则返回value2            |
 | CASE WHEN [ val1 ] THEN [ res1 ] … ELSE [ default ] END      | 如果val1为true，返回res1，… 否则返回default默认值       |
 | CASE [ expr ] WHEN [ val1 ] THEN [ res1 ] … ELSE [ default ] END | 如果expr的值等于val1，返回res1，… 否则返回default默认值 |
+
+```sql
+-- IF(expr1,expr2,expr3)如果expr1为True ,则返回expr2否则返回expr3
+SELECT IF(NULL,'真','假') FROM DUAL #假
+
+-- IFNULL(expr1,expr2)如果expr1不为空NULL,则返回expr1,否则返回expr2
+SELECT IFNULL('有数据','没数据') FROM DUAL #有数据
+SELECT IFNULL(NULL,'没数据') FROM DUAL #没数据
+
+-- SELECT CASE WHEN expr1 THEN expr2 WHEN expr3 THEN expr4 ELSE expr5 END; [类似多重分支.]
+-- 如果expr1为TRUE,则返回expr2,如果expr3 为t,返回expr4,否则返回expr5
+# 写法一
+SELECT ename,(CASE
+              WHEN job='CLERK' THEN
+              '职员'
+              WHEN job='MANAGER' THEN
+              '经理'
+              WHEN job='SALESMAN' THEN
+              '销售人员'	
+              ELSE
+              job
+              END) AS 'job'
+FROM `emp`
+# 写法二 写法二更直观，贴近java中的switch
+SELECT ename,(CASE job
+              WHEN 'CLERK' THEN
+              '职员'
+              WHEN 'MANAGER' THEN
+              '经理'
+              WHEN 'SALESMAN' THEN
+              '销售人员'	
+              ELSE
+              job
+              END) AS 'job'
+ FROM `emp`
+```
+

@@ -1342,6 +1342,167 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 
 ![image-20231120155100264](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311201551319.png)
 
+### Filter实现权限拦截
+
+#### 新建Login.jsp error.jsp
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+<form action="/learnFilter_war_exploded2/servlet/login" method="post">
+    <input type="text" name="username">
+    <input type="submit">
+</form>
+</body>
+</html>
+```
+
+当提交表单时，提交到 /learnFilter_war_exploded2/servlet/login 路径
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+    登录失败，用户名错误
+    <a href="${pageContext.request.contextPath}/Login.jsp">返回首页</a>
+</body>
+</html>
+```
+
+error.jsp中提供一个返回首页的链接
+
+#### web目录下新建sys目录
+
+里面新建success.jsp 即登录成功页面
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+   登录成功
+   <p><a href="/learnFilter_war_exploded2/servlet/logout">注销</a></p>
+</body>
+</html>
+```
+
+里面提供一个注销链接，请求发到 /learnFilter_war_exploded2/servlet/logout 中
+
+#### LoginServlet 和 LogoutServlet
+
+```java
+public class LoginServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String username = req.getParameter("username");//从参数里取
+        if(username.equals("admin")){//登录成功
+            req.getSession().setAttribute(ShareVar.USER_SESSION,req.getSession().getId());//在session中存储
+            resp.sendRedirect("/learnFilter_war_exploded2/sys/success.jsp");
+        }else{//登录失败
+            resp.sendRedirect("/learnFilter_war_exploded2/error.jsp");
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doGet(req, resp);
+    }
+}
+```
+
+LoginServlet在登录时判断是否为admin，若是，向session中存储属性与值，并跳转到登录页，若不是，跳转到error页
+
+```java
+public class LogoutServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        Object attribute = req.getSession().getAttribute(ShareVar.USER_SESSION);
+        if(attribute!=null){
+            req.getSession().removeAttribute(ShareVar.USER_SESSION);
+            resp.sendRedirect("/learnFilter_war_exploded2/Login.jsp");
+        }else{
+            resp.sendRedirect("/learnFilter_war_exploded2/Login.jsp");
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doGet(req, resp);
+    }
+}
+```
+
+LogoutServlet在注销时判断 session中在登录时所存属性和值是否还存在，若存在，移除并跳转回首页，若不存在，直接跳转回首页（防止不存在，页面卡在那里）
+
+#### 新建Filter实现拦截请求
+
+在做完上述操作之后，会有一个问题，我们可以通过在url栏直接输出地址从而访问到登录成功页面。Filter用于解决这个问题
+
+```java
+public class SysFilter implements Filter {
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+
+    }
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        //先将 ServletRequest 向下转型为 HttpServletRequest 从而获取到Session
+        HttpServletRequest req = (HttpServletRequest)servletRequest;
+        HttpServletResponse resp=(HttpServletResponse)servletResponse;
+
+        Object attribute = req.getSession().getAttribute(ShareVar.USER_SESSION);
+        if(attribute==null){
+            resp.sendRedirect("/learnFilter_war_exploded2/error.jsp");
+        }
+
+        filterChain.doFilter(servletRequest,servletResponse);
+    }
+    @Override
+    public void destroy() {
+
+    }
+}
+```
+
+#### xml 中注册
+
+```xml
+<servlet>
+    <servlet-name>loginServlet</servlet-name>
+    <servlet-class>com.balance.servlet.LoginServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>loginServlet</servlet-name>
+    <url-pattern>/servlet/login</url-pattern>
+</servlet-mapping>
+<servlet>
+    <servlet-name>logoutServlet</servlet-name>
+    <servlet-class>com.balance.servlet.LogoutServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>logoutServlet</servlet-name>
+    <url-pattern>/servlet/logout</url-pattern>
+</servlet-mapping>
+
+<filter>
+    <filter-name>sysFilter</filter-name>
+    <filter-class>com.balance.SysFilter</filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>sysFilter</filter-name>
+    <url-pattern>/sys/*</url-pattern>
+</filter-mapping>
+```
+
 ## 监听器
 
 实现一个监听器的接口；（有N种），以 HttpSessionListener 为例
@@ -1390,5 +1551,166 @@ public class OnlineCountListener implements HttpSessionListener {
 </listener>
 ```
 
+## JDBC
 
+**Java DataBase Connectivity**
+
+![img](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311211353803.png)
+
+什么是JDBC：Java连接数据库
+
+需要jar包的支持：
+
+- jar.sql
+- javax.sql
+- mysql-connecter-java…连接驱动（必须要导入）
+
+idea导入依赖,手动连接
+
+```xml
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.31</version>
+</dependency>
+```
+
+### JDBC固定步骤
+
+1. **加载驱动**
+2. **连接数据库，代表数据库**
+3. **向数据库发送SQL的对象Statement:CRUD**
+4. **编写SQL(根据业务，不同的sql)**
+5. **执行SQL**
+6. **关闭连接**
+
+```java
+public class TestJdbc {
+    public static void main(String[] args) throws Exception {
+        //配置信息,配置数据库路径时要配上数据库名称 jdbc:mysql://localhost:3306/jdbc01
+        //?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC";
+        String url="jdbc:mysql://localhost:3306/jdbc01?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC";
+        String username="root";
+        String password="";
+
+        //1.加载驱动
+        Class.forName("com.mysql.jdbc.Driver");
+        //2.连接数据库，代表数据库
+        Connection connection= DriverManager.getConnection(url,username,password);
+        //3.向数据库发送SQL的对象Statement:CRUD
+        Statement statement = connection.createStatement();
+        //4.编写SQL
+        String sql="select * from users";
+
+        //受影响的行数，增删改都使用executeUpdate
+        //int i = statement.executeUpdate(sql);
+
+        //5.执行SQL，返回一个ResultSet:结果集
+        ResultSet rs= statement.executeQuery(sql);
+        while (rs.next()){
+            System.out.println("id"+" "+rs.getObject("id"));;
+            System.out.println("name"+" "+rs.getObject("name"));;
+            System.out.println("password"+" "+rs.getObject("password"));;
+            System.out.println("email"+" "+rs.getObject("email"));;
+            System.out.println("birthday"+" "+rs.getObject("birthday"));;
+        }
+        //6.关闭连接，释放资源（一定要做），先开后关
+        rs.close();
+        statement.close();
+        connection.close();
+    }
+}
+```
+
+### 预编译SQL
+
+```java
+public class TestJdbc2 {
+    public static void main(String[] args) throws Exception {
+        //配置信息,配置数据库路径时要配上数据库名称 jdbc:mysql://localhost:3306/jdbc01
+        //?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC";
+        String url="jdbc:mysql://localhost:3306/jdbc01?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC";
+        String username="root";
+        String password="";
+
+        //1.加载驱动
+        Class.forName("com.mysql.jdbc.Driver");
+        //2.连接数据库，代表数据库
+        Connection connection= DriverManager.getConnection(url,username,password);
+        //3.编写SQL
+        String sql="insert into users(id,name,password,email,birthday) values (?,?,?,?,?);";
+        //4.预编译
+        PreparedStatement preparedStatement= connection.prepareStatement(sql);
+
+        preparedStatement.setInt(1,4);//给第一个占位符?的值赋值为4
+        preparedStatement.setString(2,"张三");//给第二个占位符?的值赋值为赵六
+        preparedStatement.setString(3,"164646");//给第三个占位符?的值赋值为654321
+        preparedStatement.setString(4,"zhangsan@qq.com");//给第四个占位符?的值赋值为zhangsan@qq.com
+        preparedStatement.setDate(5,new java.sql.Date(new java.util.Date().getTime()));//给第五个占位符?的值赋值为new java.sql.Date(new java.util.Date().getTime())
+        //5.执行SQL
+        int i= preparedStatement.executeUpdate();
+        if(i>0){
+            System.out.println("插入成功");
+        }
+        //6.关闭连接，释放资源（一定要做），先开后关
+        preparedStatement.close();
+        connection.close();
+    }
+}
+```
+
+### 事务
+
+数据库事务执行的四个基本要素
+
+ACID:atomicity、consistency、isolation、durability
+
+原子性，持久性，隔离性，一致性
+
+#### 事务回滚
+
+```java
+public class TestJdbc3 {
+    @Test
+    public void test() throws Exception{
+        //配置信息,配置数据库路径时要配上数据库名称 jdbc:mysql://localhost:3306/jdbc01
+        //?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC";
+        String url="jdbc:mysql://localhost:3306/jdbc01?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC";
+        String username="root";
+        String password="";
+        Connection connection=null;
+        try{
+        //1.加载驱动
+        Class.forName("com.mysql.jdbc.Driver");
+        //2.连接数据库，代表数据库
+        connection= DriverManager.getConnection(url,username,password);
+        //3.通知数据库开启事务，false代表开启
+        connection.setAutoCommit(false);
+
+        String sql="update account set money = money-100 where NAME ='A';";
+        connection.prepareStatement(sql).executeUpdate();
+        //制造错误
+        int i=1/0;
+        String sql2="update account set money = money+100 where NAME ='B';";
+        connection.prepareStatement(sql2).executeUpdate();
+        connection.commit();//以上两条SQL都执行成功了，就提交事务
+        System.out.println("success");
+        }catch (Exception e){
+            try {
+                //如果出现异常，就通知数据库回滚事务
+                connection.rollback();
+            }catch (SQLException e1){
+                e.printStackTrace();
+            }
+            e.printStackTrace();
+        }finally {
+            try{
+                connection.close();
+            }catch (SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
 
