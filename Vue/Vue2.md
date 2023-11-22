@@ -1497,7 +1497,7 @@ data: function () {
 
 如果 Vue 没有这条规则，点击一个按钮就可能会像如下代码一样影响到*其它所有实例*
 
-### prop 向子组件传递数据
+### prop 向子组件传递数据 只能父传子
 
 **注意：prop中属性需小写**
 
@@ -1898,6 +1898,45 @@ h1{
 ```
 
 注意一下，html标签会将名字首字母小写，驼峰处改连接线。直接使用HelloWorld，会帮我们隐式转换
+
+### 最外层引用其他组件 全局注册
+
+在main.js中写入如下代码
+
+```js
+import { createApp } from 'vue'
+import App from './App.vue';
+import HelloWorld from "@/components/helloworld.vue";
+
+const app=createApp(App);
+
+// 在这中间写组件注册
+app.component("HelloWorld",HelloWorld);
+
+app.mount('#app');
+```
+
+这样写后，原来的App.vue中就无需再次导入等操作，直接使用即可
+
+```vue
+<script>
+  export default {
+
+  }
+</script>
+
+<template>
+  <HelloWorld></HelloWorld>
+</template>
+
+<style scoped>
+
+</style>
+```
+
+
+
+
 
 ## [axios](http://www.axios-js.com/zh-cn/docs/)
 

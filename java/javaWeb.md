@@ -1714,3 +1714,251 @@ public class TestJdbc3 {
 }
 ```
 
+## 文件上传
+
+### 准备工作
+
+对于文件上传，浏览器在上传的过程中是将文件以流的形式提交到服务器的，一般选择采用apache的开源工具common-fileupload这个jar包。
+
+common-fileupload依赖于common-io包，所以还需要下载这个包
+
+此处不使用maven导包，采用手动导包的方式作为参考
+
+首先，新建lib目录，将jar包复制进去
+
+![image-20231122135503564](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311221355811.png)
+
+注意此时，项目运行，并不会将这两个jar包导入，有两种方式解决
+
+方式一：右键lib目录，选择Add as library
+
+![image-20231122135625292](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311221356343.png)
+
+方式二：File中选择项目结构，添加到library
+
+![image-20231122135833049](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311221358837.png)
+
+若有其他问题，在Problems中点击修复即可
+
+### 注意事项
+
+1. 为保证服务器安全，**上传文件应该放在外界无法直接访问的目录**下，比如放于WEB-INF目录下
+2. 为防止文件覆盖的现象发生，要为上传文件产生一个唯一的文件名（**时间戳 uuid md5等保证唯一性**）
+3. 要限制**上传文件的最大值**
+4. 可以限制上传文件的类型，在收到上传文件名时，**判断后缀是否合法**
+
+### 使用到的类简介
+
+**ServletFileUpload**负责处理上传的文件数据，并将表单中每个输入项封装成一个**Fileltem**对象，在使用**ServletFileUpload**对象解析请求时需要**DiskFileltemFactory**对象。
+
+所以，我们需要在进行解析工作前构造好**DiskFileltemFactory**对象，通过**ServletFileUpload**对象的构造方法或**setFileltemFactory**方法设置**ServletFileUpload**对象的**fileltemFactory**属性。
+
+### 具体实现
+
+项目结构图
+
+![image-20231122152401148](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311221524321.png)
+
+FileServlet
+
+```java
+public class FileServlet extends HttpServlet {
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //判断上传的表单是普通表单还是带文件的表单，是返回true,否返回false；
+        if (!ServletFileUpload.isMultipartContent(req)) {
+            return;//如果这是一个普通文件我们直接返回
+        }//如果通过了这个if，说明我们的表单是带文件上传的
+
+
+        //创建上传文件的保存目录，为了安全建议在WEB-INF目录下，用户无法访问
+        String uploadPath = this.getServletContext().getRealPath("/WEB-INF/Upload");//获取上传文件的保存路径
+        File uploadFileDir = new File(uploadPath);
+        if (!uploadFileDir.exists()) {
+            uploadFileDir.mkdir();//如果目录不存在就创建这样一个目录
+        }
+
+
+        //临时文件
+        //临时路径，如果上传的文件超过预期的大小，我们将它存放到一个临时目录中，过几天自动删除，或者提醒用户转存为永久
+        String tmpPath = this.getServletContext().getRealPath("/WEB-INF/tmp");
+        File tmpFileDir = new File(tmpPath);
+        if (!tmpFileDir.exists()) {
+            tmpFileDir.mkdir();//如果目录不存在就创建这样临时目录
+        }
+        //处理上传的文件一般需要通过流来获取，我们可以通过request.getInputstream(),原生态文件上传流获取，十分麻烦
+        //但是我们都建议使用Apache的文件上传组件来实现，common-fileupload,它需要依赖于common-io组件；
+
+        try {
+            //1、创建DiskFileItemFactory对象，处理文件上传路径或限制文件大小
+            DiskFileItemFactory factory = gteDiskFileItemFactory(tmpFileDir);
+            //2、获取ServletFileUpload
+            ServletFileUpload upload = getServletFileUpload(factory);
+            //3、处理上传文件
+
+            String msg = uploadParseRequest(upload, req, uploadPath);
+            //Servlet请求转发消息
+            req.setAttribute("msg", msg);
+            req.getRequestDispatcher("info.jsp").forward(req, resp);
+        } catch (FileUploadException e) {
+            e.printStackTrace();
+        }
+    }
+    public static DiskFileItemFactory gteDiskFileItemFactory(File tmpFileDir) {
+        //1、创建DiskFileItemFactory对象，处理文件上传路径或限制文件大小
+        DiskFileItemFactory factory = new DiskFileItemFactory();
+
+        //通过这个工厂设置一个缓冲区，当上传的文件大小大于缓冲区的时候，将它放到临时文件夹tmpFileDir中；
+        factory.setSizeThreshold(1024 * 1024);//缓冲区大小为1M
+        factory.setRepository(tmpFileDir);
+        return factory;
+    }
+
+    public static ServletFileUpload getServletFileUpload(DiskFileItemFactory factory) {
+        //2、获取ServletFileUpload
+        ServletFileUpload upload = new ServletFileUpload(factory);
+        //监听文件上传进度
+        upload.setProgressListener(new ProgressListener() {
+            @Override
+            public void update(long pBytesRead, long lpContentLenght, int i) {
+                DecimalFormat df=new DecimalFormat("0.00");
+                //pBytesRead:已读取到的文件大小
+                //pContentLenght：文件大小
+                System.out.println("总大小：" + lpContentLenght + "已上传：" + df.format((float)pBytesRead/lpContentLenght));
+            }
+        });
+        //处理乱码问题
+        upload.setHeaderEncoding("UTF-8");
+        //设置单个文件的最大值
+        upload.setFileSizeMax(1024 * 1024 * 10);
+        //设置总共能够上传文件的大小
+        //1024 = 1kb * 1024 = 1M * 10 = 10M
+        upload.setSizeMax(1024 * 1024 * 10);
+        return upload;
+    }
+
+    public static String uploadParseRequest(ServletFileUpload upload, HttpServletRequest request, String uploadPath) throws IOException, FileUploadException {
+        String msg = "";
+        //3、处理上传文件
+        //把前端的请求解析，封装成一个FileItem对象
+        List<FileItem> fileItems = upload.parseRequest(request);
+        for (FileItem fileItem : fileItems) {
+            if (fileItem.isFormField()) { //判断是普通表单还是带文件的表单
+                //getFieldName指的是前端表单控件的name
+                String name = fileItem.getFieldName();
+                String value = fileItem.getString("UTF-8");//处理乱码
+                System.out.println(name + ":" + value);
+            } else {//判断它是带文件的表单
+                //======================处理文件=======================//
+                //拿到文件的名字
+                String uploadFileName = fileItem.getName();
+                System.out.println("上传的文件名：" + uploadFileName);
+                if (uploadFileName.trim().equals("")) continue;
+
+                //获得上传的文件名，例如/img/girl/ooa.jpg,只需要ooa，其前面的后面的都不需要
+                String fileName = uploadFileName.substring(uploadFileName.lastIndexOf("/") + 1);
+                //获得文件的后缀名
+                String fileExtName = uploadFileName.substring(uploadFileName.lastIndexOf(".") + 1);
+                /*
+                 * 如果后缀名 fileExtName 不是我们需要的
+                 *就直接return，不处理，告诉用户类型不对
+                 * */
+                System.out.println("文件信息【文件名：" + fileName + "文件类型：" + fileExtName + "】");
+                //可以使用UUID(唯一通用识别码)来保证文件名的统一
+                String uuidFileName = UUID.randomUUID().toString();
+                //=======================传输文件=========================//
+                //获得文件上传的流
+                InputStream inputStream = fileItem.getInputStream();
+                //创建一个文件输出流
+                FileOutputStream fos = new FileOutputStream(uploadPath + "/" + uuidFileName + "." + fileExtName);
+                //创建一个缓冲区
+                byte[] buffer = new byte[1024 * 1024];
+                //判断是否读取完毕
+                int len;
+                //如果大于0，说明还存在数据
+                while ((len = inputStream.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+                //关闭流
+                fos.close();
+                inputStream.close();
+                msg = "文件上传成功！";
+                fileItem.delete();//上传成功，清除临时文件
+            }
+        }
+        return msg;
+    }
+}
+```
+
+index.jsp
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+    <%--
+      通过表单上传文件
+      get:上传文件大小有限制
+      post:上传文件大小没有限制
+      --%>
+    <form action=" ${pageContext.request.contextPath}/upload.do" method="post" enctype="multipart/form-data">
+        上传用户：<input type="text" name="username"><br>
+        <p><input type="file" name="file1"></p>
+        <p><input type="file" name="file2"></p>
+
+        <p><input type="submit"> | <input type="reset"></p>
+    </form>
+</body>
+</html>
+```
+
+info.jsp
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+
+结果====> ${msg}
+
+</body>
+</html>
+```
+
+web.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                      http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0"
+         metadata-complete="true">
+  <servlet>
+    <servlet-name>fileServlet</servlet-name>
+    <servlet-class>com.balance.servlet.FileServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>fileServlet</servlet-name>
+    <url-pattern>/upload.do</url-pattern>
+  </servlet-mapping>
+
+</web-app>
+```
+
+上传后目录
+
+![image-20231122152654956](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311221526691.png)
+
+## 邮件传输
+
+
+
