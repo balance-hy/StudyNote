@@ -1960,5 +1960,241 @@ web.xml
 
 ## 邮件传输
 
+![在这里插入图片描述](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311231447232.png)
 
+### 邮件收发
+
+> 要在网络上实现邮件功能，必须要有专门的**邮件服务器**。
+
+这些邮件服务器类似于现实生活中的邮局，
+
+它主要负责接收用户投递过来的邮件，并把邮件投递到邮件接收者的电子邮箱中。
+对应：接收和发送
+接收：POP3协议
+发送：SMTP协议
+SMTP服务器地址：一般是smtp.xxx.com，每一个网站都有自己的服务器地址（固定的）
+
+比如163邮箱是smtp.163.com，qq邮箱是smtp.qq.com。
+
+比如我们要使用QQ邮箱，就需要开通QQ邮箱的服务
+
+![image-20231123144527350](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311231445526.png)
+
+（1）张三通过smtp协议连接到Smtp服务器，然后发送一封邮件给网易的邮件服务器
+
+（2）网易分析发现需要去QQ的邮件服务器，通过smtp协议将邮件转投给QQ的Smtp服务器
+
+（3）QQ将接收到的邮件存储在lisi@qq.com这个邮件账号的空间中
+
+（4）李四通过Pop3协议连接到Pop3服务器收取邮件
+
+（5）从lisi@qq.com这个邮件账号的空间中取出邮件
+
+（6）Pop3服务器将取出来的邮件送到李四手中
+
+### Java发送邮件
+
+首先导入依赖的jar包，分别为：
+
+- mail.jar
+- activation.jar
+
+这里依然采用maven导入依赖，手动导入参照文件上传的示例
+
+主要有四个核心类，我们在编写程序时，记住这四个核心类，就很容易编写出Java邮件处理程序。
+
+![在这里插入图片描述](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311231450508.png)
+
+**Session：定义整个程序，所有的信息。比如：smtp.qq.com、邮箱账号、密码**
+
+**Transport：发送邮件**
+
+**Message：信息的内容。对应：收件人、主题、正文**
+
+#### 普通邮件-文本
+
+```java
+public class MailSender {
+    public static void main(String[] args) throws Exception{
+        //Properties中 设置属性
+        Properties prop=new Properties();
+        prop.setProperty("mail.host","smtp.qq.com");///设置QQ邮件服务器
+        prop.setProperty("mail.transport.protocol","smtp");///邮件发送协议
+        prop.setProperty("mail.smtp.auth","true");//需要验证用户密码
+
+        //QQ邮箱需要设置SSL加密，原因：大厂。其他邮箱不需要
+        MailSSLSocketFactory sf = new MailSSLSocketFactory();
+        sf.setTrustAllHosts(true);
+        prop.put("mail.smtp.ssl.enable","true");//使用安全的连接为true
+        prop.put("mail.smtp.ssl.socketFactory",sf);//socket工厂，使用自己的socket工厂
+
+        //使用javaMail发送邮件的5个步骤
+        //1.创建定义整个应用程序所需要的环境信息的session对象
+
+        //QQ才有!其他邮箱就不用
+        Session session= Session.getDefaultInstance(prop, new Authenticator() {//获取默认的实例
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                //发件人邮箱、授权码
+                return new PasswordAuthentication("xxxxxxxx@qq.com","xxxxxxxx");//后面是授权码
+            }
+        });
+
+        //开启session的debug模式，这样可以查看到程序发送Email的运行状态
+        session.setDebug(true);
+
+        //2.通过session得到transport对象
+        Transport ts = session.getTransport();
+
+        //3.使用邮箱的用户名和授权码连上邮件服务器
+        ts.connect("smtp.qq.com","xxxxxxxxx@qq.com","xxxxxxxx");
+
+        //4.创建邮件：写邮件
+        //需要传递session
+        MimeMessage message = new MimeMessage(session);
+
+        //指明邮件的发件人
+        message.setFrom(new InternetAddress("xxxxxxxx@qq.com"));
+
+        //指明邮件的收件人，现在发件人和收件人是一样的，那就是自己给自己发
+        message.setRecipient(Message.RecipientType.TO, new InternetAddress("xxxxxxxx3@qq.com"));
+
+        //邮件的标题   只包含文本的简单邮件
+        message.setSubject("发送的标题");
+
+        //邮件的文本内容
+        message.setContent("你好，这是一封测试邮件","text/html;charset=UTF-8");
+
+        //5.发送邮件
+        ts.sendMessage(message,message.getAllRecipients());
+
+        //6.关闭连接，一切网络都需要关闭
+        ts.close();
+
+    }
+}
+```
+
+#### 带图片和附件的邮件
+
+- MimeBodyPart类 （内容的主体）
+
+  - javax.mail.internet.MimeBodyPart类
+
+  - 表示的是一个MIME消息，它和MimeMessage类一样都是从Part接口继承过来。
+
+- MimeMultipart类 （内容的封装）
+
+  - javax.mail.internet.MimeMultipart是抽象类
+
+  - Multipart的实现子类，它用来组合多个MIME消息。
+
+  - 一个MimeMultipart对象可以包含多个代表MIME消息的MimeBodyPart对象。
+
+![image-20231123151027232](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311231510937.png)
+
+在MimeBodyPart中有三个属性
+
+- mixed：附件
+- related：内嵌资源
+- alternative：超文本正文
+
+![在这里插入图片描述](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311231510363.png)
+
+```java
+public class MailDemo01 {
+    public static void main(String[] args) throws Exception {
+
+        //Properties中 设置属性
+        Properties prop=new Properties();
+        prop.setProperty("mail.host","smtp.qq.com");///设置QQ邮件服务器
+        prop.setProperty("mail.transport.protocol","smtp");///邮件发送协议
+        prop.setProperty("mail.smtp.auth","true");//需要验证用户密码
+
+        //QQ邮箱需要设置SSL加密，原因：大厂。其他邮箱不需要
+        MailSSLSocketFactory sf = new MailSSLSocketFactory();
+        sf.setTrustAllHosts(true);
+        prop.put("mail.smtp.ssl.enable","true");//使用安全的连接为true
+        prop.put("mail.smtp.ssl.socketFactory",sf);//socket工厂，使用自己的socket工厂
+
+        //使用javaMail发送邮件的5个步骤
+        //1.创建定义整个应用程序所需要的环境信息的session对象
+
+            //QQ才有!其他邮箱就不用
+        Session session= Session.getDefaultInstance(prop, new Authenticator() {//获取默认的实例
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                //发件人邮箱、授权码
+                return new PasswordAuthentication("1455272942@qq.com","evdqbmnahqxjhfbi");
+            }
+        });
+
+            //开启session的debug模式，这样可以查看到程序发送Email的运行状态
+        session.setDebug(true);
+
+        //2.通过session得到transport对象
+        Transport ts = session.getTransport();
+
+        //3.使用邮箱的用户名和授权码连上邮件服务器
+        ts.connect("smtp.qq.com","1455272942@qq.com","evdqbmnahqxjhfbi");
+
+        //4.创建邮件：写邮件
+            //需要传递session
+        MimeMessage message = new MimeMessage(session);
+
+            //指明邮件的发件人
+        message.setFrom(new InternetAddress("1455272942@qq.com"));
+
+            //指明邮件的收件人，现在发件人和收件人是一样的，那就是自己给自己发
+        message.setRecipient(Message.RecipientType.TO, new InternetAddress("1455272942@qq.com"));
+
+            //邮件的标题   只包含文本的简单邮件
+        message.setSubject("发送的标题");
+
+            //邮件的文本内容
+        message.setContent("你好","text/html;charset=UTF-8");
+
+        /*==================图片和附件的邮件=========================*/
+
+
+        //=================================准备图片数据
+        MimeBodyPart image = new MimeBodyPart();
+        //图片需要经过数据化的处理  DataHandler：数据处理    FileDataSource：加载文件的资源
+        DataHandler dh = new DataHandler(new FileDataSource("D:\\学习资料\\MarkDown学习\\狂神说java\\javaWeb\\功能扩展\\功能扩展.assets\\邮件发送.png"));
+        //在part中放入这个处理的图片数据
+        image.setDataHandler(dh);
+        //给这个part设置一个ID名字
+        image.setContentID("bz.jpg");
+
+        //=================================准备正文数据
+        MimeBodyPart text = new MimeBodyPart();
+        text.setContent("这是一张正文<img src='cid:bz.jpg'>","text/html;charset=UTF-8");
+
+        //=================================准备附件数据
+        MimeBodyPart body1= new MimeBodyPart();
+        body1.setDataHandler(new DataHandler(new FileDataSource("D:\\学习资料\\MarkDown学习\\狂神说java\\javaWeb\\功能扩展\\功能扩展.txt")));
+        body1.setFileName("1.txt");
+
+        //描述数据关系
+        MimeMultipart mm = new MimeMultipart();
+        mm.addBodyPart(body1);
+        mm.addBodyPart(text);
+        mm.addBodyPart(image);
+        mm.setSubType("mixed");
+
+        //设置到消息中，保存修改
+        message.setContent(mm);
+        message.saveChanges();
+
+        /*===========================================*/
+
+        //5.发送邮件
+        ts.sendMessage(message,message.getAllRecipients());
+
+        //6.关闭连接，一切网络都需要关闭
+        ts.close();
+
+    }
+}
+```
 
