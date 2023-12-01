@@ -2,6 +2,135 @@
 
 ## 基础
 
+### 模板语法
+
+#### 动态绑定多个值
+
+如果你有像这样的一个包含多个 attribute 的 JavaScript 对象：
+
+```js
+const objectOfAttrs = {
+  id: 'container',
+  class: 'wrapper'
+}
+```
+
+**通过不带参数的 `v-bind`，你可以将它们绑定到单个元素上：**
+
+```html
+<div v-bind="objectOfAttrs"></div>
+```
+
+### 计算属性
+
+#### 基础示例
+
+模板中的表达式虽然方便，但也只能用来做简单的操作。如果在模板中写太多逻辑，会让模板变得臃肿，难以维护。比如说，我们有这样一个包含嵌套数组的对象：
+
+```js
+const author = reactive({
+  name: 'John Doe',
+  books: [
+    'Vue 2 - Advanced Guide',
+    'Vue 3 - Basic Guide',
+    'Vue 4 - The Mystery'
+  ]
+})
+```
+
+我们想根据 `author` 是否已有一些书籍来展示不同的信息：
+
+```html
+<p>Has published books:</p>
+<span>{{ author.books.length > 0 ? 'Yes' : 'No' }}</span>
+```
+
+这里的模板看起来有些复杂。我们必须认真看好一会儿才能明白它的计算依赖于 `author.books`。更重要的是，如果在模板中需要不止一次这样的计算，我们可不想将这样的代码在模板里重复好多遍。
+
+因此我们推荐使用**计算属性**来描述依赖响应式状态的复杂逻辑。**注意，计算属性返回的是ref**，这是重构后的示例：
+
+```vue
+<script setup>
+import { reactive, computed } from 'vue'
+
+const author = reactive({
+  name: 'John Doe',
+  books: [
+    'Vue 2 - Advanced Guide',
+    'Vue 3 - Basic Guide',
+    'Vue 4 - The Mystery'
+  ]
+})
+
+// 一个计算属性 ref
+const publishedBooksMessage = computed(() => {
+  return author.books.length > 0 ? 'Yes' : 'No'
+})
+</script>
+
+<template>
+  <p>Has published books:</p>
+  <span>{{ publishedBooksMessage }}</span>
+</template>
+```
+
+我们在这里定义了一个计算属性 `publishedBooksMessage`。`computed()` 方法期望接收一个 getter 函数，返回值为一个**计算属性 ref**。和其他一般的 ref 类似，你可以通过 `publishedBooksMessage.value` 访问计算结果。计算属性 ref 也会在模板中自动解包，因此在模板表达式中引用时无需添加 `.value`。
+
+Vue 的计算属性会自动追踪响应式依赖。它会检测到 `publishedBooksMessage` 依赖于 `author.books`，所以当 `author.books` 改变时，任何依赖于 `publishedBooksMessage` 的绑定都会同时更新。
+
+### 条件渲染
+
+#### `<template>` 上的 `v-if`
+
+因为 `v-if` 是一个指令，他必须依附于某个元素。但如果我们想要切换不止一个元素呢？在这种情况下我们可以在一个 `<template>` 元素上使用 `v-if`，这只是一个不可见的包装器元素，最后渲染的结果并不会包含这个 `<template>` 元素。
+
+```html
+<template v-if="ok">
+  <h1>Title</h1>
+  <p>Paragraph 1</p>
+  <p>Paragraph 2</p>
+</template>
+```
+
+`v-else` 和 `v-else-if` 也可以在 `<template>` 上使用。
+
+### 生命周期
+
+每个 Vue 组件实例在创建时都需要经历一系列的初始化步骤，比如设置好数据侦听，编译模板，挂载实例到 DOM，以及在数据改变时更新 DOM。在此过程中，它也会运行被称为生命周期钩子的函数，让开发者有机会在特定阶段运行自己的代码。
+
+![组件生命周期图示](https://cn.vuejs.org/assets/lifecycle.16e4c08e.png)
+
+记住八个生命周期函数
+
+**响应式**
+
+| 函数                         | 对应函数                 |
+| ---------------------------- | ------------------------ |
+| beforeCreate  组件初始化前   | created  组件初始化后    |
+| beforeMount  组件挂载到Dom前 | mounted  组件挂载到Dom后 |
+| beforeUpdate 数据更新前      | updated  数据更新后      |
+| beforeUnmount 组件卸载前     | unmounted  组件卸载后    |
+
+**组合式**
+
+> https://cn.vuejs.org/api/composition-api-lifecycle.html
+
+| 函数                             | 对应函数                    |
+| -------------------------------- | --------------------------- |
+| onBeforeMount()  组件挂载到Dom前 | onMounted() 组件挂载到Dom后 |
+| onBeforeUpdate() 数据更新前      | onUpdated() 数据更新后      |
+| onBeforeUnmount() 组件卸载前     | onUnmounted() 组件卸载后    |
+
+```js
+<script setup>
+    import { onMounted } from 'vue'
+
+    onMounted(() => {
+      console.log(`the component is now mounted.`)
+    })
+</script>
+```
+
 ### 侦听器
 
 #### 基本示例
@@ -391,6 +520,52 @@ export default {
   <h1>{{ msg }}</h1>
 </template>
 ```
+
+#### 异步组件
+
+在大型项目中，我们可能需要拆分应用为更小的块，并仅在需要时再从服务器加载相关组件。Vue 提供了 [`defineAsyncComponent`](https://cn.vuejs.org/api/general.html#defineasynccomponent) 方法来实现此功能：
+
+**也就是说，在需要加载某个组件时再加载，而不是一开始全加载完所有组件**
+
+在单文件组件中使用如下，其他详见官网文档
+
+只需在上节App.vue，更改为如下代码
+
+```vue
+<script>
+  import { defineAsyncComponent } from 'vue'  //需要引入vue中defineAsyncComponent方法
+  import Parent from "@/components/Parent.vue";
+  const Child = defineAsyncComponent(() =>   //固定格式，此时Child组件会在需要它时再加载
+      import('@/components/Child.vue')
+  )
+  export default {
+    data(){
+      return{
+        currentTab:"Parent"
+      }
+    },
+    components:{
+      Parent,
+      Child
+    },
+    methods:{
+      changeCom(){
+        console.log("hhh")
+        this.currentTab= this.currentTab==="Parent"?"Child":"Parent"
+      }
+    }
+  }
+</script>
+
+<template>
+  <KeepAlive>
+    <component :is="currentTab"></component>
+  </KeepAlive>
+  <button @click="changeCom">切换组件</button>
+</template>
+```
+
+
 
 ## 深入组件
 
@@ -1239,3 +1414,565 @@ export default {
   }
 }
 ```
+
+### 依赖注入
+
+其实就是祖先组件如何方便传递数据给后辈组件的问题解决方案
+
+#### Prop 逐级透传问题
+
+通常情况下，当我们需要从父组件向子组件传递数据时，会使用 [props](https://cn.vuejs.org/guide/components/props.html)。想象一下这样的结构：有一些多层级嵌套的组件，形成了一颗巨大的组件树，而某个深层的子组件需要一个较远的祖先组件中的部分数据。在这种情况下，如果仅使用 props 则必须将其沿着组件链逐级传递下去，这会非常麻烦：
+
+![Prop 逐级透传的过程图示](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311231542598.png)
+
+注意，虽然这里的 `<Footer>` 组件可能根本不关心这些 props，但为了使 `<DeepChild>` 能访问到它们，仍然需要定义并向下传递。如果组件链路非常长，可能会影响到更多这条路上的组件。这一问题被称为“prop 逐级透传”，显然是我们希望尽量避免的情况。
+
+`provide` 和 `inject` 可以帮助我们解决这一问题。 [[1\]](https://cn.vuejs.org/guide/components/provide-inject.html#footnote-1) 一个父组件相对于其所有的后代组件，会作为**依赖提供者**。任何后代的组件树，无论层级有多深，都可以**注入**由父组件提供给整条链路的依赖。
+
+![Provide/inject 模式](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202311231542600.png)
+
+#### Provide (提供)
+
+要为组件后代提供数据，需要使用到 [`provide`](https://cn.vuejs.org/api/options-composition.html#provide) 选项：
+
+```js
+export default {
+  provide: {
+    message: 'hello!'
+  }
+}
+```
+
+对于 `provide` 对象上的每一个属性，后代组件会用其 key 为注入名查找期望注入的值，属性的值就是要提供的数据。
+
+如果我们需要提供依赖当前组件实例的状态 (比如那些由 `data()` 定义的数据属性)，那么可以以函数形式使用 `provide`：
+
+```js
+export default {
+  data() {
+    return {
+      message: 'hello!'
+    }
+  },
+  provide() {
+    // 使用函数的形式，可以访问到 `this`
+    return {
+      message: this.message
+    }
+  }
+}
+```
+
+然而，请注意这**不会**使注入保持响应性。我们会在后续小节中讨论如何[让注入转变为响应式](https://cn.vuejs.org/guide/components/provide-inject.html#working-with-reactivity)。
+
+##### 应用层 Provide main.js全局提供
+
+除了在一个组件中提供依赖，我们还可以在整个应用层面提供依赖：
+
+```js
+import { createApp } from 'vue'
+import App from './App.vue';
+
+const app=createApp(App)
+app.provide("message","全局数据")
+app.mount('#app');
+```
+
+在应用级别提供的数据在该应用内的所有组件中都可以注入。这在你编写[插件](https://cn.vuejs.org/guide/reusability/plugins.html)时会特别有用，因为插件一般都不会使用组件形式来提供值。
+
+#### Inject (注入)
+
+要注入上层组件提供的数据，需使用 [`inject`](https://cn.vuejs.org/api/options-composition.html#inject) 选项来声明：
+
+```js
+export default {
+  inject: ['message'],
+  created() {
+    console.log(this.message) // injected value
+  }
+}
+```
+
+注入会在组件自身的状态**之前**被解析，因此你可以在 `data()` 中访问到注入的属性：
+
+```js
+export default {
+  inject: ['message'],
+  data() {
+    return {
+      // 基于注入值的初始数据
+      fullMessage: this.message
+    }
+  }
+}
+```
+
+##### 注入别名
+
+当以数组形式使用 `inject`，注入的属性会以同名的 key 暴露到组件实例上。在上面的例子中，提供的属性名为 `"message"`，注入后以 `this.message` 的形式暴露。访问的本地属性名和注入名是相同的。
+
+如果我们想要用一个不同的本地属性名注入该属性，我们需要在 `inject` 选项的属性上使用对象的形式：
+
+```js
+export default {
+  inject: {
+    /* 本地属性名 */ localMessage: {
+      from: /* 注入来源名 */ 'message'
+    }
+  }
+}
+```
+
+这里，组件本地化了原注入名 `"message"` 所提供的属性，并将其暴露为 `this.localMessage`。
+
+##### 注入默认值
+
+默认情况下，`inject` 假设传入的注入名会被某个祖先链上的组件提供。如果该注入名的确没有任何组件提供，则会抛出一个运行时警告。
+
+如果在注入一个值时不要求必须有提供者，那么我们应该声明一个默认值，和 props 类似：
+
+```js
+export default {
+  // 当声明注入的默认值时
+  // 必须使用对象形式
+  inject: {
+    message: {
+      from: 'message', // 当与原注入名同名时，这个属性是可选的
+      default: 'default value'
+    },
+    user: {
+      // 对于非基础类型数据，如果创建开销比较大，或是需要确保每个组件实例
+      // 需要独立数据的，请使用工厂函数
+      default: () => ({ name: 'John' })
+    }
+  }
+}
+```
+
+##### 和响应式数据配合使用
+
+> 没懂，是保证注入的属性也可以响应式？
+
+为保证注入方和供给方之间的响应性链接，我们需要使用 [computed()](https://cn.vuejs.org/api/reactivity-core.html#computed) 函数提供一个计算属性：
+
+```js
+import { computed } from 'vue'
+
+export default {
+  data() {
+    return {
+      message: 'hello!'
+    }
+  },
+  provide() {
+    return {
+      // 显式提供一个计算属性
+      message: computed(() => this.message)
+    }
+  }
+}
+```
+
+### 异步组件 需要时再加载
+
+#### 基本用法
+
+在大型项目中，我们可能需要拆分应用为更小的块，并仅在需要时再从服务器加载相关组件。Vue 提供了 [`defineAsyncComponent`](https://cn.vuejs.org/api/general.html#defineasynccomponent) 方法来实现此功能：
+
+```js
+import { defineAsyncComponent } from 'vue'
+
+const AsyncComp = defineAsyncComponent(() => {
+  return new Promise((resolve, reject) => {
+    // ...从服务器获取组件
+    resolve(/* 获取到的组件 */)
+  })
+})
+// ... 像使用其他一般组件一样使用 `AsyncComp`
+```
+
+如你所见，`defineAsyncComponent` 方法接收一个返回 Promise 的加载函数。这个 Promise 的 `resolve` 回调方法应该在从服务器获得组件定义时调用。你也可以调用 `reject(reason)` 表明加载失败。
+
+[ES 模块动态导入](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import)也会返回一个 Promise，所以多数情况下我们会将它和 `defineAsyncComponent` 搭配使用。类似 Vite 和 Webpack 这样的构建工具也支持此语法 (并且会将它们作为打包时的代码分割点)，因此我们也可以用它来导入 Vue 单文件组件：
+
+```js
+import { defineAsyncComponent } from 'vue'
+
+const AsyncComp = defineAsyncComponent(() =>
+  import('./components/MyComponent.vue')
+)
+```
+
+最后得到的 `AsyncComp` 是一个外层包装过的组件，仅在页面需要它渲染时才会调用加载内部实际组件的函数。它会将接收到的 props 和插槽传给内部组件，所以你可以使用这个异步的包装组件无缝地替换原始组件，同时实现延迟加载。
+
+与普通组件一样，异步组件可以使用 `app.component()` [全局注册](https://cn.vuejs.org/guide/components/registration.html#global-registration)：
+
+```js
+app.component('MyComponent', defineAsyncComponent(() =>
+  import('./components/MyComponent.vue')
+))
+```
+
+也可以直接在父组件中直接定义它们：
+
+```vue
+<script setup>
+import { defineAsyncComponent } from 'vue'
+
+const AdminPage = defineAsyncComponent(() =>
+  import('./components/AdminPageComponent.vue')
+)
+</script>
+
+<template>
+  <AdminPage />
+</template>
+```
+
+#### 加载与错误状态
+
+异步操作不可避免地会涉及到加载和错误状态，因此 `defineAsyncComponent()` 也支持在高级选项中处理这些状态：
+
+```js
+const AsyncComp = defineAsyncComponent({
+  // 加载函数
+  loader: () => import('./Foo.vue'),
+
+  // 加载异步组件时使用的组件
+  loadingComponent: LoadingComponent,
+  // 展示加载组件前的延迟时间，默认为 200ms
+  delay: 200,
+
+  // 加载失败后展示的组件
+  errorComponent: ErrorComponent,
+  // 如果提供了一个 timeout 时间限制，并超时了
+  // 也会显示这里配置的报错组件，默认值是：Infinity
+  timeout: 3000
+})
+```
+
+如果提供了一个加载组件，它将在内部组件加载时先行显示。在加载组件显示之前有一个默认的 200ms 延迟——这是因为在网络状况较好时，加载完成得很快，加载组件和最终组件之间的替换太快可能产生闪烁，反而影响用户感受。
+
+如果提供了一个报错组件，则它会在加载器函数返回的 Promise 抛错时被渲染。你还可以指定一个超时时间，在请求耗时超过指定时间时也会渲染报错组件。
+
+## 组合式API
+
+### 传递 props 父传子
+
+Props 是一种特别的 attributes，你可以在组件上声明注册。要传递给博客文章组件一个标题，我们必须在组件的 props 列表上声明它。这里要用到 [`defineProps`](https://cn.vuejs.org/api/sfc-script-setup.html#defineprops-defineemits) 宏：
+
+```vue
+<!-- BlogPost.vue -->
+<script setup>
+defineProps(['title'])
+</script>
+
+<template>
+  <h4>{{ title }}</h4>
+</template>
+```
+
+`defineProps` 是一个仅 `<script setup>` 中可用的编译宏命令，并不需要显式地导入。声明的 props 会自动暴露给模板。`defineProps` **会返回一个对象，其中包含了可以传递给组件的所有 props：**
+
+选项式是`props: ['foo']`,其实很类似
+
+```js
+const props = defineProps(['title'])
+console.log(props.title)
+```
+
+#### 静态Props传递示例
+
+父组件：
+
+```vue
+<script setup>
+  import { ref } from 'vue'
+  import AppChild from "@/components/AppChild.vue";
+</script>
+
+<template>
+  <AppChild title="hello"></AppChild>
+</template>
+```
+
+子组件：
+
+```vue
+<template>
+  <h1>{{title}}</h1>
+</template>
+
+<script setup>
+import {ref} from "vue";
+defineProps(['title'])
+</script>
+```
+
+除了使用字符串数组来声明 prop 外，还可以使用对象的形式：
+
+```js
+// 使用 <script setup>
+defineProps({
+  title: String,
+  likes: Number
+})
+```
+
+```js
+// 非 <script setup>
+export default {
+  props: {
+    title: String,
+    likes: Number
+  }
+}
+```
+
+对于以对象形式声明中的每个属性，key 是 prop 的名称，而值则是该 prop 预期类型的构造函数。比如，如果要求一个 prop 的值是 `number` 类型，则可使用 `Number` 构造函数作为其声明的值。
+
+对象形式的 props 声明不仅可以一定程度上作为组件的文档，而且如果其他开发者在使用你的组件时传递了错误的类型，也会在浏览器控制台中抛出警告。
+
+#### 传递 prop 的细节
+
+##### Prop 名字格式
+
+如果一个 prop 的名字很长，应使用 camelCase 形式，因为它们是合法的 JavaScript 标识符，可以直接在模板的表达式中使用，也可以避免在作为属性 key 名时必须加上引号。
+
+```js
+defineProps({
+  greetingMessage: String
+})
+```
+
+```html
+<span>{{ greetingMessage }}</span>
+```
+
+虽然理论上你也可以在向子组件传递 props 时使用 camelCase 形式 (使用 [DOM 内模板](https://cn.vuejs.org/guide/essentials/component-basics.html#in-dom-template-parsing-caveats)时例外)，但实际上为了和 HTML attribute 对齐，我们通常会将其写为 kebab-case 形式：
+
+```html
+<MyComponent greeting-message="hello" />
+```
+
+对于组件名我们推荐使用 [PascalCase](https://cn.vuejs.org/guide/components/registration.html#component-name-casing)，因为这提高了模板的可读性，能帮助我们区分 Vue 组件和原生 HTML 元素。然而对于传递 props 来说，使用 camelCase 并没有太多优势，因此我们推荐更贴近 HTML 的书写风格。
+
+##### 使用一个对象绑定多个 prop
+
+如果你想要将一个对象的所有属性都当作 props 传入，你可以使用[没有参数的 `v-bind`](https://cn.vuejs.org/guide/essentials/template-syntax.html#dynamically-binding-multiple-attributes)，即只使用 `v-bind` 而非 `:prop-name`。例如，这里有一个 `post` 对象：
+
+```js
+const post = {
+  id: 1,
+  title: 'My Journey with Vue'
+}
+```
+
+以及下面的模板：
+
+```html
+<BlogPost v-bind="post" />
+```
+
+而这实际上等价于：
+
+```html
+<BlogPost :id="post.id" :title="post.title" />
+```
+
+#### 动态Prop
+
+至此，你已经见过了很多像这样的静态值形式的 props：
+
+```html
+<BlogPost title="My journey with Vue" />
+```
+
+相应地，还有使用 `v-bind` 或缩写 `:` 来进行动态绑定的 props：
+
+```html
+<!-- 根据一个变量的值动态传入 -->
+<BlogPost :title="post.title" />
+
+<!-- 根据一个更复杂表达式的值动态传入 -->
+<BlogPost :title="post.title + ' by ' + post.author.name" />
+```
+
+
+
+### 事件传递
+
+有时候我们需要在子组件中触发父组件的事件，**子组件可以通过调用内置的 [`$emit` 方法](https://cn.vuejs.org/api/component-instance.html#emit)，通过传入事件名称来抛出一个事件：**
+
+父组件会接收这一抛出事件，调用对应方法
+
+![image-20231201144255538](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202312011442747.png)
+
+注意，使用`defineEmits(['enlarge-text'])`声明需要抛出的事件，这可以对事件的参数进行[验证](https://cn.vuejs.org/guide/components/events.html#validate-emitted-events)。同时，这还可以让 Vue 避免将它们作为原生事件监听器隐式地应用于子组件的根元素。
+
+和 `defineProps` 类似，`defineEmits` 仅可用于 `<script setup>` 之中，并且不需要导入，它返回一个等同于 `$emit` 方法的 `emit` 函数。它可以被用于在组件的 `<script setup>` 中抛出事件，因为此处无法直接访问 `$emit`：
+
+```vue
+<script setup>
+const emit = defineEmits(['enlarge-text'])
+
+emit('enlarge-text')
+</script>
+```
+
+#### 示例
+
+父组件
+
+```vue
+<script setup>
+  import { ref } from 'vue'
+  import AppChild from "@/components/AppChild.vue";
+  const postFontSize = ref(1)
+</script>
+
+<template>
+  <div :style="{ fontSize: postFontSize + 'em' }">
+    <AppChild title="hello" @enlarge-text="postFontSize += 0.1"></AppChild>
+  </div>
+</template>
+```
+
+子组件
+
+```vue
+<template>
+  <h1>{{title}}</h1>
+  <button @click="$emit('enlarge-text')">Enlarge text</button>
+</template>
+
+<script setup>
+import {ref} from "vue";
+defineProps(['title'])
+defineEmits(['enlarge-text'])
+</script>
+```
+
+#### 声明触发的事件 在script标签中向上传递而非template中
+
+组件可以显式地通过 [`defineEmits()`](https://cn.vuejs.org/api/sfc-script-setup.html#defineprops-defineemits) 宏来声明它要触发的事件：
+
+```vue
+<script setup>
+defineEmits(['inFocus', 'submit'])
+</script>
+```
+
+我们在 `<template>` 中使用的 `$emit` 方法不能在组件的 `<script setup>` 部分中使用，但 `defineEmits()` 会返回一个相同作用的函数供我们使用：
+
+```vue
+<script setup>
+const emit = defineEmits(['inFocus', 'submit'])
+
+function buttonClick() {
+  emit('submit')
+}
+</script>
+```
+
+`defineEmits()` 宏**不能**在子函数中使用。如上所示，它必须直接放置在 `<script setup>` 的顶级作用域下。
+
+### 组件注册
+
+一个 Vue 组件在使用前需要先被“注册”，这样 Vue 才能在渲染模板时找到其对应的实现。组件注册有两种方式：全局注册和局部注册。
+
+#### 全局注册
+
+我们可以使用 [Vue 应用实例](https://cn.vuejs.org/guide/essentials/application.html)的 `.component()` 方法，让组件在当前 Vue 应用中全局可用。
+
+```js
+import { createApp } from 'vue'
+
+const app = createApp({})
+
+app.component(
+  // 注册的名字
+  'MyComponent',
+  // 组件的实现
+  {
+    /* ... */
+  }
+)
+```
+
+如果使用单文件组件，你可以注册被导入的 `.vue` 文件：
+
+```js
+import MyComponent from './App.vue'
+
+app.component('MyComponent', MyComponent)
+```
+
+`.component()` 方法可以被链式调用：
+
+```js
+app
+  .component('ComponentA', ComponentA)
+  .component('ComponentB', ComponentB)
+  .component('ComponentC', ComponentC)
+```
+
+全局注册的组件可以在此应用的任意组件的模板中使用：
+
+```html
+<!-- 这在当前应用的任意组件中都可用 -->
+<ComponentA/>
+<ComponentB/>
+<ComponentC/>
+```
+
+所有的子组件也可以使用全局注册的组件，这意味着这三个组件也都可以在*彼此内部*使用。
+
+#### 局部注册
+
+全局注册虽然很方便，但有以下几个问题：
+
+1. 全局注册，但并没有被使用的组件无法在生产打包时被自动移除 (也叫“tree-shaking”)。如果你全局注册了一个组件，即使它并没有被实际使用，它仍然会出现在打包后的 JS 文件中。
+2. 全局注册在大型项目中使项目的依赖关系变得不那么明确。在父组件中使用子组件时，不太容易定位子组件的实现。和使用过多的全局变量一样，这可能会影响应用长期的可维护性。
+
+相比之下，局部注册的组件需要在使用它的父组件中显式导入，并且只能在该父组件中使用。它的优点是使组件之间的依赖关系更加明确，并且对 tree-shaking 更加友好。
+
+在使用 `<script setup>` 的单文件组件中，导入的组件可以直接在模板中使用，无需注册：
+
+```vue
+<script setup>
+import ComponentA from './ComponentA.vue'
+</script>
+
+<template>
+  <ComponentA />
+</template>
+```
+
+如果没有使用 `<script setup>`，则需要使用 `components` 选项来显式注册：
+
+```js
+import ComponentA from './ComponentA.js'
+
+export default {
+  components: {
+    ComponentA
+  },
+  setup() {
+    // ...
+  }
+}
+```
+
+对于每个 `components` 对象里的属性，它们的 key 名就是注册的组件名，而值就是相应组件的实现。上面的例子中使用的是 ES2015 的缩写语法，等价于：
+
+```js
+export default {
+  components: {
+    ComponentA: ComponentA
+  }
+  // ...
+}
+```
+
+请注意：**局部注册的组件在后代组件中并不可用**。在这个例子中，`ComponentA` 注册后仅在当前组件可用，而在任何的子组件或更深层的子组件中都不可用

@@ -734,7 +734,7 @@ methods: {
 
 ### v-for 使用整数值从而重复
 
-`v-for` 也可以接受整数。在这种情况下，它会把模板重复对应次数。
+`v-for` 也可以接受整数。在这种情况下，它会把模板重复对应次数。**在这种用例中，会将该模板基于 `1...n` 的取值范围重复多次。**
 
 ```html
 <div>
@@ -1182,7 +1182,7 @@ v-model会自动监听我们的输入值并赋值给message在页面上予以展
 <textarea v-model="message" placeholder="add multiple lines"></textarea>
 ```
 
-注意在 `<textarea>` 中是不支持插值表达式的。请使用 `v-model` 来替代：注意在 `<textarea>` 中是不支持插值表达式的。请使用 `v-model` 来替代：
+注意在 `<textarea>` 中是不支持插值表达式的。请使用 `v-model` 来替代：
 
 ```html
 <!-- 错误 -->
