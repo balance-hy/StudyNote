@@ -1877,6 +1877,127 @@ function buttonClick() {
 
 `defineEmits()` 宏**不能**在子函数中使用。如上所示，它必须直接放置在 `<script setup>` 的顶级作用域下。
 
+### v-model
+
+`v-model` 可以在组件上使用以实现双向绑定。
+
+首先让我们回忆一下 `v-model` 在原生元素上的用法：
+
+```html
+<input v-model="searchText" />
+```
+
+在代码背后，模板编译器会对 `v-model` 进行更冗长的等价展开。因此上面的代码其实等价于下面这段：
+
+```html
+<input
+  :value="searchText"
+  @input="searchText = $event.target.value"
+/>
+```
+
+而当使用在一个组件上时，`v-model` 会被展开为如下的形式：
+
+```html
+<CustomInput
+  :model-value="searchText"
+  @update:model-value="newValue => searchText = newValue"
+/>
+```
+
+要让这个例子实际工作起来，`<CustomInput>` 组件内部需要做两件事：
+
+1. 将内部原生 `<input>` 元素的 `value` attribute 绑定到 `modelValue` prop
+2. 当原生的 `input` 事件触发时，触发一个携带了新值的 `update:modelValue` 自定义事件
+
+这里是相应的代码：
+
+vue
+
+```vue
+<!-- CustomInput.vue -->
+<script setup>
+defineProps(['modelValue'])
+defineEmits(['update:modelValue'])
+</script>
+
+<template>
+  <input
+    :value="modelValue"
+    @input="$emit('update:modelValue', $event.target.value)"
+  />
+</template>
+```
+
+现在 `v-model` 可以在这个组件上正常工作了：
+
+```html
+<CustomInput v-model="searchText" />
+```
+
+#### `v-model` 的参数
+
+默认情况下，`v-model` 在组件上都是使用 `modelValue` 作为 prop，并以 `update:modelValue` 作为对应的事件。我们可以通过给 `v-model` 指定一个参数来更改这些名字：
+
+```html
+<MyComponent v-model:title="bookTitle" />
+```
+
+在这个例子中，子组件应声明一个 `title` prop，并通过触发 `update:title` 事件更新父组件值：
+
+```vue
+<!-- MyComponent.vue -->
+<script setup>
+defineProps(['title'])
+defineEmits(['update:title'])
+</script>
+
+<template>
+  <input
+    type="text"
+    :value="title"
+    @input="$emit('update:title', $event.target.value)"
+  />
+</template>
+```
+
+#### 多个 `v-model` 绑定
+
+利用刚才在 [`v-model` 参数](https://cn.vuejs.org/guide/components/v-model.html#v-model-arguments)小节中学到的指定参数与事件名的技巧，我们可以在单个组件实例上创建多个 `v-model` 双向绑定。
+
+组件上的每一个 `v-model` 都会同步不同的 prop，而无需额外的选项：
+
+```html
+<UserName
+  v-model:first-name="first"
+  v-model:last-name="last"
+/>
+```
+
+```vue
+<script setup>
+defineProps({
+  firstName: String,
+  lastName: String
+})
+
+defineEmits(['update:firstName', 'update:lastName'])
+</script>
+
+<template>
+  <input
+    type="text"
+    :value="firstName"
+    @input="$emit('update:firstName', $event.target.value)"
+  />
+  <input
+    type="text"
+    :value="lastName"
+    @input="$emit('update:lastName', $event.target.value)"
+  />
+</template>
+```
+
 ### 组件注册
 
 一个 Vue 组件在使用前需要先被“注册”，这样 Vue 才能在渲染模板时找到其对应的实现。组件注册有两种方式：全局注册和局部注册。
