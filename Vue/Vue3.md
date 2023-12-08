@@ -1912,8 +1912,6 @@ function buttonClick() {
 
 这里是相应的代码：
 
-vue
-
 ```vue
 <!-- CustomInput.vue -->
 <script setup>
@@ -1996,6 +1994,58 @@ defineEmits(['update:firstName', 'update:lastName'])
     @input="$emit('update:lastName', $event.target.value)"
   />
 </template>
+```
+
+#### 示例
+
+App.vue
+
+```vue
+<script setup>
+  import { ref } from 'vue'
+  import AppChild from "@/components/AppChild.vue";
+  let searchText=ref('')
+</script>
+
+<template>
+  <div>
+    <AppChild v-model:title="searchText"/>
+    <p>{{searchText}}</p>
+  </div>
+</template>
+```
+
+AppChild.vue
+
+```vue
+<template>
+  <input type="text" :value="title" @input="$emit('update:title',$event.target.value)">
+</template>
+
+<script setup>
+import {ref} from "vue";
+defineProps(['title'])
+defineEmits(['update:title'])
+</script>
+```
+
+上述代码的意思是，将searchText作为值传给searchText组件，给其起别名为title，在AppChild.vue中input的value绑定传递过来的title，同时定义一个事件，在输入时触发update:title方法，并且传出输入的值，这样父组件App.vue中就可以接收到变化的值。从而显示。
+
+当然也可以抽离出来单独写方法
+
+```vue
+<template>
+  <input type="text" :value="title" @input="handle">
+</template>
+
+<script setup>
+import {ref} from "vue";
+const props = defineProps(['title']);
+let $emit = defineEmits(['update:title'])
+function handle(e){
+  $emit('update:title',e.target.value)
+}
+</script>
 ```
 
 ### 组件注册

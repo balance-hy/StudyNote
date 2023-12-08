@@ -163,8 +163,6 @@ public class User {
 
 Data Access Object，数据存取对象，所谓Dao层就是封装对数据库的访问。
 
-UserMapper.xml
-
 ```java
 public interface UserMapper {
     public List<User> getUserList();
