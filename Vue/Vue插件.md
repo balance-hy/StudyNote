@@ -213,7 +213,7 @@ const { increment } = store
 
 ## VueRouter
 
-### 快速入门
+### 快速入门 -vue2
 
 vue-router 是一个插件包，使用前先安装
 
@@ -465,6 +465,63 @@ export default new VueRouter({
 ```
 
 需要注意的是，使用history模式时，需要保证后端服务器能够正确响应路由请求。不然，会出现404错误或者页面无法正常显示的情况。因此，我们需要针对后端服务器进行相应的配置。
+
+### 快速入门 -vue3
+
+main.js
+
+```js
+import { createApp } from 'vue'
+import App from './App.vue';
+import router from "@/router";
+
+const app=createApp(App)
+app.use(router)
+app.mount('#app');
+```
+
+新建router文件夹，文件夹新建index.js作为其配置文件，具体内容如下
+
+```js
+import {createRouter,createWebHashHistory} from "vue-router";
+import Parent from "@/components/Parent.vue";
+import Child from "@/components/Child.vue";
+const routes=[
+    {
+        path:'/child',
+        component:Child
+    },
+    {
+        path:'/parent',
+        component:Parent
+    }
+]
+const router=createRouter({
+    history:createWebHashHistory(),
+    routes
+})
+export default router;
+```
+
+APP.vue
+
+```vue
+<script setup>
+  import { ref } from 'vue'
+  import Child from "@/components/Child.vue";
+  import Parent from "@/components/Parent.vue";
+
+</script>
+
+<template>
+  <div>
+    <h1>router test</h1>
+    <router-link to="/child">Child</router-link>
+    <router-link to="/parent">Parent</router-link>
+    <router-view></router-view>
+  </div>
+</template>
+```
 
 ### 嵌套路由
 
