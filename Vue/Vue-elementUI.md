@@ -1,6 +1,8 @@
-# Vue-element
+# Element-UI
 
-## 创建项目
+## Vue-element
+
+### 创建项目
 
 ```shell
 vue init webpack xxxx
@@ -22,7 +24,7 @@ cnpm install sass-loader node-sass --save-dev #加速
 npm run dev
 ```
 
-## 快速上手
+### 快速上手
 
 删除所有不需要的东西，App.vue如下
 
@@ -231,4 +233,29 @@ new Vue({
   render: h => h(App)//  配置ElementUI。官网拷贝。
 })
 ```
+
+## Element-plus
+
+安装element-plusy以及它的图标库@element-plus/icons-vue
+
+```shell
+pnpm install element-plus @element-plus/icons-vue
+```
+
+使用，在main.ts中引入
+
+```typescript
+import ElementPlus from 'element-plus';
+import 'element-plus/dist/index.css'
+//@ts-ignore
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+
+app.use(ElementPlus, {
+    locale: zhCn
+})
+```
+
+注意要加注释`//@ts-ignore`忽略当前文件ts类型的检测否则有红色提示(打包会失败)
+
+zh-cn.mjs为中文插件
 
