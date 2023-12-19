@@ -938,5 +938,224 @@ resultMap 元素是 MyBatis 中最重要最强大的元素
 </mapper>
 ```
 
+## 日志
 
+### 日志工厂
+
+如果一个数据库操作出现了异常，我们需要排错。日志就是最好的助手！
+曾经：debug、sout
+现在：日志工厂
+
+![image-20231219154116857](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202312191541239.png)
+
+```xml
+<setting name="logImpl" value="STDOUT_LOGGING"/>
+```
+
+value属性只能为以下值：
+
+- SLF4J
+- LOG4J 【掌握】
+- LOG4J2
+- JDK_LOGGING
+- COMMONS_LOGGING
+- STDOUT_LOGGING【掌握】
+- NO_LOGGING
+
+### `STDOUT_LOGGING`—标准日志输出
+
+在核心配置文件中配置日志实现
+
+```xml
+<settings>
+    <!--标准的日志工厂实现-->
+    <setting name="logImpl" value="STDOUT_LOGGING"/>
+</settings>
+```
+
+![image-20231219154741524](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202312191547597.png)
+
+### Log4j
+
+什么是LOG4J
+
+- Log4j是Apache的一个开源项目
+
+- 通过使用Log4j，我们可以控制日志信息输送的目的地是控制台、文件、GUI组件
+
+- 我们可以控制每一条日志的输出格式；
+
+- 通过定义每一条日志信息的级别，我们能够更加细致地控制日志的生成过程。
+
+- 通过**一个配置文件**来灵活地进行配置，而不需要修改应用的代码。
+
+**导包后**在resource目录下新建log4j.properties配置文件
+
+```xml
+<dependency>
+    <groupId>log4j</groupId>
+    <artifactId>log4j</artifactId>
+    <version>1.2.17</version>
+</dependency>
+```
+
+```properties
+#将等级为DEBUG的日志信息输出到console和file这两个目的地，console和file的定义在下面的代码
+log4j.rootLogger=DEBUG,console,file
+
+#控制台输出的相关设置
+log4j.appender.console = org.apache.log4j.ConsoleAppender
+log4j.appender.console.Target = System.out
+log4j.appender.console.Threshold=DEBUG
+log4j.appender.console.layout = org.apache.log4j.PatternLayout
+log4j.appender.console.layout.ConversionPattern=【%c】-%m%n
+
+#文件输出的相关设置
+log4j.appender.file = org.apache.log4j.RollingFileAppender
+log4j.appender.file.File=./log/balance.log
+log4j.appender.file.MaxFileSize=10mb
+log4j.appender.file.Threshold=DEBUG
+log4j.appender.file.layout=org.apache.log4j.PatternLayout
+log4j.appender.file.layout.ConversionPattern=【%p】【%d{yy-MM-dd}】【%c】%m%n
+
+#日志输出级别
+log4j.logger.org.mybatis=DEBUG
+log4j.logger.java.sql=DEBUG
+log4j.logger.java.sql.Statement=DEBUG
+log4j.logger.java.sql.ResultSet=DEBUG
+log4j.logger.java.sql.PreparedStatement=DEBUG
+```
+
+修改mybatis-config.xml
+
+```xml
+<settings>
+    <setting name="logImpl" value="LOG4J"/>
+</settings>
+```
+
+运行并测试
+
+![image-20231219161948003](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202312191619109.png)
+
+![image-20231219162035973](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202312191620973.png)
+
+#### 简单使用
+
+1. 在要使用log4j的类中导入Apache的包
+
+   ```java
+   import org.apache.log4j.Logger;
+   ```
+
+2. 日志对象，参数为当前类的class
+
+   ```java
+   static Logger logger = Logger.getLogger(UserDaoTest.class);
+   ```
+
+3. 使用日志级别
+
+   ```java
+   @Test
+   public void testLog4j(){
+       //相当与sout，但输出的日志级别不同
+       logger.info("info:进入testLog4j");
+       logger.debug("debug:进入了testLog4j");
+       logger.error("error:进入了testLog4j");
+   }
+   
+   //控制台输出：（日志文件中也会添加以下输出）
+   //21:07:25,697  INFO UserDaoTest:63 - info:进入testLog4j
+   21:07:25,702 DEBUG UserDaoTest:64 - debug:进入了testLog4j
+   21:07:25,702 ERROR UserDaoTest:65 - error:进入了testLog4j
+   ```
+
+
+## 分页
+
+为什么要分页？减少数据的处理量
+
+### 使用Limit分页—通过sql实现
+
+```sql
+SELECT * FROM users limit startIndex,pageSize;
+SELECT * FROM users limit 0,2;--从第1行开始(包括第1行)显示2条记录，即(1,2]或[2,2]
+SELECT * FROM users limit 3; --[0,n]显示前3条记录
+```
+
+编写UserMapper接口（方法的参数为Map）
+
+```java
+List<User> getUserByLimit(Map<String,Integer> map);
+```
+
+xml映射文件
+
+```xml
+<select id="getUserByLimit" parameterType="map" resultMap="UserMap">
+    select * from users limit #{startIndex},#{pageSize}
+</select>
+```
+
+测试
+
+```java
+@Test
+public void getUserLimitTest(){
+    SqlSession sqlSession = MybatisUtils.getSqlSession();
+    UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+    HashMap<String, Integer> map = new HashMap<>();
+    map.put("startIndex",0);
+    map.put("pageSize",5);
+    List<User> userByLimit = mapper.getUserByLimit(map);
+    for (User user : userByLimit) {
+        System.out.println(user);
+    }
+    sqlSession.close();
+}
+```
+
+### RowBounds实现分页—了解
+
+**也就是在java代码中控制分页**
+
+UserMapper接口
+
+```java
+List<User> getUserByRowBounds();
+```
+
+UserMapper.xml映射文件
+
+```xml
+<select id="getUserByRowBounds"  resultMap="UserMap">
+    select * from users
+</select>
+```
+
+测试
+
+```java
+@Test
+public void getUserLimitByRowBounds(){
+    SqlSession sqlSession = MybatisUtils.getSqlSession();
+
+    //RowBounds实现分页
+    RowBounds rowBounds = new RowBounds(1, 2);
+
+    List<User>
+        userList=sqlSession.selectList("com.balance.dao.UserMapper.getUserByRowBounds",null,rowBounds);
+    for (User user : userList) {
+        System.out.println(user);
+    }
+    sqlSession.close();
+}
+```
+
+### 分页插件【了解】
+
+MyBatis 分页插件 PageHelper
+
+如何使用----[如何使用分页插件](https://pagehelper.github.io/docs/howtouse/)
 

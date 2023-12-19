@@ -2147,3 +2147,29 @@ export default {
 ```
 
 请注意：**局部注册的组件在后代组件中并不可用**。在这个例子中，`ComponentA` 注册后仅在当前组件可用，而在任何的子组件或更深层的子组件中都不可用
+
+#### 全局注册技巧
+
+可以在components文件夹下新建index.ts文件
+
+```ts
+//引入项目中全部的全局组件
+import SvgIcon from '@/components/SvgIcon/index.vue'
+//全局对象
+const allGlobalComponent: any = { SvgIcon }
+
+export default {
+  install(app: any) {
+    Object.keys(allGlobalComponent).forEach((key) => {
+      app.component(key, allGlobalComponent[key])
+    })
+  },
+}
+```
+
+```ts
+import globalComponent from '@/components'
+app.use(globalComponent)
+```
+
+用插件的方式帮助我们抽离出并简化全局注册代码

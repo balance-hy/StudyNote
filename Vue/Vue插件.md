@@ -574,3 +574,147 @@ export default new VueRouter({
 });
 ```
 
+## axios
+
+### 安装
+
+使用 npm:
+
+```shell
+npm install axios
+```
+
+使用 cdn:
+
+```html
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+```
+
+### 使用
+
+```html
+<div id="vue">
+    <p>{{info.name}}</p>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.14"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="js/index.js"></script>
+<script>
+    let vm=new Vue({
+        el:"#vue",
+        data(){//返回函数，隔离作用域
+            return {
+                info:{//注意，要属性和response.data中一一对应
+                    name:null
+                }
+            }
+        },
+        mounted(){ //钩子函数
+            axios.get('../data.json').then(response=>this.info=response.data);
+        }
+    });
+</script>
+```
+
+### 响应结构
+
+某个请求的响应包含以下信息
+
+```json
+{
+  // `data` 由服务器提供的响应
+  data: {},
+
+  // `status` 来自服务器响应的 HTTP 状态码
+  status: 200,
+
+  // `statusText` 来自服务器响应的 HTTP 状态信息
+  statusText: 'OK',
+
+  // `headers` 服务器响应的头
+  headers: {},
+
+   // `config` 是为请求提供的配置信息
+  config: {},
+ // 'request'
+  // `request` is the request that generated this response
+  // It is the last ClientRequest instance in node.js (in redirects)
+  // and an XMLHttpRequest instance the browser
+  request: {}
+}
+```
+
+使用 `then` 时，你将接收下面这样的响应 :
+
+```js
+axios.get('/user/12345')
+  .then(function(response) {
+    console.log(response.data);
+    console.log(response.status);
+    console.log(response.statusText);
+    console.log(response.headers);
+    console.log(response.config);
+  });
+```
+
+### 二次封装axios
+
+在开发项目的时候避免不了与后端进行交互,因此我们需要使用axios插件实现发送网络请求。
+
+在开发项目的时候，我们经常会把axios进行二次封装。
+
+**目的:**
+
+1. 使用请求拦截器，可以在请求拦截器中处理一些业务(开始进度条、请求头携带公共参数)
+
+2. 使用响应拦截器，可以在响应拦截器中处理一些业务(进度条结束、简化服务器返回的数据、处理http网络错误)
+
+
+在根目录下创建utils/request.ts
+
+```js
+import axios from "axios";
+import { ElMessage } from "element-plus";
+//创建axios实例
+let request = axios.create({
+    baseURL: import.meta.env.VITE_APP_BASE_API,
+    timeout: 5000
+})
+//请求拦截器
+request.interceptors.request.use(config => {
+    return config;
+});
+//响应拦截器
+request.interceptors.response.use((response) => {
+    return response.data;
+}, (error) => {
+    //处理网络错误
+    let msg = '';
+    let status = error.response.status;
+    switch (status) {
+        case 401:
+            msg = "token过期";
+            break;
+        case 403:
+            msg = '无权访问';
+            break;
+        case 404:
+            msg = "请求地址错误";
+            break;
+        case 500:
+            msg = "服务器出现问题";
+            break;
+        default:
+            msg = "无网络";
+
+    }
+    ElMessage({
+        type: 'error',
+        message: msg
+    })
+    return Promise.reject(error);
+});
+export default request;
+```
