@@ -1159,3 +1159,205 @@ MyBatis 分页插件 PageHelper
 
 如何使用----[如何使用分页插件](https://pagehelper.github.io/docs/howtouse/)
 
+## 使用注解开发
+
+#### 面向接口编程
+
+我们之前都学过面向对象编程，也学习过接口，但在真正的开发中，很多时候我们会选择面向接口编程
+
+- 根本原因 : 解耦 , 可拓展 , 提高复用 , 分层开发中 , 上层不用管具体的实现 , 大家都遵守共同的标准 , 使得开发变得容易 , 规范性更好
+
+- 在一个面向对象的系统中，系统的各种功能是由许许多多的不同对象协作完成的。在这种情况下，各个对象内部是如何实现自己的,对系统设计人员来讲就不那么重要了；
+
+- 而各个对象之间的协作关系则成为系统设计的关键。小到不同类之间的通信，大到各模块之间的交互，在系统设计之初都是要着重考虑的，这也是系统设计的主要工作内容。面向接口编程就是指按照这种思想来编程。
+
+
+关于接口的理解
+
+- 接口从更深层次的理解，应是定义（规范，约束）与实现（名实分离的原则）的分离。
+
+- 接口的本身反映了系统设计人员对系统的抽象理解。
+
+- 接口应有两类：
+
+  - 第一类是对一个个体的抽象，它可对应为一个抽象体(abstract class)；
+
+  - 第二类是对一个个体某一方面的抽象，即形成一个抽象面（interface）；
+
+  - 一个体有可能有多个抽象面。抽象体与抽象面是有区别的。
+
+
+三个面向区别
+
+- 面向对象是指，我们考虑问题时，以对象为单位，考虑它的属性及方法 .
+
+- 面向过程是指，我们考虑问题时，以一个具体的流程（事务过程）为单位，考虑它的实现 .
+
+- 接口设计与非接口设计是针对复用技术而言的，与面向对象（过程）不是一个问题.更多的体现就是对系统整体的架构
+
+
+#### 注解-简单使用
+
+UserMapper接口
+
+```java
+@Select("select * from users")
+List<User> getUsers();
+```
+
+核心配置文件中绑定接口
+
+```xml
+<!--绑定接口-->
+<mappers>
+    <mapper class="com.balance.dao.UserMapper"/>
+</mappers>
+```
+
+测试
+
+```java
+@Test
+public void getUsers(){
+    SqlSession sqlSession = MybatisUtils.getSqlSession();
+
+    UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+
+    List<User> userList = mapper.getUsers();
+
+    for (User user : userList) {
+        System.out.println(user);
+    }
+
+    sqlSession.close();
+}
+```
+
+本质：反射机制实现
+
+底层：动态代理
+
+#### Mybatis详细的执行流程（分析源码）
+
+![img](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202312201542242.png)
+
+#### 注解-CRUD
+
+我们可以在工具类MybatisUtil中创建sqlSession对象的时候实现自动提交事务！（但实际上不推荐）
+
+```java
+public static SqlSession getSqlSession() {
+        return sqlSessionFactory.openSession(true); //事务自动提交
+}
+```
+
+接口
+
+```java
+public interface UserMapper {
+    @Select("select * from users")
+    List<User> getUsersAnnotation();
+    
+    //方法存在多个参数，所有的参数前面都要加上@Param("id")
+    @Select("select * from users where id=#{id}")
+    List<User> getUsersByIdAnnotation(@Param("id") int id);
+
+    @Update("update users set name=#{name},password=#{pwd} where id=#{id}")
+    int updateAnnotation(User user);
+    
+    @Insert("insert into users(id,name,password,email,birthday) values(#{id},#{name},#{pwd},#{email},#{birthday})")
+    int addUserAnnotation(User user);
+    
+    @Delete("delete from users where id=#{id}")
+    int deleteUserAnnotation(@Param("id") int id);
+}
+```
+
+配置文件绑定Mapper接口
+
+```xml
+<mappers>
+    <mapper class="com.balance.dao.UserMapper"/>
+</mappers>
+```
+
+测试代码略
+
+#### `@Param`注解
+
+[MyBatis（十五）：@Param()注解 - 谁知道水烫不烫 - 博客园](https://www.cnblogs.com/jmsstudy/p/16695315.html)
+
+为什么要使用`@Param`注解？因为当传递多个参数时，我们无法使用parameterType去指定参数类型（只能指定一个），此时可以封装成map，但每次去封装map无疑很繁琐，而且不一定需要，此时可以用此注解，我们就不需要去写parameterType了。
+
+简单总结一下：
+
+- sql的#{}中的参数就是@Param(“”)中设置的参数，而不是方法的形参
+
+- 传入单个基本类型或String类型的时候，使用不使用@Param()注解都可以。
+
+- 如果参数是 JavaBean ， 则不能使用@Param。
+
+- 需要传入多个参数时，有三种方法：JavaBean、@Param()注解、Map。个人认为优先使用JavaBean，当需要传入的数据较多但又不能完全将JavaBean利用起来的时候使用@Param()注解或Map。
+
+- 单个基本类型，SQL对应的就是形参的名字；使用JavaBean，SQL中对应的就是JavaBean在结果集映射的属性（没有显性映射就是默认的属性）；使用@Param()，SQL中对应的就是@Param()注解中的名字；使用Map，SQL中对应的就是Map的键名。
+
+- 使用@Param()注解的时候，Mapper.xml文件无需再设置parameterType属性。
+
+## Lombok
+
+Lombok项目是一个**java库**，它可以自动插入到编辑器和构建工具中，增强java的性能。不需要再写getter、setter或equals方法，只要有一个注解，你的类就有一个功能齐全的构建器、自动记录变量等等。
+
+> 是一个在Java开发过程中用注解的方式，简化了 JavaBean(实体类) 的编写，避免了冗余和样板式代码而出现的插件，让编写的类更加简洁。
+
+### 使用步骤
+
+1. 在IDEA中安装lombok插件：File —> Settings —> Plugins —> Browse repositories —> 搜索lombok（**新版idea已集成**）
+2. 在pom.xml中导入lombok的maven依赖（包）
+
+3. 在实体类上加注解即可
+
+**常用注解如下：**
+
+- @Data : 自动生成set/get方法，toString方法，equals方法，hashCode方法，不带参数的构造方法
+
+- @NoArgsConstructor/@RequiredArgsConstructor/@AllArgsConstructor
+  自动生成无参/有参构造方法
+
+- @Setter/@Getter : 自动生成set和get方法
+
+- @ToString : 自动生成toString方法
+
+- @EqualsAndHashcode : 从对象的字段中生成hashCode和equals方法
+
+
+**以下为不常用注解：**
+
+- @NonNull : 用在成员方法或者构造方法的参数前面，会自动产生一个关于此参数的非空检查，如果参数为空，则抛出一个空指针异常
+
+- @CleanUp : 自动资源管理：不用再在finally中添加资源的close方法
+
+- @Value : 用于注解final类
+
+- @Builder : 产生复杂的构建器api类
+
+- @SneakyThrows : 异常处理（谨慎使用）
+
+- @Synchronized : 同步方法安全的转化
+
+- @Getter(lazy=true) :
+
+- @Log: 支持各种logger对象，使用时用对应的注解，如：@Log4j
+
+**优点:**
+
+能通过注解的形式自动生成构造器、getter/setter、equals、hashcode、 toString等方法，提高了一定的开发效率
+
+让代码变得简洁，不用过多的去关注相应的方法
+
+属性做修改时，也简化了维护为这些属性所生成的getter/setter方法等
+
+**缺点:**
+
+不支持多种参数构造器的重载
+
+虽然省去了手动创建getter/seter方法的麻烦，但大大降低了源代码的可读性和完整性，降低了阅读源代码的舒适度
