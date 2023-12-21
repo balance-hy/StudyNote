@@ -6,6 +6,12 @@
 
 ### 快速开始
 
+```shell
+npm install pinia
+```
+
+
+
 在src目录下新建store目录，目录中新建index.js（大仓库），和modules目录，该目录存放小仓库
 
 index.js
@@ -573,6 +579,22 @@ export default new VueRouter({
   ]
 });
 ```
+
+### 代码路由跳转-编程导航
+
+除了使用 `<router-link>` 创建 a 标签来定义导航链接，我们还可以借助 router 的实例方法，通过编写代码来实现。
+
+组合式api简单使用
+
+```js
+import { useRouter } from 'vue-router'
+//获取路由器
+let $router = useRouter()
+//跳转
+$router.push('/')
+```
+
+
 
 ## axios
 

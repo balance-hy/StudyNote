@@ -1361,3 +1361,186 @@ Lombok项目是一个**java库**，它可以自动插入到编辑器和构建工
 不支持多种参数构造器的重载
 
 虽然省去了手动创建getter/seter方法的麻烦，但大大降低了源代码的可读性和完整性，降低了阅读源代码的舒适度
+
+## 一对多和多对一查询
+
+### 复杂查询环境搭建
+
+创建示例数据表
+
+```sql
+CREATE TABLE `teacher` (
+   `id` INT(10) NOT NULL,
+   `name` VARCHAR(30) DEFAULT NULL,
+   PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
+
+INSERT INTO teacher(`id`, `name`) VALUES (1, '秦老师');
+
+CREATE TABLE `student` (
+   `id` INT(10) NOT NULL,
+   `name` VARCHAR(30) DEFAULT NULL,
+   `tid` INT(10) DEFAULT NULL,
+   PRIMARY KEY (`id`),
+   KEY `fktid` (`tid`),
+   CONSTRAINT `fktid` FOREIGN KEY (`tid`) REFERENCES `teacher` (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
+
+
+INSERT INTO `student` (`id`, `name`, `tid`) VALUES ('1', '小明', '1');
+INSERT INTO `student` (`id`, `name`, `tid`) VALUES ('2', '小红', '1');
+INSERT INTO `student` (`id`, `name`, `tid`) VALUES ('3', '小张', '1');
+INSERT INTO `student` (`id`, `name`, `tid`) VALUES ('4', '小李', '1');
+INSERT INTO `student` (`id`, `name`, `tid`) VALUES ('5', '小王', '1');
+```
+
+创建pojo类和对应mapper接口
+
+```java
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Teacher {
+    private int id;
+    private String name;
+}
+
+public interface TeacherMapper {
+    Teacher getTeacher(@Param("id") int id);
+}
+
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Student {
+    private int id;
+    private String name;
+
+    //学生需要关联一个老师，注意数据库里是外键的形式，这里是老师类的对象
+    private Teacher teacher;
+}
+
+public interface StudentMapper {
+}
+```
+
+注意*Mapper.xml创建其实和mybatis-config.xml格式差不多
+
+如下只需要更改头部两处`!DOCTYPE configuration`中的configuration和`https://mybatis.org/dtd/mybatis-3-config.dtd`中的config，然后改下面的标签即可
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="">
+
+</mapper>
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<!--核心配置文件-->
+<configuration>
+    
+</configuration>
+```
+
+当Mapper文件过多时，都放在dao层里显然不太合适，在resources目录下新建相同的包名，**注意要一个个建**
+
+![image-20231221162432858](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202312211624443.png)
+
+然后使用时注意在mybatis-config.xml中注册，以TeacherMapper.xml为例**,如果使用resources属性这里的注册也需一个个注册。MyBatis 的 `<mapper>` 元素中的 `resource` 属性不支持通配符**
+
+```xml
+<mappers>
+    <mapper resource="com/balance/dao/TeacherMapper.xml"/>
+</mappers>
+```
+
+或者使用package标签，全部注册。
+
+这种写法可以的原因是当程序运行后，文件会被打包生成到target/classes目录下，也就是说源程序中java目录的包会原封不动输出，而resources目录下的文件会直接放在target/classes目录下，此时若java目录中文件路径和resources目录路径相同，就会合并到同一个路径下。
+
+```xml
+<mappers>
+    <package name="com.balance.dao"/>
+</mappers>
+```
+
+**通常情况下，推荐将 XML Mapper 文件放置在 resources 目录下，因为这是 Maven 和其他构建工具默认会扫描的位置。**
+
+### 多对一
+
+多对一的理解：
+
+- 多个学生对应一个老师
+
+- 如果对于学生这边，就是一个多对一的现象，即从学生这边**关联**一个老师！
+
+
+结果映射（resultMap）：
+
+- association
+
+  - 一个复杂类型的关联；许多结果将包装成这种类型
+  - 嵌套结果映射 —— 关联可以是 resultMap 元素，或是对其它结果映射的引用
+- collection
+  - 一个复杂类型的集合
+  - 嵌套结果映射 —— 集合可以是 resultMap 元素，或是对其它结果映射的引用
+
+**需求：查所有学生的信息以及其对应的老师姓名**
+
+对应sql语句
+
+```sql
+select 
+	s.id AS sid ,
+	s.name AS sname ,
+	t.name AS tname 
+from 
+	student AS s,
+	teacher AS t 
+where s.tid=t.id
+```
+
+#### 法一 子查询
+
+因为student表中存放的是teacher id，而实体类只能建teacher对象，当多对一时，可以考虑使用嵌套查询，首先查询出所有学生信息，然后定义resultMap，在其中使用association标签，指定实体类属性和表字段名，以及指定实体类属性javaType，然后嵌套一个查询teacher的语句。
+
+**也就是先查一张表，用这张表的字段去查另一张表**
+
+```xml
+<select id="getStudent" resultMap="StudentTeacher">
+    select * from student
+</select>
+<resultMap id="StudentTeacher" type="student">
+    <!--复杂的属性，需要单独处理——对象：<association>  集合：<collection>-->
+    <association property="teacher" javaType="teacher" column="tid" select="getTeacher"/>
+</resultMap>
+<select id="getTeacher" resultType="teacher">
+    select * from teacher where id=#{id}
+</select>
+```
+
+#### 法二 联表查询 更直接
+
+可以看到法一是使用了两个查询，如果我们就想写原来的sql语句应该怎么办？这时用到联表查询
+
+```xml
+<select id="getStudent2" resultMap="StudentTeacher2">
+    select s.id as sid, s.name as sname,t.name as tname from student as s,teacher as t where s.tid=t.id
+</select>
+<resultMap id="StudentTeacher2" type="student">
+    <result property="id" column="sid"/>
+    <result property="name" column="sname"/>
+    <association property="teacher" javaType="teacher">
+        <result property="name" column="tname"/>
+    </association>
+</resultMap>
+```
+
+我们从数据库查出三个字段sid，sname，tname，前两个很好对应，但第三个，我们的实体类要求是对象，使用association标签，定义其属性和其javaType，在association标签内用result进行映射。此时association中不需要写column，因为是按照结果去映射。
+
