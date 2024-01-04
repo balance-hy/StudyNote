@@ -1425,14 +1425,14 @@ public interface StudentMapper {
 }
 ```
 
-注意*Mapper.xml创建其实和mybatis-config.xml格式差不多
+**注意Mapper.xml创建其实和mybatis-config.xml格式差不多**
 
 如下只需要更改头部两处`!DOCTYPE configuration`中的configuration和`https://mybatis.org/dtd/mybatis-3-config.dtd`中的config，然后改下面的标签即可
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="">
 
@@ -1543,4 +1543,103 @@ where s.tid=t.id
 ```
 
 我们从数据库查出三个字段sid，sname，tname，前两个很好对应，但第三个，我们的实体类要求是对象，使用association标签，定义其属性和其javaType，在association标签内用result进行映射。此时association中不需要写column，因为是按照结果去映射。
+
+### 一对多
+
+一个老师有多个学生
+
+对应sql
+
+```sql
+SELECT t.id AS tid, t.`name` AS tname, s.id AS sid, s.`name` AS sname
+FROM `teacher` AS t, `student` AS s
+WHERE t.id = s.tid AND t.id = #{tid}
+```
+
+对应实体类
+
+```java
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Student {
+    private int id;
+    private String name;
+
+    private int tid;
+}
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Teacher {
+    private int id;
+    private String name;
+
+    //一个老师有许多学生，所以用集合
+    private List<Student> students;
+}
+```
+
+#### 法一 子查询
+
+先查teacher表，再查student表
+
+```xml
+<select id="getTeacher2" resultMap="TeacherStudent2">
+      select * from teacher where id=#{tid}
+</select>
+<resultMap id="TeacherStudent2" type="teacher">
+    <!--前两个属性字段名一致可以省略-->
+    <collection property="students" column="id" javaType="ArrayList" 			ofType="student" select="getStudentByTid"/>
+</resultMap>
+<select id="getStudentByTid" resultType="student">
+    select * from student where tid=#{tid}
+</select>
+```
+
+#### 法二 联表查询 更直接
+
+```xml
+<select id="getTeacher" resultMap="TeacherStudent">
+    SELECT t.id AS tid, t.`name` AS tname, s.id AS sid, s.`name` AS sname
+    FROM `teacher` AS t, `student` AS s
+    WHERE t.id = s.tid AND t.id = #{tid}
+</select>
+<resultMap id="TeacherStudent" type="teacher">
+    <result property="id" column="tid"/>
+    <result property="name" column="tname"/>
+    <!--
+            javaType=“” 指定属性的类型
+            但因为这里是集合，集合指定泛型信息，使用ofType进行获取
+            这里是集合中一个个值，所以不需要javaType
+        -->
+    <collection property="students" ofType="student">
+        <result property="id" column="sid"/>
+        <result property="name" column="sname"/>
+        <result property="tid" column="tid"/>
+    </collection>
+</resultMap>
+```
+
+## 动态sql
+
+什么是动态SQL：**动态SQL指的是根据不同的查询条件 , 生成不同的Sql语句.**
+
+类似JSTL标签
+
+> 官网描述：
+> MyBatis 的强大特性之一便是它的动态 SQL。如果你有使用 JDBC 或其它类似框架的经验，你就能体会到根据不同条件拼接 SQL 语句的痛苦。例如拼接时要确保不能忘记添加必要的空格，还要注意去掉列表最后一个列名的逗号。利用动态 SQL 这一特性可以彻底摆脱这种痛苦。
+> 虽然在以前使用动态 SQL 并非一件易事，但正是 MyBatis 提供了可以被用在任意 SQL 映射语句中的强大的动态 SQL 语言得以改进这种情形。
+> 动态 SQL 元素和 JSTL 或基于类似 XML 的文本处理器相似。在 MyBatis 之前的版本中，有很多元素需要花时间了解。MyBatis 3 大大精简了元素种类，现在只需学习原来一半的元素便可。MyBatis 采用功能强大的基于 OGNL 的表达式来淘汰其它大部分元素。
+
+- if
+- choose (when, otherwise)
+- trim (where, set)
+- foreach
+
+我们之前写的 SQL 语句都比较简单，如果有比较复杂的业务，我们需要写复杂的 SQL 语句，往往需要拼接，而拼接 SQL ，稍微不注意，由于引号，空格等缺失可能都会导致错误。
+
+那么怎么去解决这个问题呢？这就要使用 mybatis 动态SQL，通过 if, choose, when, otherwise, trim, where, set, foreach等标签，可组合成非常灵活的SQL语句。
+### 环境搭建
 
