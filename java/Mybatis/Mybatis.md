@@ -4,7 +4,7 @@
 
 ### 什么是Mybatis
 
-- MyBatis 是一款优秀的持久层框架，是一个半自动化的 ORM 框架
+- MyBatis 是一款优秀的持久层框架，是一个半自动化的 ORM 框架(ORM 是Object Relational Mapping 的缩写，译为“对象关系映射”框架。 所谓的ORM 框架就是**一种为了解决面向对象与关系型数据库中数据类型不匹配的技术**，)
 
 - 不同于其他的对象关系映射框架，MyBatis 并未将 Java 对象和数据库表关联，而是将 Java 方法与 SQL 语句关联。
 
@@ -1301,7 +1301,7 @@ public interface UserMapper {
 
 - 单个基本类型，SQL对应的就是形参的名字；使用JavaBean，SQL中对应的就是JavaBean在结果集映射的属性（没有显性映射就是默认的属性）；使用@Param()，SQL中对应的就是@Param()注解中的名字；使用Map，SQL中对应的就是Map的键名。
 
-- 使用@Param()注解的时候，Mapper.xml文件无需再设置parameterType属性。
+- **使用@Param()注解的时候，Mapper.xml文件无需再设置parameterType属性。**
 
 ## Lombok
 
@@ -1642,4 +1642,682 @@ public class Teacher {
 
 那么怎么去解决这个问题呢？这就要使用 mybatis 动态SQL，通过 if, choose, when, otherwise, trim, where, set, foreach等标签，可组合成非常灵活的SQL语句。
 ### 环境搭建
+
+数据库表
+
+```sql
+CREATE TABLE `blog` (
+`id` varchar(50) NOT NULL COMMENT '博客id',
+`title` varchar(100) NOT NULL COMMENT '博客标题',
+`author` varchar(30) NOT NULL COMMENT '博客作者',
+`create_time` datetime NOT NULL COMMENT '创建时间',
+`views` int(30) NOT NULL COMMENT '浏览量'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+```
+
+创建Mybatis基础工程
+
+![image-20240105160754747](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401051607933.png)
+
+IDutil工具类
+
+```java
+public class IDUtils {
+    //使用UUID来获取不同的id，因为生成的是-分隔，所以替换成不分割
+    public static String getId(){
+        return UUID.randomUUID().toString().replaceAll("-","");
+    }
+}
+```
+
+实体类编写 
+
+注意：Date类为`java.util.Date`，不是`java.sql.Date`
+
+```java
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Blog {
+    private String id;
+    private String title;
+    private String author;
+    private Date createTime;//属性名和字段名不一致，驼峰和下划线转化可以在 mybatis-config中开启设置
+    private int views;
+}
+```
+
+编写Mapper接口及xml文件
+
+BlogMapper
+
+```java
+public interface BlogMapper {
+}
+```
+
+BlogMapper.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.balance.dao.BlogMapper">
+
+</mapper>
+```
+
+mybatis核心配置文件，**下划线驼峰自动转换**
+
+```xml
+<settings>
+   <setting name="mapUnderscoreToCamelCase" value="true"/>
+</settings>
+```
+
+### if标签
+
+使用动态 SQL 最常见情景是根据条件包含 where 子句的一部分。
+
+**也就是说，如果我们要按不同条件查询，比如作者，出版社，我们可以仅写一条查询语句，在其中嵌套多个if，从而实现需求，而不用写多个方法。**
+
+接口
+
+```java
+public interface BlogMapper {
+    //int addBlog(Blog blog);
+
+    List<Blog> queryBlogIf(Map map);
+}
+```
+
+BlogMapper.xml,**注意此处拼接 where 1=1，这样方便一点**
+
+```xml
+<select id="queryBlogIf" parameterType="map" resultType="blog">
+    select * from blog where 1=1
+    <if test="title != null">
+        and title=#{title}
+    </if>
+    <if test="author != null">
+        and author=#{author}
+    </if>
+</select>
+```
+
+测试
+
+```java
+public class BlogTest {
+    @Test
+    public void queryIf(){
+        SqlSession sqlSession = MybatisUtils.getSqlSession();
+        BlogMapper mapper = sqlSession.getMapper(BlogMapper.class);
+        HashMap<String, Object> map = new HashMap<>();
+        //map.put("title","Java如此简单");
+        map.put("author","狂神说");
+        List<Blog> blogs = mapper.queryBlogIf(map);
+        for (Blog blog : blogs) {
+            System.out.println(blog);
+        }
+        sqlSession.close();
+    }
+}
+```
+
+如果我们只传title或者author，就只查title或者author，如果一起传，就查满足两个条件所有的。
+
+### choose（when、otherwise）
+
+有时候，我们不想使用所有的条件，而只是想从多个条件中选择一个使用。针对这种情况，MyBatis 提供了 choose 元素，它有点像 Java 中的 switch 语句。
+
+还是上面的例子，但是策略变为：传入了 “title” 就按 “title” 查找，传入了 “author” 就按 “author” 查找的情形。
+
+如果两者都没有提供就使用otherwise中的语句
+
+接口
+
+```java
+List<Blog> queryBlogChoose(Map map);
+```
+
+BlogMapper.xml,这里没有where 1=1 了使用 `where`标签代替
+
+```xml
+<select id="queryBlogChoose" parameterType="map" resultType="blog">
+    select * from blog
+    <where>
+        <choose>
+            <when test="title != null">
+                title=#{title}
+            </when>
+            <when test="author != null">
+                author=#{author}
+            </when>
+            <otherwise>
+                views=#{views}
+            </otherwise>
+        </choose>
+    </where>
+</select>
+```
+
+测试
+
+```java
+@Test
+public void queryChoose(){
+    SqlSession sqlSession = MybatisUtils.getSqlSession();
+    BlogMapper mapper = sqlSession.getMapper(BlogMapper.class);
+    HashMap hashMap = new HashMap();
+    //hashMap.put("title","Java如此简单");
+    hashMap.put("author","狂神说");
+    List<Blog> blogs = mapper.queryBlogChoose(hashMap);
+    for (Blog blog : blogs) {
+        System.out.println(blog);
+    }
+}
+```
+
+### trim（where，set）
+
+> https://mybatis.org/mybatis-3/zh_CN/dynamic-sql.html
+
+#### where
+
+- *where* 元素只会在子元素返回任何内容的情况下才插入 “WHERE” 关键字。
+- 若子句的开头为 “AND” 或 “OR”，*where* 元素也会视情况将它们去除或保留。
+
+上面的意思就是where标签只有后面有语句才会有where字样，否则最终sql语句自动去掉。
+
+而且，当后面有语句比如只有一句会把多余的and去掉
+
+where在上面已经演示过了，这里说一下不使用where标签的问题，比如if标签中演示的sql语句没有1=1
+
+```xml
+<select id="queryBlogIf" parameterType="map" resultType="blog">
+    select * from blog 
+    where
+    <if test="title != null">
+        and title=#{title}
+    </if>
+    <if test="author != null">
+        and author=#{author}
+    </if>
+</select>
+```
+
+如果什么都没匹配，或匹配到一个，语句会变成
+
+```sql
+select * from blog where
+select * from blog where and title=#{title}
+```
+
+都会导致出错,使用where标签，上述sql应该改为
+
+```xml
+<select id="queryBlogIf" parameterType="map" resultType="blog">
+    select * from blog 
+    <where>
+        <if test="title != null">
+            title=#{title}
+        </if>
+        <if test="author != null">
+            and author=#{author}
+        </if>
+    </where>
+</select>
+```
+
+#### set update
+
+*set* 元素会动态地在行首插入 SET 关键字，并会删掉额外的逗号（这些逗号是在使用条件语句给列赋值时引入的）。
+
+接口
+
+```java
+int updateSet(Map map);
+```
+
+BlogMapper.xml
+
+```xml
+<update id="updateSet" parameterType="map">
+    update blog
+    <set>
+        <if test="author != null">
+            author = #{author},
+        </if>
+        <if test="title != null">
+            title =#{title}
+        </if>
+    </set>
+    where id=#{id}
+</update>
+```
+
+测试
+
+```java
+@Test
+public void updateSetTest(){
+    SqlSession sqlSession = MybatisUtils.getSqlSession();
+    BlogMapper mapper = sqlSession.getMapper(BlogMapper.class);
+    HashMap hashMap = new HashMap();
+    //hashMap.put("title","Java如此简单2");
+    hashMap.put("author","狂神说2");
+    hashMap.put("id","208d60ebd16b40bcb71a6317320d50c5");
+    int i = mapper.updateSet(hashMap);
+    System.out.println(i);
+    sqlSession.commit();
+    sqlSession.close();
+}
+```
+
+可以看到即使我们只写了author，也不会因为多一个逗号而出错
+
+#### trim
+
+where和set都可以被trim代替
+
+```xml
+<trim prefix="WHERE" prefixOverrides="AND |OR ">
+  ...
+</trim>
+```
+
+```xml
+<trim prefix="SET" suffixOverrides=",">
+  ...
+</trim>
+```
+
+###  sql片段
+
+将需要重复编写的sql片段提取出来方便复用
+
+以if标签中语句为例，首先抽取出来 
+
+```xml
+<sql id="if-title-author">
+    <if test="title != null">
+        and title=#{title}
+    </if>
+    <if test="author != null">
+        and author=#{author}
+    </if>
+</sql>
+```
+
+在sql语句中用include标签进行引用即可
+
+```xml
+<select id="queryBlogIf" parameterType="map" resultType="blog">
+    select * from blog
+    <where>
+        <include refid="if-title-author"/>
+    </where>
+</select>
+```
+
+**注意事项**
+
+* 尽量封装简单的单表语句
+* 不要在其中使用where标签
+
+### Foreach标签
+
+也就是遍历传入的集合，一般用于 in 或者 or 或者 and 之类
+
+```xml
+<select id="selectPostIn" resultType="domain.blog.Post">
+  SELECT *
+  FROM POST P
+  <where>
+    <foreach item="item" index="index" collection="list"
+        open="ID in (" separator="," close=")" nullable="true">
+          #{item}
+    </foreach>
+  </where>
+</select>
+```
+
+*foreach* 元素的功能非常强大，它允许你指定一个集合，声明可以在元素体内使用的集合项（item）和索引（index）变量。它也允许你指定开头与结尾的字符串以及集合项迭代之间的分隔符
+
+**比如如下sql语句**
+
+```sql
+select * from blog where id=1 or id=2 or id=3
+```
+
+接口
+
+```java
+List<Blog> queryForeach(Map map);
+```
+
+BlogMappepr.xml
+
+```xml
+<select id="queryForeach" parameterType="map" resultType="blog">
+    select * from blog
+    <where>
+        <foreach collection="ids" item="id" index="index" open="(" separator="or" 			close=")">
+            id=#{id}
+        </foreach>
+    </where>
+</select>
+```
+
+测试
+
+```java
+@Test
+public void queryForeach(){
+    SqlSession sqlSession = MybatisUtils.getSqlSession();
+    BlogMapper mapper = sqlSession.getMapper(BlogMapper.class);
+    HashMap map = new HashMap();
+    ArrayList ids = new ArrayList();
+    ids.add("208d60ebd16b40bcb71a6317320d50c5");
+    ids.add("6daeb9c67ea04b57bc1c92cb29ad25f7");
+    ids.add("b8e435d9bb0942c28ebca07b6600b079");
+    map.put("ids",ids);
+    List<Blog> blogs = mapper.queryForeach(map);
+    for (Blog blog : blogs) {
+    System.out.println(blog);
+    }
+    sqlSession.close();
+}
+```
+
+## 缓存
+
+### 简介
+
+1. 什么是缓存 [ Cache ]？
+   * 存在内存中的临时数据。
+   * 将用户经常查询的数据放在缓存（内存）中，用户去查询数据就不用从磁盘上(关系型数据库数据文件)查询，从缓存中查询，从而提高查询效率，解决了高并发系统的性能问题。
+
+2. 为什么使用缓存？
+   * 减少和数据库的交互次数，减少系统开销，提高系统效率。
+
+3. 什么样的数据能使用缓存？
+   * 经常查询并且不经常改变的数据。
+     
+
+### Mybatis缓存
+
+* MyBatis包含一个非常强大的查询缓存特性，它可以非常方便地定制和配置缓存。缓存可以极大的提升查询效率。
+
+* MyBatis系统中默认定义了两级缓存：一级缓存和二级缓存
+
+  * **默认情况下，只有一级缓存开启**。（SqlSession级别的缓存，也称为本地缓存）
+
+  * 二级缓存需要手动开启和配置，他是基于namespace级别的缓存。
+
+  * 为了提高扩展性，MyBatis定义了缓存接口Cache。我们可以通过实现Cache接口来自定义二级缓存
+
+#### 一级缓存
+
+一级缓存也叫***本地(会话)缓存***：
+
+- 与数据库同一次会话(sqlSession)期间查询到的数据会放在本地缓存中。
+- 以后如果需要获取相同的数据，直接从缓存中拿，没必须再去查询数据库；
+
+**测试步骤：**
+
+* 开启日志
+  * `<setting name="logImpl" value="STDOUT_LOGGING"/>`
+* 测试
+
+```java
+@Test
+public void test(){
+    SqlSession sqlSession = MybatisUtils.getSqlSession();
+    BlogMapper mapper = sqlSession.getMapper(BlogMapper.class);
+    Blog blog=mapper.queryBlogById("208d60ebd16b40bcb71a6317320d50c5");
+    System.out.println(blog);
+    System.out.println("====================================");
+    Blog blog2=mapper.queryBlogById("208d60ebd16b40bcb71a6317320d50c5");
+    System.out.println(blog2);
+    
+    sqlSession.close();
+}
+```
+
+![image-20240106163554793](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401061635020.png)
+
+可以看到sql语句实际上只执行了一次。
+
+**注意一级缓存是SqlSession级别的缓存，是一直开启的，我们关闭不了它；**
+
+一级缓存失效情况：
+
+* 查询不同的记录
+
+* 增删改操作，**可能会改变**原来的数据，所以**必定会刷新**缓存！
+
+* 查询不同的Mapper.xml
+
+* **手动清理缓存！**`sqlSession.clearCache();`
+
+![image-20240106164153596](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401061641847.png)
+
+#### 二级缓存
+
+二级缓存也叫全局缓存，一级缓存作用域太低了，所以诞生了二级缓存
+
+基于namespace级别的缓存，一个名称空间，对应一个二级缓存；
+
+工作机制
+
+* 一个会话查询一条数据，这个数据就会被放在当前会话的一级缓存中；
+
+* 如果当前会话关闭了，这个会话对应的一级缓存就没了；但是我们想要的是，会话关闭了，一级缓存中的数据被保存到二级缓存中；
+
+* 新的会话查询信息，就可以从二级缓存中获取内容；
+
+* 不同的mapper查出的数据会放在自己对应的缓存（map）中；
+
+**开启二级缓存**
+
+在mybatis-config.xml中显式开启全局缓存
+
+```xml
+<!--显式开启全局缓存-->
+<setting name="cacheEnabled" value="true"/>
+```
+
+在去每个需要缓存的mapper.xml中加上
+
+```xml
+<!--在当前mapper中使用二级缓存-->
+<cache/>
+```
+
+```xml
+官方示例=====>查看官方文档
+<cache
+ eviction="FIFO"
+ flushInterval="60000"
+ size="512"
+ readOnly="true"/>
+这个更高级的配置创建了一个 FIFO 缓存，每隔 60 秒刷新，最多可以存储结果对象或列表的 512 个引用，而且返回的对象被认为是只读的，因此对它们进行修改可能会在不同线程中的调用者产生冲突。
+```
+
+一共有四种缓存策略，详见官方文档
+
+测试
+
+**注意实体类需要序列化**
+
+![image-20240106170304510](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401061703259.png)
+
+为什么是false?
+
+因为我们未设置readOnly属性，默认是false，即缓存给的值是拷贝值，所以两个blog判断为false
+
+#### 缓存原理
+
+缓存顺序：
+
+1. 先看二级缓存中有没有
+
+2. 再看一级缓存中有没有
+3. 查询数据库
+
+注：一二级缓存都没有，查询数据库，查询后将数据放入一级缓存
+
+![img](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401061758391.png)
+
+#### 自定义缓存 ehcache
+
+介绍：
+
+- EhCache 是一个纯Java的进程内缓存框架，具有快速、精干等特点，是Hibernate（已淘汰）中默认的CacheProvider
+- Ehcache是一种广泛使用的开源Java分布式缓存。主要面向通用缓存
+- Enchache可以使用配置文件`ehcache.xml`
+
+**使用方法**
+
+要在应用程序中使用Ehcache，需要引入依赖的jar包
+
+```xml
+<!-- https://mvnrepository.com/artifact/org.mybatis.caches/mybatis-ehcache -->
+<dependency>
+    <groupId>org.mybatis.caches</groupId>
+    <artifactId>mybatis-ehcache</artifactId>
+    <version>1.2.3</version>
+</dependency>
+```
+
+配置mapper中cache type
+
+```xml
+<mapper namespace = "com.kuang.dao.UserMapper" >
+    <!--开启ehcache缓存-->
+    
+    <!-- 以下两个<cache>标签二选一,第一个可以输出日志,第二个不输出日志 -->
+    <cache type="org.mybatis.caches.ehcache.LoggingEhcache" />
+
+    <cache type="org.mybatis.caches.ehcache.EhcacheCache"/>
+</mapper>
+```
+
+加入Ehcache的配置文件
+
+在src/main/resources/下创建编写ehcache.xml文件，如果在加载时未找到ehcache.xml资源或出现问题，则将使用默认配置。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd"
+        updateCheck="false">
+   <!--
+      diskStore：为缓存路径，ehcache分为内存和磁盘两级，此属性定义磁盘的缓存位置。参数解释如下：
+      user.home – 用户主目录
+      user.dir – 用户当前工作目录
+      java.io.tmpdir – 默认临时文件路径
+    -->
+   <diskStore path="./tmpdir/Tmp_EhCache"/>
+   
+   <defaultCache
+           eternal="false"
+           maxElementsInMemory="10000"
+           overflowToDisk="false"
+           diskPersistent="false"
+           timeToIdleSeconds="1800"
+           timeToLiveSeconds="259200"
+           memoryStoreEvictionPolicy="LRU"/>
+
+   <cache
+           name="cloud_user"
+           eternal="false"
+           maxElementsInMemory="5000"
+           overflowToDisk="false"
+           diskPersistent="false"
+           timeToIdleSeconds="1800"
+           timeToLiveSeconds="1800"
+           memoryStoreEvictionPolicy="LRU"/>
+   <!--
+      defaultCache：默认缓存策略，当ehcache找不到定义的缓存时，则使用这个缓存策略。只能定义一个。
+    -->
+   <!--
+     name:缓存名称。
+     maxElementsInMemory:缓存最大数目
+     maxElementsOnDisk：硬盘最大缓存个数。
+     eternal:对象是否永久有效，一但设置了，timeout将不起作用。
+     overflowToDisk:是否保存到磁盘，当系统宕机时
+     timeToIdleSeconds:设置对象在失效前的允许闲置时间（单位：秒）。仅当eternal=false对象不是永久有效时使用，可选属性，默认值是0，也就是可闲置时间无穷大。
+     timeToLiveSeconds:设置对象在失效前允许存活时间（单位：秒）。最大时间介于创建时间和失效时间之间。仅当eternal=false对象不是永久有效时使用，默认是0.，也就是对象存活时间无穷大。
+     diskPersistent：是否缓存虚拟机重启期数据 Whether the disk store persists between restarts of the Virtual Machine. The default value is false.
+     diskSpoolBufferSizeMB：这个参数设置DiskStore（磁盘缓存）的缓存区大小。默认是30MB。每个Cache都应该有自己的一个缓冲区。
+     diskExpiryThreadIntervalSeconds：磁盘失效线程运行时间间隔，默认是120秒。
+     memoryStoreEvictionPolicy：当达到maxElementsInMemory限制时，Ehcache将会根据指定的策略去清理内存。默认策略是LRU（最近最少使用）。你可以设置为FIFO（先进先出）或是LFU（较少使用）。
+     clearOnFlush：内存数量最大时是否清除。
+     memoryStoreEvictionPolicy:可选策略有：LRU（最近最少使用，默认策略）、FIFO（先进先出）、LFU（最少访问次数）。
+     FIFO，first in first out，这个是大家最熟的，先进先出。
+     LFU， Less Frequently Used，就是上面例子中使用的策略，直白一点就是讲一直以来最少被使用的。如上面所讲，缓存的元素有一个hit属性，hit值最小的将会被清出缓存。
+     LRU，Least Recently Used，最近最少使用的，缓存的元素有一个时间戳，当缓存容量满了，而又需要腾出地方来缓存新的元素的时候，那么现有缓存元素中时间戳离当前时间最远的元素将被清出缓存。
+  -->
+
+</ehcache>
+```
+
+自己自定义缓存，实现cache接口
+
+```java
+package com.kuang.pojo;
+
+import org.apache.ibatis.cache.Cache;
+
+import java.util.concurrent.locks.ReadWriteLock;
+
+public class MyCache implements Cache {
+    @Override
+    public String getId() {
+        return null;
+    }
+
+    @Override
+    public void putObject(Object key, Object value) {
+
+    }
+
+    @Override
+    public Object getObject(Object key) {
+        return null;
+    }
+
+    @Override
+    public Object removeObject(Object key) {
+        return null;
+    }
+
+    @Override
+    public void clear() {
+
+    }
+
+    @Override
+    public int getSize() {
+        return 0;
+    }
+
+    @Override
+    public ReadWriteLock getReadWriteLock() {
+        return null;
+    }
+}
+```
+
+配置mapper中cache type
+
+```xml
+<mapper namespace = "com.kuang.pojo.UserMapper" >
+      <cache type="com.kuang.pojo.MyCache"/>
+</mapper>
+```
 
