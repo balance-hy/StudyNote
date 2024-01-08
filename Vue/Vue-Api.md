@@ -349,6 +349,10 @@ var app6 = new Vue({
   - [数据绑定语法- 插值](https://v2.cn.vuejs.org/v2/guide/syntax.html#插值)
   - [组件 - 对低开销的静态组件使用 `v-once`](
 
+### v-show
+
+基于表达式值的真假性，来改变元素的可见性。
+
 ## DOM
 
 ### el
@@ -573,3 +577,16 @@ var app6 = new Vue({
 </div>
 ```
 
+#### nextTick()[](https://cn.vuejs.org/api/general.html#nexttick)
+
+等待下一次 DOM 更新刷新的工具方法。
+
+- **类型**
+
+  ```ts
+  function nextTick(callback?: () => void): Promise<void>
+  ```
+
+- **详细信息**
+
+  当你在 Vue 中更改响应式状态时，最终的 DOM 更新并不是同步生效的，而是由 Vue 将它们缓存在一个队列中，直到下一个“tick”才一起执行。这样是为了确保每个组件无论发生多少状态改变，都仅执行一次更新。

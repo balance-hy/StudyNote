@@ -1,3 +1,27 @@
+## Vite
+
+### [在配置中使用环境变量](https://cn.vitejs.dev/config/#using-environment-variables-in-config)
+
+环境变量通常可以从 `process.env` 获得。
+
+注意 Vite 默认是不加载 `.env` 文件的，因为这些文件需要在执行完 Vite 配置后才能确定加载哪一个，举个例子，`root` 和 `envDir` 选项会影响加载行为。不过当你的确需要时，**你可以使用 Vite 导出的 `loadEnv` 函数来加载指定的 `.env` 文件。**
+
+```js
+import { defineConfig, loadEnv } from 'vite'
+
+export default defineConfig(({ command, mode }) => {
+  // 根据当前工作目录中的 `mode` 加载 .env 文件
+  // 设置第三个参数为 '' 来加载所有环境变量，而不管是否有 `VITE_` 前缀。
+  const env = loadEnv(mode, process.cwd(), '')
+  return {
+    // vite 配置
+    define: {
+      __APP_ENV__: JSON.stringify(env.APP_ENV),
+    },
+  }
+})
+```
+
 ## pinia
 
 集中式管理状态容器，用于任意组件间通信，其实就是给定了一个全局的仓库存储状态，组件访问这些状态即可

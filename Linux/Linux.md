@@ -275,10 +275,6 @@ sync
 
 这些方法中的任何一个都可以用来注销当前用户的会话，**并返回到登录界面或切换到另一个用户**。注销用户会话是确保系统安全性和用户隐私的重要步骤。请确保在注销前保存了未保存的工作，以防止数据丢失。
 
-#### pwd 显示目录
-
-显示当前目录 print work directory
-
 ### 网络
 
 #### ip 地址
@@ -349,6 +345,139 @@ userdel -r 用户名
 who am i
 ```
 
+### 文件目录指令
+
+#### ls
+
+列出当前目录下文件
+
+注意，linux中隐藏文件以 `.`开头，但普通ls不会列出隐藏文件
+
+```bash
+ls -a #列出所有文件，包括隐藏文件
+ls -l #按行显示
+
+ls -la
+```
+
+这些后缀参数都可以一起使用无所谓先后
+
+#### pwd 显示目录
+
+显示当前目录 print work directory
+
+#### cd 切换目录
+
+`cd ~`:回到用户目录
+
+`cd -`:根目录
+
+`cd ..`上一级目录
+
+#### mkdir 创建目录
+
+创建一个目录 `mkdir 目录名`
+
+注意有时候你或许这样使用 `mkdir hello.txt`实际上创建出来的不是txt，而是目录名为hello.txt的目录
+
+![image-20240108183134253](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401081831597.png)
+
+创建多级目录`mkdir -p 目录名/目录名....`
+
+也可以指定创建的位置`mkdir -p hello/hhh/hh`,这将在hello下创建hhh，在hhh下创建hh目录
+
+**当你执行 `mkdir hello/hhh/hh` 这样的命令时，系统会按照路径的层次结构逐级创建目录，如果其中某个目录不存在的话。**
+
+#### rmdir 删除空目录
+
+`rmdir 目录名`
+
+`rm -rf` 删除非空目录
+
+#### touch 创建空文件
+
+```
+touch 文件名
+```
+
+#### cp 拷贝
+
+拷贝文件到指定目录
+
+```
+cp [选项] source dest
+
+-r :递归复制整个文件夹
+source:源文件
+dest：目标目录
+```
+
+![image-20240108184831438](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401081848347.png)
+
+强制覆盖所有文件不提示`\cp -r xxx  xxx`
+
+#### rm 删除
+
+删除一个文件/目录：`rm /home/hello.txt`
+删除整个文件夹：`rm -rf /home/hello.txt`
+
+```
+-r 递归删除整个文件夹
+-f 强制删除不提示
+```
+
+#### mv 移动文件/目录 重命名
+
+重命名：`mv oldNameFile newNameFile`
+
+**注意重命名也可以更改文件后缀**
+
+移动文件/目录：`mv 文件 新目录`
+
+**注意此时若指定新目录下文件名称，也会执行重命名功能**
+
+#### cat 查看文件
+
+`cat 文件名`
+
+若要带上行号`cat -n 文件名`，可以和管道命名 more 合用
+
+管道命令：前面命令的结果作为管道命令的输入 `cat -n 文件名 | more`
+
+**按“Enter”表示显示下一行，“空格”表示翻一页**
+
+#### more 查看文件
+
+more即可和cat等指令一起使用，也可以单独使用，但more无选项显示行号
+
+`more 文件名`
+
+![image-20240108191406398](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401081914794.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### 其他
 
 #### clear
@@ -370,23 +499,6 @@ help 指令名
 ```
 
 显示指令的帮助文档（英文）
-
-#### ls
-
-列出当前目录下文件
-
-注意，linux中隐藏文件以 `.`开头，但普通ls不会列出隐藏文件
-
-```bash
-ls -a #列出所有文件，包括隐藏文件
-ls -l #按行显示
-
-ls -la
-```
-
-这些后缀参数都可以一起使用无所谓先后
-
-
 
 ## vi 和 vim
 

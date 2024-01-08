@@ -625,7 +625,11 @@ background: linear-gradient(45deg, rgb(118, 201, 255), rgb(247, 255, 222));
 
 **em相对于父元素，rem相对于根元素**
 
+### vertical-align
 
+>https://zhuanlan.zhihu.com/p/28626505?utm_medium=social
+
+主要用于内联元素垂直方向上对齐
 
 ## 变量
 
