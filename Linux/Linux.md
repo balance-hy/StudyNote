@@ -454,23 +454,144 @@ more即可和cat等指令一起使用，也可以单独使用，但more无选项
 
 ![image-20240108191406398](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401081914794.png)
 
+#### less 查看大文件较好
 
+less指令在显示文件内容时，并不是一次将整个文件加载之后再显示，而是根据显示需要加载内容
 
+![image-20240109184919271](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401091849672.png)
 
+#### head 显示文件的开头部分
 
+默认情况下head指令显示文件的前10行内容
 
+```shell
+head 文件	#查看文件头10行内容
+head -n 5 文件 #查看文件头5行内容，5可以是任意行数
+```
 
+#### tail 显示文件尾部内容
 
+默认情况下tail指令显示文件的后10行内容
 
+```shell
+tail 文件	#查看文件后10行内容
+tail -n 5 文件	#查看文件后5行内容，5可以是任意行数
+```
 
+`tail -f 文件`**实时追踪该文档的所有更新，工作经常使用**
 
+#### **echo 输入内容到控制台**
 
+```shell
+echo [选项] [输出内容]
+echo $PATH 
+echo $HOSTNAME
+```
 
+写shell脚本时往往会用到 echo 进行输出比如 echo "hello world"
 
+#### `>`(输出重定向)和`>>`(追加)指令
 
+举个例子，一般输出
 
+```shell
+echo $PATH 
+```
 
+会输出显示到控制台，而
 
+```shell
+echo $PATH > hello.txt
+```
+
+现在会将$PATH写入hello.txt且为**覆盖写**
+
+`>>`这个是追加写入
+
+**常见用法**
+
+```shell
+ls -l > 文件	#列表的内容写入文件a.txt中(覆盖写)
+ls -al >> 文件	#列表的内容追加到文件aa.txt的末尾
+cat 文件1 > 文件2	#将文件1的内容覆盖到文件2
+echo "内容" >> "文件"
+```
+
+注意若目标文件不存在会创建
+
+#### ln 软连接
+
+软链接也叫符号链接，类似于windows里的快捷方式，主要存放了链接其他方式的路径
+
+```shell
+ln -s [文件或目录] [软链接名] #功能描述: 给文件创建一个软链接
+```
+
+当我们使用pwd指令查看目录时，仍然看到的是软链接所在目录
+
+### 时间日期指令
+
+#### date 日期
+
+```shell
+date	#显示当前时间
+date+%Y	#显示当前年份
+date+%m	#显示当前月份
+date+%d	#显示当前是哪一天
+date "+%Y-%m-%d %H:%M:%S"	#显示年月日时分秒
+
+date -s 2020-10-09 11:22:22 #设置时间为2020-10-09 11:22:22
+```
+
+#### cal 日历信息
+
+```shell
+cal [选项] 	#不加选项，显示本月日历
+```
+
+### 查找指令
+
+#### find
+
+将从指定目录向下递归地遍历其各个子目录，将满足条件的文件或者目录显示在终端
+
+```shell
+find [搜索范围/指定的目录] [选项]
+-name <查询方式> #在指定路径下按照文件名查找文件  find /home -name hello.txt
+-user <用户名> #查找属于指定用户名所有文件   find /home -user balance
+-size <文件大小> #按照指定文件大小查找文件   find /home -size +10M 大于10M -10M 小于 10M 等于
+```
+
+#### locate 定位文件路径
+
+locate指令利用事先建立的系统中所有文件名称及路径的locate数据库实现快速定位给定的文件。
+
+**Locate指令无需遍历整个文件系统，查询速度较快**。为了保证查询结果的准确度，管理员必须定期更新locate
+
+由于locate指令基于数据库进行查询，所以**第一次运行前，必须使用updatedb指令创建locate数据库**
+
+```shell
+locate filename # 将在文件数据库中查找包含指定名称的文件
+locate -b '\directoryname' # 查找包含指定名称的目录。
+locate -n 5 filename #限制搜索结果的数量，仅显示前 5 条匹配项。
+locate -i filename #忽略文件名的大小写。
+locate -r 'filename' #显示文件的完整路径。
+locate -e '/excluded_path' filename #在搜索中排除指定的路径。
+```
+
+使用 updatedb 命令手动更新数据库
+
+```shell
+sudo updatedb # 使用 updatedb 命令手动更新数据库。
+```
+
+#### which
+
+用于在 Linux 或类 Unix 系统上查找可执行文件路径的命令。它用于确定给定命令的实际路径。
+
+```shell
+which 命令
+```
 
 
 
@@ -499,6 +620,18 @@ help 指令名
 ```
 
 显示指令的帮助文档（英文）
+
+#### history
+
+查看已经执行过历史命令，也可以执行历史指令
+
+```shell
+history		# 查看已经执行过历史命令
+history 10 #显示最后执行的 10 条命令
+!n    #这里的n是命令的编号，通过history命令查看。例如，!100 将重新执行历史记录中编号为 100 的命令
+!! #重新执行刚刚输入的命令。
+history -c #清除当前 shell 会话的历史记录。
+```
 
 ## vi 和 vim
 

@@ -734,7 +734,7 @@ xmlns:c="http://www.springframework.org/schema/c"
 <bean id="ServiceImpl" class="cn.csdn.service.ServiceImpl" scope="singleton">
 ```
 
-单例模式也就是只new一次对象，之后getBean的都直接获取第一次new的对象
+**单例模式也就是只new一次对象，之后getBean的都直接获取第一次new的对象**
 
 测试：
 
@@ -750,7 +750,7 @@ xmlns:c="http://www.springframework.org/schema/c"
 
 #### Prototype
 
-当一个bean的作用域为Prototype，表示一个bean定义对应多个对象实例。Prototype作用域的bean会导致在每次对该bean请求（将其注入到另一个bean中，或者以程序的方式调用容器的getBean()方法）时都会创建一个新的bean实例。Prototype是原型类型，它在我们创建容器的时候并没有实例化，而是当我们获取bean的时候才会去创建一个对象，而且我们每次获取到的对象都不是同一个对象。根据经验，对有状态的bean应该使用prototype作用域，而对无状态的bean则应该使用singleton作用域。在XML中将bean定义成prototype，可以这样配置：
+当一个bean的作用域为Prototype，表示一个bean定义对应多个对象实例。Prototype作用域的bean会导致在每次对该bean请求（将其注入到另一个bean中，或者以程序的方式调用容器的getBean()方法）时都会创建一个新的bean实例。Prototype是原型类型，它在我们创建容器的时候并没有实例化，**而是当我们获取bean的时候才会去创建一个对象，而且我们每次获取到的对象都不是同一个对象**。根据经验，对有状态的bean应该使用prototype作用域，而对无状态的bean则应该使用singleton作用域。在XML中将bean定义成prototype，可以这样配置：
 
 ```xml
  <bean id="account" class="com.foo.DefaultAccount" scope="prototype"/>  
@@ -779,3 +779,302 @@ xmlns:c="http://www.springframework.org/schema/c"
 ```
 
 针对某个HTTP Session，Spring容器会根据userPreferences bean定义创建一个全新的userPreferences bean实例，且该userPreferences bean仅在当前HTTP Session内有效。与request作用域一样，可以根据需要放心的更改所创建实例的内部状态，而别的HTTP Session中根据userPreferences创建的实例，将不会看到这些特定于某个HTTP Session的状态变化。当HTTP Session最终被废弃的时候，在该HTTP Session作用域内的bean也会被废弃掉。
+
+## Bean的自动装配
+
+什么是自动装配？
+
+
+
+自动装配是使用spring满足bean依赖的一种方法，spring会在应用上下文中为某个bean寻找其依赖的bean。
+
+Spring中bean有三种装配机制，分别是：
+
+1. 在xml中显式配置【上面用的】；
+2. 在java中显式配置【还未讲，略麻烦】；
+3. 隐式的自动装配bean【**重要**】。
+
+这里主要讲第三种：自动化的装配bean。
+
+Spring的自动装配需要从两个角度来实现，或者说是两个操作：
+
+1. 组件扫描(component scanning)：spring会自动发现应用上下文中所创建的bean；
+2. 自动装配(autowiring)：spring自动满足bean之间的依赖，也就是我们说的IoC/DI；
+
+组件扫描和自动装配组合发挥巨大威力，使得显示的配置降低到最少。
+
+**推荐不使用自动装配xml配置 , 而使用注解 .**
+
+### 环境搭建
+
+1、新建一个项目
+
+2、新建两个实体类，Cat Dog 都有一个叫的方法
+
+```java
+public class Cat {
+    public void bark() {
+        System.out.println("Cat meow");
+    }
+}
+
+public class Dog {
+    public void bark() {
+        System.out.println("Dog bark");
+    }
+}
+```
+
+3、新建一个用户类 People
+
+```
+public class People {
+    private Cat cat;
+    private Dog dog;
+    private String name;
+    .......
+}
+```
+
+4、编写Spring配置文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="cat" class="com.balance.pojo.Cat"/>
+    <bean id="dog" class="com.balance.pojo.Dog"/>
+    <bean id="people" class="com.balance.pojo.People">
+        <property name="name" value="balance"/>
+        <property name="cat" ref="cat"/>
+        <property name="dog" ref="dog"/>
+    </bean>
+</beans>
+```
+
+5、测试
+
+```java
+public class MyTest {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("beans.xml");
+        People people = (People) context.getBean("people");
+        people.getCat().bark();
+        people.getDog().bark();
+    }
+}
+```
+
+### byName
+
+**autowire byName (按名称自动装配)**
+
+测试：
+
+1、修改bean配置，**增加一个属性 autowire="byName",去除之前在people bean中书写的属性**
+
+```xml
+<bean id="cat" class="com.balance.pojo.Cat"/>
+<bean id="dog" class="com.balance.pojo.Dog"/>
+
+<bean id="people" class="com.balance.pojo.People" autowire="byName">
+    <property name="name" value="balance"/>
+</bean>
+```
+
+2、再次测试，结果依旧成功输出！
+
+3、我们将 cat 的bean id修改为 catXXX
+
+4、再次测试， 执行时报空指针java.lang.NullPointerException。因为按byName规则找不对应set方法，真正的setCat就没执行，对象就没有初始化，所以调用时就会报空指针错误。
+
+**小结：**
+
+当一个bean节点带有 autowire byName的属性时。
+
+1. **将查找其类中所有的set方法名，例如setCat，获得将set去掉并且首字母小写的字符串，即cat。**
+2. **去spring容器中寻找是否有此字符串名称id的对象。**
+3. **如果有，就取出注入；如果没有，就报空指针异常。**
+
+### byType
+
+**autowire byType (按类型自动装配)**
+
+使用autowire byType首先需要保证：**同一类型的对象，在spring容器中唯一。如果不唯一，会报不唯一的异常。**
+
+```
+NoUniqueBeanDefinitionException
+```
+
+测试：
+
+1、将user的bean配置修改一下 ： autowire="byType", **根据类型时不需要id**
+
+```xml
+<bean class="com.balance.pojo.Cat"/>
+<bean class="com.balance.pojo.Dog"/>
+
+<bean id="people" class="com.balance.pojo.People" autowire="byType">
+	<property name="name" value="balance"/>
+</bean>
+```
+
+2、测试，正常输出
+
+3、再注册一个cat 的bean对象！
+
+```xml
+<bean class="com.balance.pojo.Cat"/>
+<bean class="com.balance.pojo.Dog"/>
+<bean id="cat2" class="com.balance.pojo.Cat"/>
+
+<bean id="people" class="com.balance.pojo.People" autowire="byType">
+	<property name="name" value="balance"/>
+</bean>
+```
+
+4、测试，报错：NoUniqueBeanDefinitionException
+
+或者修改id为cat2，因为是按类型装配，所以并不会报异常，也不影响最后的结果。甚至将id属性去掉，也不影响结果。
+
+**总结：按类型装配和id无关，但需要类型唯一**
+
+### 注解实现自动装配
+
+jdk1.5开始支持注解，spring2.5开始全面支持注解。
+
+准备工作：利用注解的方式注入属性。
+
+1、在spring配置文件中引入context文件头
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++    xmlns:context="http://www.springframework.org/schema/context"
++    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
++        http://www.springframework.org/schema/context
++        https://www.springframework.org/schema/context/spring-context.xsd">
+
++    <context:annotation-config/>
+
+</beans>
+```
+
+2、开启属性注解支持！
+
+```xml
+<context:annotation-config/>
+```
+
+#### @Autowired
+
+@Autowired默认是 **byType的，当有多个bean，就byName**
+
+并且，当在属性上加上了`@Autowired`注解之后，set方法可以略去（不略去，idea会自动标灰，佐证了这一点）
+
+People.java
+
+```java
+public class People {
+    @Autowired
+    private Cat cat;
+    @Autowired
+    private Dog dog;
+    private String name;
+
+    public Cat getCat() {
+        return cat;
+    }
+
+
+    public Dog getDog() {
+        return dog;
+    }
+
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "People{" +
+                "cat=" + cat +
+                ", dog=" + dog +
+                ", name='" + name + '\'' +
+                '}';
+    }
+}
+```
+
+beans.xml
+
+```xml
+<bean id="cat"  class="com.balance.pojo.Cat"/>
+<bean id="cat2" class="com.balance.pojo.Cat"/>
+<bean class="com.balance.pojo.Dog"/>
+
+<bean id="people" class="com.balance.pojo.People">
+    <property name="name" value="balance"/>
+</bean>
+```
+
+**拓展**
+
+**@Autowired(required=false) 说明：false，对象可以为null；true，对象必须存对象，不能为null。**
+
+```java
+//如果允许对象为null，设置required = false,默认为true
+@Autowired(required = false)
+private Cat cat;
+```
+
+#### @Qualifier
+
+思考这样一个问题，如果
+
+```java
+<bean id="cat1"  class="com.balance.pojo.Cat"/>
+<bean id="cat2" class="com.balance.pojo.Cat"/>
+```
+
+此时@Autowired无法自动装配，因为byType不唯一，byName找不到名为cat的bean
+
+这时可以使用@Qualifier，**它根据byName的方式自动装配**
+
+加上以下代码即可正确运行
+
+```java
+@Autowired
+@Qualifier(value = "cat1")
+private Cat cat;
+```
+
+#### @Resource
+
+其实java中自带了注解@Resource可以实现以上注解功能，但此注解在jdk 1.8后被略去，它的运作方式如下：
+
+- @Resource如有指定的name属性，先按该属性进行byName方式查找装配；
+- 其次再进行默认的byName方式进行装配；
+- 如果以上都不成功，则按byType的方式自动装配。
+- 都不成功，则报异常。
+
+#### 总结
+
+**@Autowired与@Resource异同**：
+
+1、@Autowired与@Resource都可以用来装配bean。**都可以写在字段上，或写在setter方法上**。
+
+2、@Autowired默认**按类型装配**（属于spring规范），默认情况下必须要求依赖对象必须存在，如果要允许null 值，可以设置它的required属性为false，如：@Autowired(required=false) ，如果我们想使用名称装配可以结合@Qualifier注解进行使用
+
+3、@Resource（属于J2EE规范），默认**按照名称进行装配**，名称可以通过name属性进行指定。如果没有指定name属性，当注解写在字段上时，默认取字段名进行按照名称查找，如果注解写在setter方法上默认取属性名进行装配。当找不到与名称匹配的bean时才按照类型进行装配。但是需要注意的是，如果name属性一旦指定，就只会按照名称进行装配。
+
+它们的作用相同都是用注解方式注入对象，但执行顺序不同。@Autowired先byType，@Resource先byName。
