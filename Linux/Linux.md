@@ -358,6 +358,9 @@ ls -a #列出所有文件，包括隐藏文件
 ls -l #按行显示
 
 ls -la
+
+ls可以加文件名，会显示文件相关信息
+ls -l hello.txt
 ```
 
 这些后缀参数都可以一起使用无所谓先后
@@ -585,19 +588,73 @@ locate -e '/excluded_path' filename #在搜索中排除指定的路径。
 sudo updatedb # 使用 updatedb 命令手动更新数据库。
 ```
 
-#### which
+#### grep 文本文件搜索
 
-用于在 Linux 或类 Unix 系统上查找可执行文件路径的命令。它用于确定给定命令的实际路径。
+grep过滤查找，管道符，“|”，表示将前一个命令的处理结果输出传递给后面的命令处理
 
 ```shell
-which 命令
+grep [选项] 模式 文件
+[选项] 是可选的命令行选项，用于指定搜索的行为。 -i 忽略大小写 -n显示行号 --color 高亮显示
+模式 是一个正则表达式模式，用于定义搜索的文本模式。
+文件 是要搜索的文件名。
+# 示例 此命令只会显示行内有hello的行
+cat hello.txt | grep "hello" 
 ```
 
+### 压缩和解压相关指令
 
+#### gzip/gunzip
 
+gzip：用于压缩文件，gunzip用于解压文件
 
+**用于压缩单个文件，不直接支持压缩多个文件或目录。**
 
+```shell
+gzip 文件	#压缩文件，只能将文件压缩为*.gz文件
+gunzip 文件.gz	#解压缩文件命令
 
+# 示例：
+gzip /home/hello.txt
+gunzip /home/hello.txt.gz
+```
+
+#### zip/unzip
+
+zip用于压缩文件，unzip用于解压
+
+**支持多文件压缩**
+
+```shell
+zip [选项] XXX.zip 将要压缩的内容	#压缩文件和目录的命令
+unzip [选项] XXX.zip	#解压缩文件
+/*
+	zip 常用选项
+		-r 递归压缩，即会压缩目录
+	unzip 常用选项
+		-d 目录	指定解压后文件的存放目录
+*/
+#示例 
+zip -r myhome.zip /home/ #将home目录及其子目录/文件都压缩
+uzip -d /opt/tmp  myhome.zip #将myhome.zip解压到/opt/tmp文件下
+```
+
+#### tar 打包
+
+`tar` 本身并不进行压缩(指定选项也可进行压缩)，它只是将文件和目录组合成一个单一的归档文件。
+
+```shell
+tar [选项] XXX.tar.gz 打包的内容 #XXX.tar.gz 是你指定的文件名
+常用选项
+-c    产生.tar打包文件
+-v    显示详细信息
+-f    指定文件名
+-z    -z是代表--gzip,--ungzip，因为文件后缀有gz，所以不管压缩还是解压都要加
+-x    解压tar文件
+# 示例
+tar -zvcf hello.tar.gz /home/hello.txt /home/hello2.txt 
+tar -zxvf hello.tar.gz # 当前目录解压
+tar -zxvf hello.tar.gz -C /opt/tmp # /opt/tmp目录下解压 注意-C，需大写
+```
 
 ### 其他
 
@@ -620,6 +677,14 @@ help 指令名
 ```
 
 显示指令的帮助文档（英文）
+
+#### which
+
+用于在 Linux 或类 Unix 系统上查找可执行文件路径的命令。它用于确定给定命令的实际路径。
+
+```shell
+which 命令
+```
 
 #### history
 

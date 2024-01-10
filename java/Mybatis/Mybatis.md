@@ -836,7 +836,7 @@ MapperRegistry：注册绑定我们的Mapper文件，每写一个mapper接口就
 
   - 连接到连接池的一个请求，相当于一个数据库连接（Connnection对象）
 
-  - SqlSession 的实例不是线程安全的，因此是不能被共享的，它的最佳的作用域是请求或方法作用域
+  - **SqlSession 的实例不是线程安全的，因此是不能被共享的**，它的最佳的作用域是请求或方法作用域
 
   - 用完之后需要赶紧关闭，否则资源被占用。用 try…catch…finally… 语句来保证其正确关闭。
 
@@ -872,7 +872,7 @@ private String email;
 private Date birthday;
 ```
 
-假如不对应怎么办，比如 password 在实体类中是 pwd
+假如不对应怎么办，比如 **password 在实体类中是 pwd**
 
 这样查出来的结果是
 
@@ -975,7 +975,7 @@ value属性只能为以下值：
 
 ![image-20231219154741524](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202312191547597.png)
 
-### Log4j
+### Log4j-已废弃
 
 什么是LOG4J
 
@@ -1080,7 +1080,7 @@ log4j.logger.java.sql.PreparedStatement=DEBUG
 
 ```sql
 SELECT * FROM users limit startIndex,pageSize;
-SELECT * FROM users limit 0,2;--从第1行开始(包括第1行)显示2条记录，即(1,2]或[2,2]
+SELECT * FROM users limit 0,2;--从第1行开始(包括第1行)显示2条记录，不包括0
 SELECT * FROM users limit 3; --[0,n]显示前3条记录
 ```
 
@@ -1235,7 +1235,7 @@ public void getUsers(){
 
 本质：反射机制实现
 
-底层：动态代理
+底层：**动态代理**？
 
 #### Mybatis详细的执行流程（分析源码）
 
@@ -1243,7 +1243,7 @@ public void getUsers(){
 
 #### 注解-CRUD
 
-我们可以在工具类MybatisUtil中创建sqlSession对象的时候实现自动提交事务！（但实际上不推荐）
+我们可以在工具类**MybatisUtil中创建sqlSession对象的时候实现自动提交事务！（但实际上不推荐）**
 
 ```java
 public static SqlSession getSqlSession() {
@@ -1287,7 +1287,7 @@ public interface UserMapper {
 
 [MyBatis（十五）：@Param()注解 - 谁知道水烫不烫 - 博客园](https://www.cnblogs.com/jmsstudy/p/16695315.html)
 
-为什么要使用`@Param`注解？因为当传递多个参数时，我们无法使用parameterType去指定参数类型（只能指定一个），此时可以封装成map，但每次去封装map无疑很繁琐，而且不一定需要，此时可以用此注解，我们就不需要去写parameterType了。
+为什么要使用`@Param`注解？因为当传递多个参数时，我们无法使用parameterType去指定参数类型（只能指定一个），此时可以封装成map，但每次去封装map无疑很繁琐，而且不一定需要，此时可以**用此注解，我们就不需要去写parameterType了**。
 
 简单总结一下：
 
@@ -1460,7 +1460,7 @@ public interface StudentMapper {
 </mappers>
 ```
 
-或者使用package标签，全部注册。
+**或者使用package标签，全部注册。**
 
 这种写法可以的原因是当程序运行后，文件会被打包生成到target/classes目录下，也就是说源程序中java目录的包会原封不动输出，而resources目录下的文件会直接放在target/classes目录下，此时若java目录中文件路径和resources目录路径相同，就会合并到同一个路径下。
 
@@ -1610,9 +1610,9 @@ public class Teacher {
     <result property="id" column="tid"/>
     <result property="name" column="tname"/>
     <!--
-            javaType=“” 指定属性的类型
-            但因为这里是集合，集合指定泛型信息，使用ofType进行获取
-            这里是集合中一个个值，所以不需要javaType
+            javaType=“” 集合或关联对象的类型
+            ofType： 集合或关联对象中元素的 Java 类型
+			其实可以省略，mybatis会自动帮我们进行推断
         -->
     <collection property="students" ofType="student">
         <result property="id" column="sid"/>
@@ -1663,7 +1663,7 @@ IDutil工具类
 
 ```java
 public class IDUtils {
-    //使用UUID来获取不同的id，因为生成的是-分隔，所以替换成不分割
+    //使用UUID来获取不同的id，因为生成的是-分隔，所以替换成分割
     public static String getId(){
         return UUID.randomUUID().toString().replaceAll("-","");
     }
