@@ -13,6 +13,16 @@ HTTP的头域包括通用头、请求头、响应头和实体头四个部分。�
 
 通用头域包含请求和响应消息都支持的头域，通用头域包含缓存头部Cache-Control、Pragma及信息性头部Connection、Date、Transfer-Encoding、Update、Via。
 
+```json
+{
+    Request URL: https://www.cnblogs.com/renxuw/p/12994080.html
+	Request Method:GET
+	Status Code:200 OK
+	Remote Address:121.40.43.188:443
+	Referrer Policy:strict-origin-when-cross-origin
+}
+```
+
 | **字段名**            | **含义**                                                     |
 | --------------------- | ------------------------------------------------------------ |
 | **Cache-Control**     | 告诉所有的缓存机制是否可用缓存及哪种类型。例：Cache-Control：no-cache |
@@ -297,7 +307,6 @@ public class HelloServlet extends HttpServlet {
 **再在web.xml的web-app标签中编写servlet的映射如下**
 
 ```xml
-
 <servlet>
     <servlet-name>hello</servlet-name>
     <servlet-class>com.balance.servlet.HelloServlet</servlet-class>
@@ -784,7 +793,7 @@ Cookie是浏览器在本地存储数据的一种方式，理论上是可以存�
 关于Cookie的三个问题：Cookie从哪来？Cookie到哪去？Cookie有什么用？
 
 - **Cookie从哪来**：Cookie是从浏览器来的，服务器在响应时就会通过Set-Cookie字段将Cookie返回给浏览器，浏览器在下次访问服务器时，就会带上Cookie；
-- **Cookie到哪去**：Cookie还是到服务器去，在下一次的浏览器访问服务器的时候，浏览器会带上服务器返回的Cookie去访问服务器；
+- **Cookie到哪去**：Cookie到服务器去，在下一次的浏览器访问服务器的时候，浏览器会带上服务器返回的Cookie去访问服务器；
 - **Cookie有什么用**：Cookie是可以携带任何数据的，一般情况下我们是令Cookie来保存用户的登录信息，用来识别用户的身份，这样用户就不需要一直执行登录操作了。
 
 #### **常用操作**

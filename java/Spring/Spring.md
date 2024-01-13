@@ -78,7 +78,7 @@ Spring 框架是一个分层架构，由 7 个定义良好的模块组成。Spri
 
 组成 Spring 框架的每个模块（或组件）都可以单独存在，或者与其他一个或多个模块联合实现。每个模块的功能如下：
 
-- **核心容器**：核心容器提供 Spring 框架的基本功能。核心容器的主要组件是 BeanFactory，它是工厂模式的实现。BeanFactory 使用*控制反转*（IOC） 模式将应用程序的配置和依赖性规范与实际的应用程序代码分开。
+- **核心容器**：核心容器提供 Spring 框架的基本功能。核心容器的主要组件是 BeanFactory，它是**工厂模式**的实现。**BeanFactory 使用*控制反转*（IOC） 模式将应用程序的配置和依赖性规范与实际的应用程序代码分开**。
 - **Spring 上下文**：Spring 上下文是一个配置文件，向 Spring 框架提供上下文信息。Spring 上下文包括企业服务，例如 JNDI、EJB、电子邮件、国际化、校验和调度功能。
 - **Spring AOP**：通过配置管理特性，Spring AOP 模块直接将面向切面的编程功能 , 集成到了 Spring 框架中。所以，可以很容易地使 Spring 框架管理任何支持 AOP的对象。Spring AOP 模块为基于 Spring 的应用程序中的对象提供了事务管理服务。通过使用 Spring AOP，不用依赖组件，就可以将声明性事务管理集成到应用程序中。
 - **Spring DAO**：JDBC DAO 抽象层提供了有意义的异常层次结构，可用该结构来管理异常处理和不同数据库供应商抛出的错误消息。异常层次结构简化了错误处理，并且极大地降低了需要编写的异常代码数量（例如打开和关闭连接）。Spring DAO 的面向 JDBC 的异常遵从通用的 DAO 异常层次结构。
@@ -251,7 +251,7 @@ Spring容器在初始化时先读取配置文件，根据配置文件或元数�
 
 ![img](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401071552637.webp)
 
-采用XML方式配置Bean的时候，Bean的定义信息是和实现分离的，而采用注解的方式可以把两者合为一体，Bean的定义信息直接以注解的形式定义在实现类中，从而达到了零配置的目的。
+采用**XML方式配置**Bean的时候，Bean的**定义信息是和实现分离**的，而**采用注解的方式可以把两者合为一体**，Bean的定义信息直接以注解的形式定义在实现类中，从而达到了零配置的目的。
 
 **控制反转是一种通过描述（XML或注解）并通过第三方去生产或获取特定对象的方式。在Spring中实现控制反转的是IoC容器，其实现方法是依赖注入（Dependency Injection,DI）。**
 
@@ -340,7 +340,7 @@ public class Test {
 - 控制 : 谁来控制对象的创建 , 传统应用程序的对象是由程序本身控制创建的 , 使用Spring后 , 对象是由Spring来创建的
 - 反转 : 程序本身不创建对象 , 而变成被动的接收对象 .
 
-依赖注入 : 就是利用set方法来进行注入的。IOC是一种编程思想，由主动的编程变成被动的接收
+**依赖注入 : 就是利用set方法来进行注入的**。IOC是一种编程思想，由主动的编程变成被动的接收
 
 **对IOC原型进行修改**
 
@@ -784,8 +784,6 @@ xmlns:c="http://www.springframework.org/schema/c"
 
 什么是自动装配？
 
-
-
 自动装配是使用spring满足bean依赖的一种方法，spring会在应用上下文中为某个bean寻找其依赖的bean。
 
 Spring中bean有三种装配机制，分别是：
@@ -1046,7 +1044,7 @@ private Cat cat;
 <bean id="cat2" class="com.balance.pojo.Cat"/>
 ```
 
-此时@Autowired无法自动装配，因为byType不唯一，byName找不到名为cat的bean
+此时@Autowired无法自动装配，**因为byType不唯一，byName找不到名为cat的bean**
 
 这时可以使用@Qualifier，**它根据byName的方式自动装配**
 
