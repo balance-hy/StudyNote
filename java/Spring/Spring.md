@@ -1076,3 +1076,261 @@ private Cat cat;
 3、@Resource（属于J2EE规范），默认**按照名称进行装配**，名称可以通过name属性进行指定。如果没有指定name属性，当注解写在字段上时，默认取字段名进行按照名称查找，如果注解写在setter方法上默认取属性名进行装配。当找不到与名称匹配的bean时才按照类型进行装配。但是需要注意的是，如果name属性一旦指定，就只会按照名称进行装配。
 
 它们的作用相同都是用注解方式注入对象，但执行顺序不同。@Autowired先byType，@Resource先byName。
+
+## 使用注解开发
+
+在spring4之后，想要使用注解形式，必须得要引入aop的包
+
+![image-20240114152536505](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401141525123.png)
+
+在配置文件当中，还得要引入一个context约束
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++      xmlns:context="http://www.springframework.org/schema/context"
+      xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
++       http://www.springframework.org/schema/context
++       http://www.springframework.org/schema/context/spring-context.xsd">
+    
++    <context:annotation-config/>
+    
+</beans>
+```
+
+### bean的注解实现
+
+我们之前都是在xml中使用 bean 的标签进行bean注入，但是实际开发中，我们一般都会使用注解！
+
+1、配置扫描哪些包下的注解
+
+```xml
+<!--指定要扫描的包，这个包下注解（spring特有）就会生效，配完这个就无需配<context:annotation-config/>-->
+<context:component-scan base-package="com.balance.pojo"/>
+```
+
+2、在指定包下编写类，增加注解
+
+**Spring 将会自动扫描并注册带有 @Component 注解的类，使它们成为 Spring IoC 容器中的 Spring Bean。**
+
+```java
+//@Component 组件 等价于在xml <bean id="user" class="com.balance.pojo.User"/>
+@Component
+public class User {
+    public String name = "balance";
+}
+```
+
+3、测试
+
+```java
+public class MyTest {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        User user = (User) context.getBean("user");
+        System.out.println(user.name);
+    }
+}
+```
+
+发现依旧成功输出了
+
+### 属性注入注解实现
+
+使用注解注入属性
+
+1、可以不用提供set方法，**直接在属性名上添加**@value("值")
+
+```java
+@Component
+public class User {
+    //@Value("balance") 等价于 <property name="name" value="balance"/>
+    @Value("balance")
+    public String name;
+}
+```
+
+2、如果提供了set方法，**也可以在set方法上添加**@value("值");
+
+```java
+@Component
+public class User {
+    public String name;
+    
+    public String getName() {
+        return name;
+    }
+	@Value("balance")
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+```
+
+### 衍生注解
+
+我们这些注解，就是替代了在配置文件当中配置步骤而已！更加的方便快捷！
+
+**@Component三个衍生注解**
+
+为了更好的进行分层，Spring可以使用其它三个注解，功能一样
+
+- **@Controller**：controller层
+- **@Service**：service层
+- **@Repository**：dao层
+
+写上这些注解，就相当于将这个类交给Spring管理装配了！
+
+### 自动装配注解
+
+在Bean的自动装配已经讲过，此处略
+
+### 作用域注解
+
+**@scope**
+
+- singleton：默认的，Spring会采用单例模式创建这个对象。关闭工厂 ，所有的对象都会销毁。
+- prototype：原型模式。关闭工厂 ，所有的对象不会销毁。内部的垃圾回收机制会回收
+
+```
+@Controller("user")
+@Scope("prototype")
+public class User {
+   @Value("balance")
+   public String name;
+}
+```
+
+### 总结
+
+**XML与注解比较**
+
+- XML可以适用任何场景 ，结构清晰，维护方便
+- 注解不是自己的类使用不了，维护复杂，但开发简单方便
+
+**xml与注解整合开发** ：推荐最佳实践
+
+- xml管理Bean
+- 注解完成属性注入
+- 使用过程中， 可以不用扫描，**扫描是为了类上spring特有的注解**
+
+```xml
+<context:annotation-config/>  
+```
+
+作用：
+
+- 进行注解驱动注册，从而使注解生效
+- 用于激活那些已经在spring容器里注册过的bean上面的注解，也就是显示的向Spring注册
+- 如果不扫描包，就需要手动配置bean
+- 如果不加注解驱动，则注入的值为null！
+
+## 使用java的方式配置Spring
+
+完全不使用xml配置
+
+**javaConfig 原来是 Spring 的一个子项目，它通过 Java 类的方式提供 Bean 的定义信息，在 Spring4 的版本， JavaConfig 已正式成为 Spring4 的核心功能 。**
+
+### @Configuration
+
+@Configuration 注解用于标识一个类是 Spring 配置类，它通常包含了用于配置 Spring IoC 容器的 Bean 定义。配置类中可以包含一些用 @Bean 注解标注的方法，这些方法用于创建和配置 Spring Bean
+
+### @Bean
+
+一个带有该注解的方法将产生一个由 Spring 管理的 Bean 对象。通常，@Bean 注解用在配置类中，表示该方法返回的对象将被注册为 Spring Bean。
+
+### @ComponentScan
+
+`@ComponentScan` 是 Spring 框架提供的一个注解，用于配置 Spring 容器在哪些包下扫描组件（包括 `@Component`、`@Service`、`@Repository`、`@Controller` 等注解标识的类），并将它们注册为 Spring Bean。
+
+### @import
+
+`@Import` 注解是 Spring 框架中用于**导入其他配置类或者注册额外的 Bean 定义**的注解。它可以用在配置类上，通过引入其他配置类的方式，实现模块化的配置，提高配置的可维护性和复用性。
+
+相当于之前xml中的import标签
+
+### 使用java类配置
+
+创建一个User类
+
+```java
+public class User {
+    @Value("balance")
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "name='" + name + '\'' +
+                '}';
+    }
+}
+```
+
+再创建一个config配置类
+
+```java
+@Configuration
+@ComponentScan("com.balance")
+public class BalanceConfig {
+	
+    //注册一个Bean，相当于我们之前写的一个bean标签
+    //方法的名字为id属性，返回值为class属性
+    @Bean
+    public User getUser(){
+        return new User();
+    }
+}
+```
+
+测试
+
+```java
+public class MyTest {
+    public static void main(String[] args) {
+        //如果完全使用java配置类的方式去做，我们就只能通过AnnotationConfig上下文来获取容器，通过配置类的class对象加载
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(BalanceConfig.class);
+        User getUser = (User) context.getBean("getUser");
+        System.out.println(getUser.getName());
+    }
+}
+```
+
+## 代理模式
+
+为什么要学习代理模式，因为AOP的底层机制就是动态代理！【SpringAOP和SpringMVC】
+
+代理模式：
+
+- 静态代理
+- 动态代理
+
+学习aop之前 , 我们要先了解一下代理模式！
+
+![image-20240114170136992](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401141701304.png)
+
+![image-20240114170352639](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401141703861.png)
+
+### 静态代理
+
+**静态代理角色分析**
+
+- 抽象角色 : 一般使用接口或者抽象类来实现
+- 真实角色 : 被代理的角色
+- 代理角色 : 代理真实角色 ，代理真实角色后 , 一般会做一些附属的操作 .
+- 客户 : 访问代理角色的人
+
+
+
+### 动态代理
+
