@@ -786,6 +786,34 @@ console.log(getArrayOfUsers(users));
 [ 'Alan', 'Jeff', 'Sarah', 'Ryan' ]
 ```
 
+####  Object.assign()
+
+在JavaScript中，`Object.assign()` 方法用于将一个或多个源对象的属性复制到目标对象。它的语法如下：
+
+```js
+Object.assign(target, source1, source2, ...);
+```
+
+- `target`: 目标对象，将源对象的属性复制到这个对象中。
+- `source1`, `source2`, ...: 一个或多个源对象，它们的属性将被复制到目标对象。
+
+`Object.assign()` 方法返回目标对象。
+
+例子：
+
+```js
+let target = { a: 1, b: 2 };
+let source = { b: 3, c: 4 };
+
+Object.assign(target, source);
+
+console.log(target); // 输出 { a: 1, b: 3, c: 4 }
+```
+
+在这个例子中，`source` 对象的属性被复制到了 `target` 对象中。如果目标对象已经有相同属性名的属性，它们将被源对象的属性值覆盖。
+
+需要注意的是，`Object.assign()` 是浅拷贝，即它只会复制对象的第一层属性。如果源对象的属性值是对象，它只会复制对象的引用，而不会递归地复制整个子对象。
+
 #### bind 创建函数绑定this
 
 JavaScript 中的 `bind()` 方法用于**创建一个新的函数，该函数在调用时将指定的对象绑定为其 `this` 值**。这个方法常用于确保函数在特定上下文中执行，以及将函数的参数预先设置。以下是 `bind()` 方法的语法和示例：

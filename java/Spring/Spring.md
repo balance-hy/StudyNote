@@ -163,7 +163,7 @@ public void test(){
 }
 ```
 
-这是我们原来的方式 , 开始大家也都是这么去写的对吧 . 那我们现在修改一下 .
+这是我们原来的方式 , 我们现在修改一下 .
 
 把Userdao的实现类增加一个 .
 
@@ -1330,7 +1330,350 @@ public class MyTest {
 - 代理角色 : 代理真实角色 ，代理真实角色后 , 一般会做一些附属的操作 .
 - 客户 : 访问代理角色的人
 
+Rent . java 即抽象角色
 
+```java
+//抽象角色：租房
+public interface Rent {
+   public void rent();
+}
+```
+
+Host . java 即真实角色
+
+```java
+//真实角色: 房东，房东要出租房子
+public class Host implements Rent{
+   public void rent() {
+       System.out.println("房屋出租");
+  }
+}
+```
+
+Proxy . java 即代理角色
+
+```java
+//代理角色：中介
+public class Proxy implements Rent {
+
+   private Host host;
+   public Proxy() { }
+   public Proxy(Host host) {
+       this.host = host;
+  }
+
+   //租房
+   public void rent(){
+       seeHouse();
+       host.rent();
+       fare();
+  }
+   //看房
+   public void seeHouse(){
+       System.out.println("带房客看房");
+  }
+   //收中介费
+   public void fare(){
+       System.out.println("收中介费");
+  }
+}
+```
+
+Client . java 即客户
+
+```java
+//客户类，一般客户都会去找代理！
+public class Client {
+   public static void main(String[] args) {
+       //房东要租房
+       Host host = new Host();
+       //中介帮助房东
+       Proxy proxy = new Proxy(host);
+
+       //你去找中介！
+       proxy.rent();
+  }
+}
+```
+
+分析：在这个过程中，你直接接触的就是中介，就如同现实生活中的样子，你看不到房东，但是你依旧租到了房东的房子通过代理，这就是所谓的代理模式。
+
+**静态代理的好处:**
+
+- 可以使得我们的真实角色更加纯粹 . 不再去关注一些公共的事情 .
+- 公共的业务由代理来完成 . 实现了业务的分工 ,
+- 公共业务发生扩展时变得更加集中和方便 .
+
+缺点 :
+
+- 类多了 , 多了代理类 , 工作量变大了，开发效率降低 .
+
+我们想要静态代理的好处，又不想要静态代理的缺点，所以 , 就有了动态代理 !
+
+#### 加深理解
+
+练习步骤：
+
+1、创建一个抽象角色，比如平时做的用户业务，抽象起来就是增删改查！
+
+```java
+//抽象角色：增删改查业务
+public interface UserService {
+   void add();
+   void delete();
+   void update();
+   void query();
+}
+```
+
+2、我们需要一个真实对象来完成这些增删改查操作
+
+```java
+//真实对象，完成增删改查操作的人
+public class UserServiceImpl implements UserService {
+
+   public void add() {
+       System.out.println("增加了一个用户");
+  }
+
+   public void delete() {
+       System.out.println("删除了一个用户");
+  }
+
+   public void update() {
+       System.out.println("更新了一个用户");
+  }
+
+   public void query() {
+       System.out.println("查询了一个用户");
+  }
+}
+```
+
+3、需求来了，现在我们需要增加一个日志功能，怎么实现！
+
+- 思路1 ：在实现类上增加代码 【麻烦！】
+- 思路2：使用代理来做，能够不改变原来的业务情况下，实现此功能就是最好的了！
+
+4、设置一个代理类来处理日志！代理角色
+
+```java
+//代理角色，在这里面增加日志的实现
+public class UserServiceProxy implements UserService {
+   private UserServiceImpl userServiceImpl;
+
+   public void setUserServiceImpl(UserServiceImpl userServiceImpl) {
+       this.userServiceImpl = userServiceImpl;
+  }
+
+   public void add() {
+       log("add");
+       userServiceImpl.add();
+  }
+
+   public void delete() {
+       log("delete");
+       userServiceImpl.delete();
+  }
+
+   public void update() {
+       log("update");
+       userServiceImpl.update();
+  }
+
+   public void query() {
+       log("query");
+       userServiceImpl.query();
+  }
+
+   public void log(String msg){
+       System.out.println("执行了"+msg+"方法");
+  }
+
+}
+```
+
+5、测试访问类：
+
+```java
+public class Client {
+   public static void main(String[] args) {
+       //真实业务
+       UserServiceImpl userServiceImpl = new UserServiceImpl();
+       //代理类
+       UserServiceProxy proxy = new UserServiceProxy();
+       //使用代理类实现日志功能！
+       proxy.setUserServiceImpl(userServiceImpl);
+
+       proxy.add();
+  }
+}
+```
+
+**我们在不改变原来的代码的情况下，实现了对原有功能的增强，这是AOP中最核心的思想**
+
+![image-20240124161225961](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401241612625.png)
 
 ### 动态代理
+
+- 动态代理的角色和静态代理的一样 ，
+- 动态代理的代理类是动态生成的 ，静态代理的代理类是我们提前写好的
+- 动态代理分为两类 : 一类是**基于接口动态代理** , 一类是**基于类的动态代理**
+- - 基于接口的动态代理----JDK动态代理（原生）
+  - 基于类的动态代理--cglib
+  - 现在用的比较多的是 javasist 即java字节码 来实现动态代理
+
+此处以 JDK动态代理 实现为例
+
+**JDK的动态代理需要了解两个类 InvocationHandler 和 Proxy**
+
+![image-20240124162039860](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401241620409.png)
+
+Proxy
+
+![image-20240124162117207](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401241621745.png)
+
+代码实现
+
+Rent . java 即抽象角色
+
+```java
+//抽象角色：租房
+public interface Rent {
+   public void rent();
+}
+```
+
+Host . java 即真实角色
+
+```java
+//真实角色: 房东，房东要出租房子
+public class Host implements Rent{
+   public void rent() {
+       System.out.println("房屋出租");
+  }
+}
+```
+
+ProxyInvocationHandler. java 即代理角色
+
+```java
+public class ProxyInvocationHandler implements InvocationHandler {
+   private Rent rent;
+
+   public void setRent(Rent rent) {
+       this.rent = rent;
+  }
+
+   //生成代理类，重点是第二个参数，获取要代理的抽象角色！之前都是一个角色，现在可以代理一类角色
+   public Object getProxy(){
+       return Proxy.newProxyInstance(this.getClass().getClassLoader(),
+               rent.getClass().getInterfaces(),this);
+  }
+
+   // proxy : 代理类 method : 代理类的调用处理程序的方法对象.
+   // 处理代理实例上的方法调用并返回结果
+   @Override
+   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+       seeHouse();
+       //核心：本质利用反射实现！
+       Object result = method.invoke(rent, args);
+       fare();
+       return result;
+  }
+
+   //看房
+   public void seeHouse(){
+       System.out.println("带房客看房");
+  }
+   //收中介费
+   public void fare(){
+       System.out.println("收中介费");
+  }
+
+}
+```
+
+Client . java
+
+```java
+//租客
+public class Client {
+
+   public static void main(String[] args) {
+       //真实角色
+       Host host = new Host();
+       //代理实例的调用处理程序
+       ProxyInvocationHandler pih = new ProxyInvocationHandler();
+       pih.setRent(host); //将真实角色放置进去！
+       Rent proxy = (Rent)pih.getProxy(); //动态生成对应的代理类！
+       proxy.rent();
+  }
+
+}
+```
+
+#### 重点解释
+
+```
+Proxy.newProxyInstance(x,x,x);
+第一个参数：一个类加载器，用于确定代理类的类加载环境
+第二个参数：希望代理对象实现的接口，即被代理的接口
+第三个参数：指定在代理对象的方法调用时要执行的逻辑
+```
+
+我们传入第一个参数为`this.getClass().getClassLoader()`，因为该方法调用会返回一个代理对象，第一个参数用于保证代理对象的类加载环境和当前一致，从而可以在执行被代理对象方法前执行invoke方法。
+
+第二个传入的参数为`rent.getClass().getInterfaces()`，用于指定代理类要实现被代理的接口
+
+第三个传入的参数为`this`,为了指定在代理对象的方法调用时要执行的逻辑,即invoke方法具体实现类
+
+**一个动态代理类代理的是一个接口, 一个动态代理可以代理多个类，只要实现的是同一个接口**
+
+
+
+## AOP
+
+Aspect Oriented Programming：面向切面编程
+
+### 什么是AOP
+
+AOP通过预编译方式和运行期动态代理实现程序功能的统一维护的一种技术。AOP是OOP的延续，是软件开发中的一个热点，也是Spring框架中的一个重要内容，是函数式编程的一种衍生范型。利用AOP可以对业务逻辑的各个部分进行隔离，从而使得业务逻辑各部分之间的耦合度降低，提高程序的可重用性，同时提高了开发的效率。
+
+![img](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401271537055.webp)
+
+### Spring中的AOP
+
+提供声明式事务；允许用户自定义切面
+
+- 横切关注点：跨越应用程序多个模块的方法或功能。即是，与我们业务逻辑无关的，但是我们需要关注的部分，就是横切关注点。如日志 , 安全 , 缓存 , 事务等等 ....。**比如需要在中间加日志**
+- 切面（ASPECT）：横切关注点 被模块化 的特殊对象。即，它是一个类。**比如日志类**
+- 通知（Advice）：切面必须要完成的工作。即，它是类中的一个方法。**比如日志类中的一个方法**
+- 目标（Target）：被通知对象。**比如需要加日志的对象**
+- 代理（Proxy）：向目标对象应用通知之后创建的对象。**比如代理对象**
+- 切入点（PointCut）：切面通知 执行的 “地点”。**比如日志方法可以在哪里调用**
+- 连接点（JointPoint）：与切入点匹配的执行点。**比如日志方法的具体调用，连接点是切入点的实例**
+
+![img](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401271546330.webp)
+
+SpringAOP中，通过Advice定义横切逻辑，Spring中支持5种类型的Advice:
+
+![img](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401271547477.webp)
+
+Aop 在 不改变原有代码的情况下 , 去增加新的功能 .
+
+### Spring实现AOP
+
+使用AOP织入，需要导入一个依赖包！
+
+```xml
+<!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
+<dependency>
+   <groupId>org.aspectj</groupId>
+   <artifactId>aspectjweaver</artifactId>
+   <version>1.9.4</version>
+</dependency>
+```
+
+
 
