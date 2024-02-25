@@ -232,7 +232,7 @@ public class UserDaoTest {
 
 #### 注意事项
 
-有时候我们的xml并没有写在resources目录下，导致资源无法导出，可以在pom.xml中加上
+因为我们的xml并没有写在resources目录下，会导致资源无法导出，可以在pom.xml中加上
 
 ```xml
 <build>
@@ -243,7 +243,7 @@ public class UserDaoTest {
                 <include>**/*.properties</include>
                 <include>**/*.xml</include>
             </includes>
-            <filtering>false</filtering>
+            <filtering>true</filtering>
         </resource>
         <resource>
             <directory>src/main/java</directory>
@@ -251,7 +251,7 @@ public class UserDaoTest {
                 <include>**/*.properties</include>
                 <include>**/*.xml</include>
             </includes>
-            <filtering>false</filtering>
+            <filtering>true</filtering>
         </resource>
     </resources>
 </build>
