@@ -604,6 +604,38 @@ console.log(replacedText); // 输出 "The quick red fox jumps over the active do
 
 `replace()` 方法在字符串处理和文本替换方面非常常用，可以用于替换文本中的特定部分，例如搜索和替换操作、文本清理、模板替换等。
 
+#### foreach 遍历
+
+在JavaScript中，`forEach()`方法用于遍历数组中的每个元素，并为每个元素执行提供的回调函数。它是一种方便的方式来迭代数组，而不需要显式使用循环。
+
+`forEach()`方法接受一个回调函数作为参数，该回调函数将在数组中的每个元素上被调用。回调函数可以接受三个参数：当前元素的值、当前元素的索引和正在遍历的数组本身。
+
+下面是一个简单的示例，演示了如何使用`forEach()`方法：
+
+```js
+const numbers = [1, 2, 3, 4, 5];
+
+numbers.forEach(function(number) {
+  console.log(number);
+});
+
+array.forEach(function(currentValue, index, array) {
+  // 在这里执行针对每个元素的操作
+});
+```
+
+在这个示例中，`forEach()`方法被调用在`numbers`数组上。它接受一个匿名函数作为参数，该函数将在数组中的每个元素上被调用。在这个匿名函数中，我们简单地使用`console.log()`输出了当前元素的值。
+
+你也可以传递一个箭头函数来定义回调函数，以使代码更为简洁：
+
+```js
+const numbers = [1, 2, 3, 4, 5];
+
+numbers.forEach(number => console.log(number));
+```
+
+这将产生与前面示例相同的结果，但使用了箭头函数来定义回调函数。
+
 ### 数组、字符串共有
 
 #### length

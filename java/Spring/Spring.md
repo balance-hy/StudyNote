@@ -1327,8 +1327,8 @@ public class MyTest {
 
 - 抽象角色 : 一般使用接口或者抽象类来实现
 - 真实角色 : 被代理的角色
-- 代理角色 : 代理真实角色 ，代理真实角色后 , 一般会做一些附属的操作 .
-- 客户 : 访问代理角色的人
+- 代理 : 代理真实角色 ，代理真实角色后 , 一般会做一些附属的操作 .
+- 客户 : 访问代理的人
 
 Rent . java 即抽象角色
 
@@ -1350,7 +1350,7 @@ public class Host implements Rent{
 }
 ```
 
-Proxy . java 即代理角色
+Proxy . java 即代理
 
 ```java
 //代理角色：中介
@@ -1555,7 +1555,7 @@ public class Host implements Rent{
 }
 ```
 
-ProxyInvocationHandler. java 即代理角色
+ProxyInvocationHandler. java 即代理
 
 ```java
 public class ProxyInvocationHandler implements InvocationHandler {

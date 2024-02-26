@@ -524,7 +524,7 @@ MyBatis 的配置文件包含了会深深影响 MyBatis 行为的设置和属性
             <!--username – 登录数据库的用户名-->
             <property name="username" value="root"/>
             <!--password – 登录数据库的密码-->
-            <property name="password" value="niit1234"/>
+            <property name="password" value="123456"/>
         </dataSource>
     </environment>
 </environments>
@@ -596,7 +596,7 @@ password=
 </properties>
 ```
 
-也可以在 SqlSessionFactoryBuilder.build() 方法中传入属性值。例如：
+也可以在 SqlSessionFactoryBuilder.build() 方法中		传入属性值。例如：
 
 ```java
 SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(reader, props);
