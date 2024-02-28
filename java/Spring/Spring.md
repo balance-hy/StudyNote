@@ -1675,5 +1675,833 @@ Aop 在 不改变原有代码的情况下 , 去增加新的功能 .
 </dependency>
 ```
 
+#### 方式一 springApi
 
+![image-20240227140042382](C:\Users\18356\AppData\Roaming\Typora\typora-user-images\image-20240227140042382.png)
 
+首先编写我们的业务接口和实现类
+
+```java
+public interface UserService {
+    void add();
+    void delete();
+    void update();
+    void query();
+}
+public class UserServiceImpl implements UserService{
+
+    @Override
+    public void add() {
+        System.out.println("添加用户");
+    }
+
+    @Override
+    public void delete() {
+        System.out.println("删除用户");
+    }
+
+    @Override
+    public void update() {
+        System.out.println("更新用户");
+    }
+
+    @Override
+    public void query() {
+        System.out.println("查询用户");
+    }
+}
+```
+
+然后去写我们的增强类 , 我们编写两个 , 一个前置增强 一个后置增强,其实就是前置日志和后置日志
+
+```java
+package com.balance.log;
+
+import org.springframework.aop.MethodBeforeAdvice;
+
+import java.lang.reflect.Method;
+
+public class Log implements MethodBeforeAdvice {
+     /**
+          * 在方法执行之前调用的方法。
+          *
+          * @param  method   被调用的方法
+          * @param  objects  传递给方法的参数
+          * @param  o        目标对象
+          * @throws Throwable 如果在执行之前发生错误
+     */
+    @Override
+    public void before(Method method, Object[] objects, Object o) throws Throwable {
+        System.out.println(o.getClass().getName() + "调用了" + method.getName() + "方法");
+    }
+}
+```
+
+```java
+package com.balance.afterlog;
+
+import org.springframework.aop.AfterReturningAdvice;
+
+import java.lang.reflect.Method;
+
+public class AfterLog implements AfterReturningAdvice {
+    /**
+      * 在成功调用目标对象中的方法之后调用的方法。
+      *
+      * @param  o       方法的返回值
+      * @param  method  正在调用的 Method 对象
+      * @param  objects 方法的参数
+      * @param  o1      目标对象
+      * @throws Throwable  如果发生错误
+      */
+    @Override
+    public void afterReturning(Object o, Method method, Object[] objects, Object o1) throws Throwable {
+        System.out.println(o1.getClass().getName() + "调用了" + method.getName() + "方法"+"返回值为"+o);
+    }
+}
+```
+
+最后去spring的文件中注册 , 并实现aop切入实现 , 注意导入约束 .
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
+    <!--注册bean-->
+    <bean id="log" class="com.balance.log.Log"/>
+    <bean id="afterLog" class="com.balance.afterlog.AfterLog"/>
+    <bean id="userService" class="com.balance.service.UserServiceImpl"/>
+    <!--aop的配置-->
+    <aop:config>
+        <!--
+             execution(修饰符  返回值  包名.类名/接口名.方法名(参数列表))
+             注意老师忽略了修饰符
+            (..)可以代表所有参数,(*)代表一个参数,(*,String)代表第一个参数为任何值,第二个参数为String类型.
+            切入点 expression:表达式匹配要执行的方法
+        -->
+        <aop:pointcut id="pointcut" expression="execution(public * com.balance.service.UserServiceImpl.*(..))"/>
+        <!--执行环绕; advice-ref执行方法  pointcut-ref切入点-->
+        <aop:advisor advice-ref="log" pointcut-ref="pointcut"/>
+        <aop:advisor advice-ref="afterLog" pointcut-ref="pointcut"/>
+    </aop:config>
+
+</beans>
+```
+
+测试
+
+```java
+public class Test {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("beans.xml");
+        UserService userService = (UserService) context.getBean("userService");
+        userService.add();
+    }
+}
+```
+
+#### 方式二 自定义类
+
+目标业务类不变依旧是userServiceImpl
+
+第一步 : 写我们自己的一个切入类
+
+```java
+public class Diy {
+    public void before() {
+        System.out.println("方法执行前");
+    }
+    public void after() {
+        System.out.println("方法执行后");
+    }
+}
+```
+
+去spring中配置
+
+```xml
+<bean id="diy" class="com.balance.diy.Diy"/>
+
+<aop:config>
+    <aop:aspect ref="diy">
+        <aop:pointcut id="pointcut" expression="execution(public * com.balance.service.UserServiceImpl.*(..))"/>
+        <aop:before method="before" pointcut-ref="pointcut"/>
+        <aop:after method="after" pointcut-ref="pointcut"/>
+    </aop:aspect>
+</aop:config>
+```
+
+测试
+
+```java
+public class Test {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("beans.xml");
+        UserService userService = (UserService) context.getBean("userService");
+        userService.add();
+    }
+}
+```
+
+**可以看到第二种更简单，但是第二种是我们自定义的方法，没有springApi中方法功能强大**
+
+#### 方式三 使用注解
+
+第一步：编写一个注解实现的增强类
+
+```java
+@Aspect
+public class AnnotationPointCut {
+    @Before("execution(public * com.balance.service.UserServiceImpl.*(..))")
+    public void before() {
+        System.out.println("方法执行前  AnnotationPointCut");
+    }
+    @After("execution(public * com.balance.service.UserServiceImpl.*(..))")
+    public void after() {
+        System.out.println("方法执行后   AnnotationPointCut");
+    }
+}
+```
+
+第二步：在Spring配置文件中，注册bean，并增加支持注解的配置
+
+```xml
+<bean id="annotationPointCut" class="com.balance.diy.AnnotationPointCut"/>
+<aop:aspectj-autoproxy/>
+```
+
+* 通过aop命名空间的`<aop:aspectj-autoproxy/>`声明自动为spring容器中那些配置@aspectJ切面的bean创建代理，织入切面。
+  当然，spring 在内部依旧采用AnnotationAwareAspectJAutoProxyCreator进行自动代理的创建工作，但具体实现的细节已经被<aop:aspectj-autoproxy />隐藏起来了
+
+* <aop:aspectj-autoproxy />有一个proxy-target-class属性，默认为false，表示使用jdk动态代理织入增强。
+  当为<aop:aspectj-autoproxy  poxy-target-class="true"/>时，表示使用CGLib动态代理技术织入增强。
+  不过即使proxy-target-class设置为false，如果目标类没有声明接口，则spring将自动使用CGLib动态代理
+
+## 整合Mybatis
+
+### 导入相关jar包
+
+mybatis集成spring版本：
+
+如果spring是6以上版本 ，那么JDK请用17  并且mybatis-spring的版本3.0以上 tomcat需要是10版本 并且servlet版本是Jakarta  不是javax
+
+如果是spring4、5版本  那么JDK8以上，但是mybatis-spring版本只能2.0以上不能是3.0以上 tomcat是9版本
+
+否则报错 
+
+```xml
+<dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>3.5.6</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.28</version>
+        </dependency>
+        <!--spring相关依赖-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>5.3.20</version>
+        </dependency>
+        <!--spring操作数据库所需-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>5.3.20</version>
+        </dependency>
+        <!--spring实现AOP所需-->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>1.9.6</version>
+        </dependency>
+        <!--spring整合mybatis所需-->
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>2.0.6</version>
+        </dependency>
+   	   <!--lomb-->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+        </dependency>
+    </dependencies>
+```
+
+配置Maven静态资源过滤问题！
+
+```xml
+<build>
+    <resources>
+        <resource>
+            <directory>src/main/java</directory>
+            <includes>
+                <include>**/*.properties</include>
+                <include>**/*.xml</include>
+            </includes>
+            <filtering>true</filtering>
+        </resource>
+    </resources>
+</build>
+```
+
+### 回忆流程
+
+先建pojo类
+
+```java
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class User {
+    private int id;
+    private String name;
+    private String password;
+}
+```
+
+实现mybatis的配置文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <typeAliases>
+        <package name="com.balance.pojo"/>
+    </typeAliases>
+
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://localhost:3306/test?useSSL=true&amp;useUnicode=true&amp;characterEncoding=utf8"/>
+                <property name="username" value="root"/>
+                <property name="password" value="123456"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <mappers>
+        <mapper resource="com/balance/mapper/UserMapper.xml"/>
+    </mappers>
+</configuration>
+```
+
+UserMapper接口编写
+
+```java
+public interface UserMapper {
+    List<User> getAllUsers();
+}
+```
+
+接口对应的Mapper映射文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.balance.mapper.UserMapper">
+    <select id="getAllUsers" resultType="user">
+        select * from users
+    </select>
+</mapper>
+```
+
+测试
+
+```java
+public class Demo {
+    @Test
+    public void test() throws IOException {
+        String res="mybatis-config.xml";
+        InputStream in = Resources.getResourceAsStream(res);
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(in);
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+        UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+        List<User> allUsers = mapper.getAllUsers();
+        for (User allUser : allUsers) {
+            System.out.println(allUser);
+        }
+        sqlSession.close();
+    }
+}
+```
+
+### MyBatis-Spring学习
+
+引入Spring之前需要了解mybatis-spring包中的一些重要类；
+
+http://www.mybatis.org/spring/zh/index.html
+
+ 要和 Spring 一起使用 MyBatis，需要在 Spring 应用上下文中定义至少两样东西：
+
+* 一个 SqlSessionFactory 和至少一个数据映射器类。
+
+在 MyBatis-Spring 中，可使用SqlSessionFactoryBean来创建 SqlSessionFactory。要配置这个工厂 bean，只需要把下面代码放在 Spring 的 XML 配置文件中：
+
+```xml
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+ <property name="dataSource" ref="dataSource" />
+</bean>
+```
+
+注意：**SqlSessionFactory需要一个 DataSource（数据源）**。这可以是任意的 DataSource，只需要和配置其它 Spring 数据库连接一样配置它就可以了。
+
+在基础的 MyBatis 用法中，是通过 SqlSessionFactoryBuilder 来创建 SqlSessionFactory 的。而在 MyBatis-Spring 中，则使用 SqlSessionFactoryBean 来创建。
+
+**一个常用的属性是 configLocation，它用来指定 MyBatis 的 XML 配置文件路径**。它在需要修改 MyBatis 的基础配置非常有用。通常，基础配置指的是 < settings> 或 < typeAliases>元素。
+
+**SqlSessionTemplate 是 MyBatis-Spring 的核心**。作为 SqlSession 的一个实现，这意味着可以使用它无缝代替你代码中已经在使用的 SqlSession。
+
+模板可以参与到 Spring 的事务管理中，并且由于其是线程安全的，可以供多个映射器类使用，你应该总是用 SqlSessionTemplate 来替换 MyBatis 默认的 DefaultSqlSession 实现。
+
+可以使用 SqlSessionFactory 作为构造方法的参数来创建 SqlSessionTemplate 对象。
+
+```xml
+<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+ <constructor-arg index="0" ref="sqlSessionFactory" />
+</bean>
+```
+
+现在，这个 bean 就可以直接注入到你的 DAO bean 中了。你需要在你的 bean 中添加一个 SqlSession 属性，就像下面这样：
+
+```java
+public class UserDaoImpl implements UserDao {
+
+ private SqlSession sqlSession;
+
+ public void setSqlSession(SqlSession sqlSession) {
+   this.sqlSession = sqlSession;
+}
+
+ public User getUser(String userId) {
+   return sqlSession.getMapper...;
+}
+}
+```
+
+按下面这样，注入 SqlSessionTemplate：
+
+```xml
+<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
+ <property name="sqlSession" ref="sqlSession" />
+</bean>
+```
+
+#### 实现方式一
+
+其实就是把mybatis配置的东西用spring实现
+
+新建Spring数据库配置文件spring-dao.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+</beans>
+```
+
+配置数据源替换mybaits的数据源
+
+```xml
+<!--首先配好数据源-->
+<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+    <property name="url" value="jdbc:mysql://localhost:3306/test?useSSL=true&amp;useUnicode=true&amp;characterEncoding=utf8"/>
+    <property name="username" value="root"/>
+    <property name="password" value="123456"/>
+</bean>
+```
+
+配置SqlSessionFactory，关联MyBatis
+
+```xml
+<!--然后创建sqlSessionFactory-->
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+    <property name="dataSource" ref="dataSource"/>
+    <!--关联mybatis配置文件，以及注册mapper映射-->
+    <property name="configLocation" value="mybatis-config.xml"/>
+    <property name="mapperLocations" value="com/balance/mapper/*.xml"/>
+</bean>
+```
+
+注册sqlSessionTemplate，关联sqlSessionFactory；**这其实就是sqlsession**，spring称之为xxxTemplate
+
+```xml
+<!--构建-->
+<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+    <!--构造器注入-->
+    <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"/>
+</bean>
+```
+
+增加Dao接口的实现类；私有化sqlSessionTemplate
+
+```java
+public class UserMapperImpl implements UserMapper {
+    private SqlSessionTemplate sqlSessionTemplate;
+
+    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+        this.sqlSessionTemplate = sqlSessionTemplate;
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        UserMapper mapper = sqlSessionTemplate.getMapper(UserMapper.class);
+        return mapper.getAllUsers();
+    }
+}
+```
+
+再新建Spring总的配置文件 applicationContext.xml ，注册实现类
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    
+    <!--之后就可以分任务配置，然后导入到一个配置文件中-->
+    <import resource="spring-dao.xml"/>
+    
+    <bean id="userMapperImpl" class="com.balance.mapper.UserMapperImpl">
+        <property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+    </bean>
+</beans>
+```
+
+测试
+
+```java
+public class Demo {
+    @Test
+    public void test() throws IOException {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        UserMapperImpl userMapperImpl = context.getBean("userMapperImpl", UserMapperImpl.class);
+        List<User> allUsers = userMapperImpl.getAllUsers();
+        for (User allUser : allUsers) {
+            System.out.println(allUser);
+        }
+    }
+}
+```
+
+现在我们的Mybatis配置文件的状态！发现都可以被Spring整合！
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    
+    <!--此后mybatis配置文件只剩一些别名，日志之类的配置-->
+    <typeAliases>
+        <package name="com.balance.pojo"/>
+    </typeAliases>
+    
+</configuration>
+```
+
+#### 实现方式二
+
+mybatis-spring1.2.3版以上的才有这个 .
+
+官方文档截图 :
+
+dao继承Support类 , 直接利用 getSqlSession() 获得 , 然后直接注入SqlSessionFactory .
+
+ **比起方式1 , 不需要管理SqlSessionTemplate , 而且对事务的支持更加友好 . 可跟踪源码查看**
+
+[![img](https://mmbiz.qpic.cn/mmbiz_png/uJDAUKrGC7JXnZ2vicYHdibF3mvk0w89Cq6qzPguHd15ribJeF3ickXAy98VG8YFjxwftEdsvvCLWkWLPeiaiaVibbPxQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)](https://mmbiz.qpic.cn/mmbiz_png/uJDAUKrGC7JXnZ2vicYHdibF3mvk0w89Cq6qzPguHd15ribJeF3ickXAy98VG8YFjxwftEdsvvCLWkWLPeiaiaVibbPxQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+
+其实就是在其基础上省略了
+
+```xml
+<!--构建-->
+<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+    <!--构造器注入-->
+    <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"/>
+</bean>
+```
+
+以及改进了
+
+```java
+public class UserMapperImpl implements UserMapper {
+    private SqlSessionTemplate sqlSessionTemplate;
+
+    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+        this.sqlSessionTemplate = sqlSessionTemplate;
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        UserMapper mapper = sqlSessionTemplate.getMapper(UserMapper.class);
+        return mapper.getAllUsers();
+    }
+}
+```
+
+将我们上面写的UserMapperImpl修改一下
+
+```java
+public class UserMapperImpl extends SqlSessionDaoSupport implements UserMapper {
+    @Override
+    public List<User> getAllUsers() {
+        return getSqlSession().getMapper(UserMapper.class).getAllUsers();
+    }
+}
+```
+
+修改bean的配置 applicationContext
+
+```xml
+<bean id="userMapperImpl2" class="com.balance.mapper.UserMapperImpl">
+    <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+</bean>
+```
+
+**现在就可以删除 spring-dao中的SqlsessionTemplate了**
+
+测试
+
+```java
+@Test
+public void test2() throws IOException {
+    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    UserMapperImpl mapper = context.getBean("userMapperImpl2", UserMapperImpl.class);
+    List<User> allUsers = mapper.getAllUsers();
+    for (User allUser : allUsers) {
+        System.out.println(allUser);
+    }
+}
+```
+
+**总结 : 整合到spring以后可以完全不要mybatis的配置文件，除了这些方式可以实现整合之外，我们还可以使用注解来实现，这个等我们后面学习SpringBoot的时候还会测试整合！**
+
+## 事务
+
+### 回顾事务
+
+- 事务在项目开发过程非常重要，涉及到数据的一致性的问题，不容马虎！
+- 事务管理是企业级应用程序开发中必备技术，用来确保数据的完整性和一致性。
+
+**事务就是把一系列的动作当成一个独立的工作单元，这些动作要么全部完成，要么全部不起作用。**
+
+**事务四个属性ACID**
+
+1. 原子性（atomicity）
+   1. 事务是原子性操作，由一系列动作组成，事务的原子性确保动作要么全部完成，要么完全不起作用
+2. 一致性（consistency）
+   1. 一旦所有事务动作完成，事务就要被提交。数据和资源处于一种满足业务规则的一致性状态中
+3. 隔离性（isolation）
+   1. 可能多个事务会同时处理相同的数据，因此每个事务都应该与其他事务隔离开来，防止数据损坏
+4. 持久性（durability）
+   1. 事务一旦完成，无论系统发生什么错误，结果都不会受到影响。通常情况下，事务的结果被写到持久化存储器中
+
+### 案例
+
+将上面的代码拷贝到一个新项目中
+
+在之前的案例中，我们给userMapper接口新增两个方法，删除和增加用户；
+
+```java
+//添加一个用户
+int addUser(User user);
+
+//根据id删除用户
+int deleteUser(int id);
+```
+
+mapper文件，我们故意把 deletes 写错，测试！
+
+```xml
+<insert id="addUser" parameterType="com.balance.pojo.User">
+    insert into users (id,name,password) values (#{id},#{name},#{password})
+</insert>
+<delete id="deleteUser" parameterType="int">
+    deletes from users where id = #{id}
+</delete>
+```
+
+编写接口的实现类，在实现类中，我们去操作一波
+
+```java
+public class UserMapperImpl extends SqlSessionDaoSupport implements UserMapper {
+    @Override
+    public List<User> getAllUsers() {
+        UserMapper mapper = getSqlSession().getMapper(UserMapper.class);
+        User xiaozhang = new User(4, "xiaozhang", "123");
+        mapper.addUser(xiaozhang);
+        mapper.deleteUser(4);
+        return mapper.getAllUsers();
+    }
+
+    @Override
+    public int addUser(User user) {
+        return getSqlSession().getMapper(UserMapper.class).addUser(user);
+    }
+
+    @Override
+    public int deleteUser(int id) {
+        return getSqlSession().getMapper(UserMapper.class).deleteUser(id);
+    }
+}
+```
+
+测试
+
+```java
+public class MyTest {
+    @Test
+    public void test() {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        UserMapper userMapper = context.getBean("userMapperImpl", UserMapper.class);
+        List<User> allUsers = userMapper.getAllUsers();
+        System.out.println(allUsers);
+    }
+}
+```
+
+报错：sql异常，delete写错了
+
+结果 ：插入成功！
+
+没有进行事务的管理；我们想让他们都成功才成功，有一个失败，就都失败，我们就应该需要**事务！**
+
+以前我们都需要自己手动管理事务，十分麻烦！
+
+但是Spring给我们提供了事务管理，我们只需要配置即可；
+
+### Spring中的事务管理
+
+Spring在不同的事务管理API之上定义了一个抽象层，使得开发人员不必了解底层的事务管理API就可以使用Spring的事务管理机制。Spring支持编程式事务管理和声明式的事务管理。
+
+**编程式事务管理**
+
+- 将事务管理代码嵌到业务方法中来控制事务的提交和回滚
+- 缺点：必须在每个事务操作业务逻辑中包含额外的事务管理代码
+
+**声明式事务管理** **主要使用**
+
+- 一般情况下比编程式事务好用。
+- 将事务管理代码从业务方法中分离出来，以声明的方式来实现事务管理。
+- 将事务管理作为横切关注点，通过aop方法模块化。Spring中通过Spring AOP框架支持声明式事务管理。
+
+**使用Spring管理事务，注意头文件的约束导入 : tx**
+
+```xml
+xmlns:tx="http://www.springframework.org/schema/tx"
+
+http://www.springframework.org/schema/tx
+http://www.springframework.org/schema/tx/spring-tx.xsd">
+```
+
+**事务管理器**
+
+- 无论使用Spring的哪种事务管理策略（编程式或者声明式）事务管理器都是必须的。
+- 就是 Spring的核心事务管理抽象，管理封装了一组独立于技术的方法。
+
+**JDBC事务**
+
+```xml
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+       <property name="dataSource" ref="dataSource" />
+</bean>
+```
+
+**配置好事务管理器后我们需要去配置事务的通知**
+
+```xml
+<!--配置事务通知-->
+<tx:advice id="txAdvice" transaction-manager="transactionManager">
+    <tx:attributes>
+        <!--配置哪些方法使用什么样的事务,配置事务的传播特性 REQUIRED表明有事务就使用，没有就新建-->
+        <!--这里的name是以其值开头的方法名都会使用-->
+        <tx:method name="add" propagation="REQUIRED"/>
+        <tx:method name="delete" propagation="REQUIRED"/>
+        <tx:method name="update" propagation="REQUIRED"/>
+        <tx:method name="search*" propagation="REQUIRED"/>
+        <tx:method name="get" read-only="true"/>
+        <tx:method name="*" propagation="REQUIRED"/>
+    </tx:attributes>
+</tx:advice>
+```
+
+**spring事务传播特性：**
+
+事务传播行为就是多个事务方法相互调用时，事务如何在这些方法间传播。spring支持7种事务传播行为：
+
+- propagation_requierd：如果当前没有事务，就新建一个事务，如果已存在一个事务中，加入到这个事务中，这是最常见的选择。
+- propagation_supports：支持当前事务，如果没有当前事务，就以非事务方法执行。
+- propagation_mandatory：使用当前事务，如果没有当前事务，就抛出异常。
+- propagation_required_new：新建事务，如果当前存在事务，把当前事务挂起。
+- propagation_not_supported：以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。
+- propagation_never：以非事务方式执行操作，如果当前事务存在则抛出异常。
+- propagation_nested：如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行与propagation_required类似的操作
+
+Spring 默认的事务传播行为是 PROPAGATION_REQUIRED，它适合于绝大多数的情况。
+
+**事务管理**
+
+在Java Spring框架中，以下是关于事务管理的三个重要配置：
+
+1. **tx:advice**: 这个配置用于定义事务通知的行为。在Spring中，通知是在方法调用前后执行的代码，例如，执行事务的代码。tx:advice配置定义了这些通知的类型、顺序和条件。
+2. **tx:annotation-driven**: 这个配置是用来启用基于注解的事务管理。通过在方法上添加注解，如`@Transactional`，就可以标识哪些方法应该在调用时启用事务管理。tx:annotation-driven配置告诉Spring要扫描这些注解，并在运行时为它们创建相应的事务代理。
+3. **tx:jta-transaction-manager**: 这个配置是用于配置Spring事务管理器，以便与Java Transaction API (JTA) 兼容。JTA是Java EE平台的一部分，它提供了一种在分布式环境下管理事务的标准方法。tx:jta-transaction-manager配置告诉Spring使用JTA事务管理器来管理分布式事务。
+
+**配置AOP**
+
+导入aop的头文件！
+
+```xml
+<!--配置aop织入事务-->
+<aop:config>
+    <aop:pointcut id="txPointcut" expression="execution(* com.balance.mapper.*.*(..))"/>
+    <aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut"/>
+</aop:config>
+```
+
+**进行测试**
+
+删掉刚才插入的数据，再次测试！
+
+```java
+public class MyTest {
+    @Test
+    public void test() {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        UserMapper userMapper = context.getBean("userMapperImpl", UserMapper.class);
+        List<User> allUsers = userMapper.getAllUsers();
+        System.out.println(allUsers);
+    }
+}
+```
+
+为什么需要配置事务？
+
+- 如果不配置，就需要我们手动提交控制事务；
+- 事务在项目开发过程非常重要，涉及到数据的一致性的问题，不容马虎！
