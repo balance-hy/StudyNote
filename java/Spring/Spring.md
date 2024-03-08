@@ -251,7 +251,7 @@ Spring容器在初始化时先读取配置文件，根据配置文件或元数�
 
 ![img](https://raw.githubusercontent.com/balance-hy/typora/master/2023img/202401071552637.webp)
 
-采用**XML方式配置**Bean的时候，Bean的**定义信息是和实现分离**的，而**采用注解的方式可以把两者合为一体**，Bean的定义信息直接以注解的形式定义在实现类中，从而达到了零配置的目的。
+采用**XML方式配置**Bean的时候，Bean的**定义信息是和实现分离**的，而**采用注解的方式可以把两者合为一体**，==Bean的定义信息直接以注解的形式定义在实现类中，从而达到了零配置的目的。==
 
 **控制反转是一种通过描述（XML或注解）并通过第三方去生产或获取特定对象的方式。在Spring中实现控制反转的是IoC容器，其实现方法是依赖注入（Dependency Injection,DI）。**
 
@@ -1677,7 +1677,7 @@ Aop 在 不改变原有代码的情况下 , 去增加新的功能 .
 
 #### 方式一 springApi
 
-![image-20240227140042382](C:\Users\18356\AppData\Roaming\Typora\typora-user-images\image-20240227140042382.png)
+![image-20240227140042382](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240227140042382.png)
 
 首先编写我们的业务接口和实现类
 
