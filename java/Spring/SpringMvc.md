@@ -190,9 +190,9 @@ SpringMVC的原理如下图所示：
 
 注意在初始参数需要一个springmvc-servlet.xml即spring配置文件，在resource目录下新建该文件,注册三个bean，分别为
 
-处理映射器：
+处理映射器：帮你寻找到底是哪一个映射
 
-处理适配器：
+处理适配器：通过映射执行相应的控制器
 
 视图解析器：这其中有前缀和后缀，其实就是帮你拼接成具体的页面路径
 
@@ -399,7 +399,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@Controller
+@Controller //被这个注解的类中所有方法，若返回值为字符串，且有具体页面可以跳转，那么就会被视图解析器解析
 public class HelloController {
     @RequestMapping("/hello")
     public String hello(Model model){
@@ -430,4 +430,400 @@ public class HelloController {
 **处理器映射器、处理器适配器、视图解析器**
 
 通常，我们只需要手动配置视图解析器，而处理器映射器和处理器适配器只需要开启注解驱动即可，而省去了大段的xml配置
+
+## Controller和Restful风格
+
+### Controller
+
+- 控制器复杂提供访问应用程序的行为，通常通过接口定义或**注解定义（建议）**两种方法实现。
+- 控制器负责解析用户的请求并将其转换为一个模型。
+- 在Spring MVC中一个Controller可以包含多个方法
+- 在Spring MVC中，对于Controller的配置方式有很多种
+
+两种方式参见上面的笔记
+
+**注意如果修改了java代码，需要redeploy，即重新部署**
+
+**修改了配置文件，重新发布**
+
+**修改了前端页面，刷新即可**
+
+### Restful风格
+
+#### 概念
+
+Restful就是一个资源定位及资源操作的风格。不是标准也不是协议，只是一种风格。基于这个风格设计的软件可以更简洁，更有层次，更易于实现缓存等机制。
+
+#### **功能**
+
+资源：互联网所有的事物都可以被抽象为资源
+
+资源操作：**使用POST、DELETE、PUT、GET，使用不同方法对资源进行操作**。
+
+分别对应 **添加、 删除、修改、查询**。
+
+**传统方式操作资源** ：通过不同的参数来实现不同的效果！方法单一，post 和 get
+
+ http://127.0.0.1/item/queryItem.action?id=1 查询,GET
+
+ http://127.0.0.1/item/saveItem.action 新增,POST
+
+ http://127.0.0.1/item/updateItem.action 更新,POST
+
+ http://127.0.0.1/item/deleteItem.action?id=1 删除,GET或POST
+
+**使用RESTful操作资源** ：可以通过不同的请求方式来实现不同的效果！如下：**请求地址一样，但是功能可以不同**！
+
+ http://127.0.0.1/item/1 查询,GET
+
+ http://127.0.0.1/item 新增,POST
+
+ http://127.0.0.1/item 更新,PUT
+
+ http://127.0.0.1/item/1 删除,DELETE
+
+#### 示例
+
+在下面的情况中，我们访问是 http://localhost:8080/test?a=1&b=2
+
+```java
+@Controller
+public class RestFulController {
+    @RequestMapping("/test")
+    public String test(int a , int b, Model m) {
+        int res=a+b;
+        m.addAttribute("msg",res);
+        return "test";
+    }
+}
+```
+
+如果使用RestFul风格编码 访问路径就变成 http://localhost:8080/test/1/2
+
+```java
+@Controller
+public class RestFulController {
+    @RequestMapping("/test/{a}/{b}")
+    public String test(@PathVariable int a ,@PathVariable int b, Model m) {
+        int res=a+b;
+        m.addAttribute("msg",res);
+        return "test";
+    }
+}
+```
+
+但是现在这样依旧未实现url的复用
+
+>  http://127.0.0.1/item 新增,POST
+>
+>  http://127.0.0.1/item 更新,PUT
+
+RequestMapping支持两个参数，一个是value别名为path，一个是method，通过指定method，我们就可以实现复用
+
+```java
+@Controller
+public class RestFulController {
+    //也可以写成@RequestMapping(value = "/test/{a}/{b}",method = RequestMethod.GET)
+    @RequestMapping(path = "/test/{a}/{b}",method = RequestMethod.GET)
+    public String test(@PathVariable int a ,@PathVariable int b, Model m) {
+        int res=a+b;
+        m.addAttribute("msg",res);
+        return "test";
+    }
+}
+```
+
+更简单的，我们可以使用提供的组合注解来对应不同的方法
+
+```
+@GetMapping
+@PostMapping
+@PutMapping
+@DeleteMapping
+@PatchMapping
+```
+
+比如上述例子 就可以改写成以下代码，路径依旧为 http://localhost:8080/test/1/2
+
+```java
+@Controller
+public class RestFulController {
+    @GetMapping( "/test/{a}/{b}")
+    public String test(@PathVariable int a ,@PathVariable int b, Model m) {
+        int res=a+b;
+        m.addAttribute("msg",res);
+        return "test";
+    }
+}
+```
+
+#### 注解含义
+
+##### @PathVariable
+
+在Spring MVC中，`@PathVariable` 注解用于从请求 URL 中提取参数值。通常，我们使用 `@PathVariable` 来捕获 URL 中的动态部分，并将其作为方法参数传递给处理请求的方法。
+
+例如，考虑以下 URL 模式：`/users/{userId}`，其中 `{userId}` 是一个动态的路径参数。如果我们希望在处理该请求的方法中获取 `userId` 的值，我们可以使用 `@PathVariable` 注解。
+
+以下是一个简单的示例：
+
+```java
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @GetMapping("/{userId}")
+    public String getUserById(@PathVariable Long userId) {
+        // 根据 userId 获取用户信息
+        return "User ID: " + userId;
+    }
+}
+```
+
+在上面的例子中，`@GetMapping("/{userId}")` 声明了一个处理 `/users/{userId}` 请求的方法。`@PathVariable Long userId` 将 `{userId}` 的值映射到方法的参数中，以供方法内部使用。
+
+##### @RestController
+
+```java
+@RestController
+```
+
+- `@RestController` 注解是 `@Controller` 的特殊形式，用于创建 RESTful Web 服务。
+- 与 `@Controller` 不同，`@RestController` 不会将方法的返回值视图名称，而是直接将其返回作为 HTTP 响应体。
+- 通常情况下，`@RestController` 中的方法**会返回 JSON 或 XML 等格式的数据，而不是视图**。
+
+示例：
+
+```java
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class MyRestController {
+
+    @GetMapping("/api/hello")
+    public String hello() {
+        return "Hello, World!"; // 直接返回字符串作为响应体
+    }
+}
+```
+
+总之，`@Controller` 用于创建传统的 MVC 控制器，而 `@RestController` 用于创建 RESTful Web 服务，直接返回数据而不是视图。
+
+## Spring结果跳转方式
+
+### ModelAndView
+
+设置ModelAndView对象 , 根据view的名称 , 和视图解析器跳到指定的页面 .
+
+页面 : {视图解析器前缀} + viewName +{视图解析器后缀}
+
+```xml
+<!-- 视图解析器 -->
+<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+     id="internalResourceViewResolver">
+   <!-- 前缀 -->
+   <property name="prefix" value="/WEB-INF/jsp/" />
+   <!-- 后缀 -->
+   <property name="suffix" value=".jsp" />
+</bean>
+```
+
+对应的controller类
+
+```java
+public class ControllerTest1 implements Controller {
+
+   public ModelAndView handleRequest(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws Exception {
+       //返回一个模型视图对象
+       ModelAndView mv = new ModelAndView();
+       mv.addObject("msg","ControllerTest1");
+       mv.setViewName("test");
+       return mv;
+  }
+}
+```
+
+**此时是最基本的实现接口来做跳转**
+
+### ServletAPI
+
+因为视图解析器本质上就是一个Servlet，而Servlet可以实现转发或者重定向，**注释掉视图解析器**
+
+1、通过HttpServletResponse进行输出
+
+2、通过HttpServletResponse实现重定向
+
+3、通过HttpServletResponse实现转发
+
+```java
+@Controller
+public class ResultGo {
+
+   @RequestMapping("/result/t1")
+   public void test1(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+       rsp.getWriter().println("Hello,Spring BY servlet API");
+  }
+
+   @RequestMapping("/result/t2")
+   public void test2(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+       rsp.sendRedirect("/index.jsp");
+  }
+
+   @RequestMapping("/result/t3")
+   public void test3(HttpServletRequest req, HttpServletResponse rsp) throws Exception {
+       //转发
+       req.setAttribute("msg","/result/t3");
+       req.getRequestDispatcher("/WEB-INF/jsp/test.jsp").forward(req,rsp);
+  }
+
+}
+```
+
+**注意此种方式，需要参数里面有请求和响应**
+
+### SpringMVC -无解析器
+
+将视图解析器注释掉
+
+```java
+@Controller
+public class ResultSpringMVC {
+    
+   @RequestMapping("/rsm/t2")
+   public String test2(){
+       //转发二
+       return "forward:/index.jsp";
+  }
+
+   @RequestMapping("/rsm/t3")
+   public String test3(){
+       //重定向
+       return "redirect:/index.jsp";
+  }
+}
+```
+
+此种方式如果是转发需要加上 `forward:` 如果是重定向需要加上`redirect:`
+
+### SpringMVC -有解析器
+
+```java
+@Controller
+public class ResultSpringMVC2 {
+   @RequestMapping("/rsm2/t1")
+   public String test1(){
+       //转发
+       return "test";
+  }
+   @RequestMapping("/rsm2/t2")
+   public String test2(){
+       //重定向
+       return "redirect:/index.jsp";
+       //return "redirect:hello.do"; //hello.do为另一个请求/
+  }
+}
+```
+
+此时转发直接写即可，重定向依旧加上 `redirect:`
+
+## 乱码问题解决
+
+1. 方式一自己实现过滤器，javaweb中
+2. spring提供的过滤器
+
+将乱码过滤器组测到web.xml:
+
+```xml
+<!--配置SpringMVC的乱码过滤-->
+<filter>
+    <filter-name>encoding</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+        <param-name>encoding</param-name>
+        <param-value>UTF-8</param-value>
+    </init-param>
+</filter>
+<filter-mapping>
+    <filter-name>encoding</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+
+注意 url-pattern 处是 `/*`而非`/ ` `/*`可以匹配jsp等格式
+
+## Json
+
+### 什么是Json
+
+- JSON(JavaScript Object Notation, JS 对象标记) 是一种轻量级的数据交换格式，目前使用特别广泛。
+- 采用完全独立于编程语言的**文本格式**来存储和表示数据。
+- 简洁和清晰的层次结构使得 JSON 成为理想的数据交换语言。
+- 易于人阅读和编写，同时也易于机器解析和生成，并有效地提升网络传输效率。
+
+在 JavaScript 语言中，一切都是对象。因此，任何JavaScript 支持的类型都可以通过 JSON 来表示，例如字符串、数字、对象、数组等。看看他的要求和语法格式：
+
+- 对象表示为键值对，数据由逗号分隔
+- 花括号保存对象
+- 方括号保存数组
+
+**JSON 键值对**是用来保存 JavaScript 对象的一种方式，和 JavaScript 对象的写法也大同小异，键/值对组合中的键名写在前面并用双引号 "" 包裹，使用冒号 : 分隔，然后紧接着值：
+
+```json
+{"name": "QinJiang"}
+{"age": "3"}
+{"sex": "男"}
+```
+
+很多人搞不清楚 JSON 和 JavaScript 对象的关系，甚至连谁是谁都不清楚。其实，可以这么理解：
+
+**JSON 是 JavaScript 对象的字符串表示法，它使用文本表示一个 JS 对象的信息，本质是一个字符串**。
+
+```js
+var obj = {a: 'Hello', b: 'World'}; //这是一个对象，注意键名也是可以使用引号包裹的
+var json = '{"a": "Hello", "b": "World"}'; //这是一个 JSON 字符串，本质是一个字符串
+```
+
+**JSON 和 JavaScript 对象互转**
+
+要实现从JSON字符串转换为JavaScript 对象，使用 JSON.parse() 方法：
+
+```js
+var obj = JSON.parse('{"a": "Hello", "b": "World"}');
+//结果是 {a: 'Hello', b: 'World'}
+```
+
+要实现从JavaScript 对象转换为JSON字符串，使用 JSON.stringify() 方法：
+
+```js
+var json = JSON.stringify({a: 'Hello', b: 'World'});
+//结果是 '{"a": "Hello", "b": "World"}'
+```
+
+### Controller返回JSON数据
+
+Jackson应该是目前比较好的json解析工具了
+
+当然工具不止这一个，比如还有阿里巴巴的 fastjson 等等。
+
+我们这里使用Jackson，使用它需要导入它的jar包；
+
+```xml
+<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.16.1</version>
+</dependency>
+
+<!--lomb-->
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.30</version>
+    <scope>provided</scope>
+</dependency>
+```
 
