@@ -827,3 +827,845 @@ Jackson应该是目前比较好的json解析工具了
 </dependency>
 ```
 
+新建一个用户类
+
+```java
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+    private int id;
+    private String name;
+    private String password;
+}
+```
+
+新建controller测试
+
+```java
+@Controller
+public class RestFulController {
+    @GetMapping( "/test")
+    @ResponseBody //返回json等数据而不是视图
+    public String test() throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        User user = new User(1, "张三", "123456");
+        String s = objectMapper.writeValueAsString(user);
+        return s;
+    }
+}
+```
+
+**这里也可以直接使用RestController，就无需ResponseBody了**
+
+测试发现乱码
+
+```
+{"id":1,"name":"??","password":"123456"}
+```
+
+### json 乱码
+
+首先想到上节课中的spring的拦截器  web.xml
+
+```xml
+<filter>
+    <filter-name>encoding</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+        <param-name>encoding</param-name>
+        <param-value>UTF-8</param-value>
+    </init-param>
+</filter>
+<filter-mapping>
+    <filter-name>encoding</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+
+**配置完发现未解决，因为这是json的乱码**
+
+提供两种解决方法
+
+1. 在RequestMapping中指定json的编码
+
+   ```java
+   //produces:指定响应体返回类型和编码
+   @RequestMapping(value = "/json1",produces = "application/json;charset=utf-8")
+   ```
+
+2. **方法一每个请求都需要加无疑太繁琐，故在springmvc的配置文件上添加一段消息StringHttpMessageConverter转换配置**
+
+   ```xml
+   <mvc:annotation-driven>
+      <mvc:message-converters register-defaults="true">
+          <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+              <constructor-arg value="UTF-8"/>
+          </bean>
+          <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+              <property name="objectMapper">
+                  <bean class="org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean">
+                      <property name="failOnEmptyBeans" value="false"/>
+                  </bean>
+              </property>
+          </bean>
+      </mvc:message-converters>
+   </mvc:annotation-driven>
+   ```
+
+乱码问题解决，成功输出
+
+```
+{"id":1,"name":"张三","password":"123456"}
+```
+
+### 返回集合/输出时间
+
+```java
+@GetMapping( "/test1")
+public String test1() throws JsonProcessingException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    User user = new User(1, "张三1", "123456");
+    User user1 = new User(2, "张三2", "123456");
+    User user2 = new User(3, "张三3", "123456");
+
+    ArrayList<User> users = new ArrayList<>();
+    users.add(user);
+    users.add(user1);
+    users.add(user2);
+
+    return objectMapper.writeValueAsString(users);
+}
+```
+
+输出时间
+
+```java
+@GetMapping( "/test2")
+public String test2() throws JsonProcessingException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Date date = new Date();
+    return objectMapper.writeValueAsString(date);
+}
+```
+
+会发现输出的是时间戳的形式，可以用两种方法来解决，第一种 java的方式
+
+```java
+@GetMapping( "/test2")
+public String test2() throws JsonProcessingException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Date date = new Date();
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    return objectMapper.writeValueAsString(simpleDateFormat.format(date));
+}
+```
+
+第二种在jackson配置中取消时间戳 实际上感觉更复杂了
+
+```java
+@GetMapping( "/test2")
+public String test2() throws JsonProcessingException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
+    Date date = new Date();
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    objectMapper.setDateFormat(simpleDateFormat);
+    return objectMapper.writeValueAsString(date);
+}
+```
+
+### 总结
+
+其实以上方式大部分写的是重复的代码，我们可以提取成为一个json的工具类，需要时调取静态方法即可
+
+```java
+public class JsonUtils {
+   
+   public static String getJson(Object object) {
+       return getJson(object,"yyyy-MM-dd HH:mm:ss");
+  }
+
+   public static String getJson(Object object,String dateFormat) {
+       ObjectMapper mapper = new ObjectMapper();
+       //不使用时间差的方式
+       mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+       //自定义日期格式对象
+       SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+       //指定日期格式
+       mapper.setDateFormat(sdf);
+       try {
+           return mapper.writeValueAsString(object);
+      } catch (JsonProcessingException e) {
+           e.printStackTrace();
+      }
+       return null;
+  }
+}
+```
+
+### fastjson 阿里
+
+fastjson.jar是阿里开发的一款专门用于Java开发的包，可以方便的实现json对象与JavaBean对象的转换，实现JavaBean对象与json字符串的转换，实现json对象与json字符串的转换。实现json的转换方法很多，最后的实现结果都是一样的。
+
+fastjson 的 pom依赖！
+
+```xml
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>fastjson</artifactId>
+    <version>1.2.83</version>
+</dependency>
+```
+
+fastjson 三个主要的类：
+
+**JSONObject  代表 json 对象** 
+
+- JSONObject实现了Map接口, 猜想 JSONObject底层操作是由Map实现的。
+- JSONObject对应json对象，通过各种形式的get()方法可以获取json对象中的数据，也可利用诸如size()，isEmpty()等方法获取"键：值"对的个数和判断是否为空。其本质是通过实现Map接口并调用接口中的方法完成的。
+
+**JSONArray  代表 json 对象数组**
+
+- 内部是有List接口中的方法来完成操作的。
+
+**JSON代表 JSONObject和JSONArray的转化**
+
+- JSON类源码分析与使用
+- 仔细观察这些方法，主要是实现json对象，json对象数组，javabean对象，json字符串之间的相互转化。
+
+```java
+public class FastJsonDemo {
+   public static void main(String[] args) {
+       //创建一个对象
+       User user1 = new User("秦疆1号", 3, "男");
+       User user2 = new User("秦疆2号", 3, "男");
+       User user3 = new User("秦疆3号", 3, "男");
+       User user4 = new User("秦疆4号", 3, "男");
+       List<User> list = new ArrayList<User>();
+       list.add(user1);
+       list.add(user2);
+       list.add(user3);
+       list.add(user4);
+
+       System.out.println("*******Java对象 转 JSON字符串*******");
+       String str1 = JSON.toJSONString(list);
+       System.out.println("JSON.toJSONString(list)==>"+str1);
+       String str2 = JSON.toJSONString(user1);
+       System.out.println("JSON.toJSONString(user1)==>"+str2);
+
+       System.out.println("\n****** JSON字符串 转 Java对象*******");
+       User jp_user1=JSON.parseObject(str2,User.class);
+       System.out.println("JSON.parseObject(str2,User.class)==>"+jp_user1);
+
+       System.out.println("\n****** Java对象 转 JSON对象 ******");
+       JSONObject jsonObject1 = (JSONObject) JSON.toJSON(user2);
+       System.out.println("(JSONObject) JSON.toJSON(user2)==>"+jsonObject1.getString("name"));
+
+       System.out.println("\n****** JSON对象 转 Java对象 ******");
+       User to_java_user = JSON.toJavaObject(jsonObject1, User.class);
+       System.out.println("JSON.toJavaObject(jsonObject1, User.class)==>"+to_java_user);
+  }
+}
+```
+
+## 整合SSM框架
+
+>环境：
+>
+>- IDEA
+>- MySQL 8.0.36
+>- Tomcat 8.5.98
+>- Maven 3.9.6
+>
+> 要求：
+>
+>- 需要熟练掌握MySQL数据库，Spring，JavaWeb及MyBatis知识，简单的前端知识；
+
+### 数据库
+
+```sql
+CREATE DATABASE `ssmbuild`;
+
+USE `ssmbuild`;
+
+DROP TABLE IF EXISTS `books`;
+
+CREATE TABLE `books` (
+`bookID` INT(10) NOT NULL AUTO_INCREMENT COMMENT '书id',
+`bookName` VARCHAR(100) NOT NULL COMMENT '书名',
+`bookCounts` INT(11) NOT NULL COMMENT '数量',
+`detail` VARCHAR(200) NOT NULL COMMENT '描述',
+KEY `bookID` (`bookID`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8
+
+INSERT  INTO `books`(`bookID`,`bookName`,`bookCounts`,`detail`)VALUES
+(1,'Java',1,'从入门到放弃'),
+(2,'MySQL',10,'从删库到跑路'),
+(3,'Linux',5,'从进门到进牢');
+```
+
+### 基本环境搭建
+
+1、新建一Maven项目！ssmbuild ， 添加web的支持
+
+2、导入相关的pom依赖！
+
+```xml
+<dependencies>
+    <!--Junit-->
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.12</version>
+    </dependency>
+    <!--数据库驱动-->
+    <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>8.0.28</version>
+    </dependency>
+    <!-- 数据库连接池 -->
+   <dependency>
+       <groupId>com.mchange</groupId>
+       <artifactId>c3p0</artifactId>
+       <version>0.9.5.2</version>
+   </dependency>
+    <!--Servlet - JSP -->
+   <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>4.0.1</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>javax.servlet.jsp</groupId>
+        <artifactId>javax.servlet.jsp-api</artifactId>
+        <version>2.3.3</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>jstl</artifactId>
+        <version>1.2</version>
+    </dependency>
+    <!--mybatis-->
+    <dependency>
+        <groupId>org.mybatis</groupId>
+        <artifactId>mybatis</artifactId>
+        <version>3.5.6</version>
+    </dependency>
+    <dependency>
+        <groupId>org.mybatis</groupId>
+        <artifactId>mybatis-spring</artifactId>
+        <version>2.0.6</version>
+    </dependency>
+    <!--spring相关依赖-->
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-webmvc</artifactId>
+        <version>5.3.20</version>
+    </dependency>
+    <!--spring操作数据库所需-->
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-jdbc</artifactId>
+        <version>5.3.20</version>
+    </dependency>
+    <!--spring实现AOP所需-->
+    <dependency>
+        <groupId>org.aspectj</groupId>
+        <artifactId>aspectjweaver</artifactId>
+        <version>1.9.6</version>
+    </dependency>
+    <!--lomb-->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.30</version>
+    </dependency>
+    <!--json-->
+    <dependency>
+        <groupId>com.alibaba</groupId>
+        <artifactId>fastjson</artifactId>
+        <version>1.2.83</version>
+	</dependency>
+</dependencies>
+```
+
+3、Maven资源过滤问题解决
+
+```xml
+<build>
+   <resources>
+       <resource>
+           <directory>src/main/java</directory>
+           <includes>
+               <include>**/*.properties</include>
+               <include>**/*.xml</include>
+           </includes>
+           <filtering>false</filtering>
+       </resource>
+       <resource>
+           <directory>src/main/resources</directory>
+           <includes>
+               <include>**/*.properties</include>
+               <include>**/*.xml</include>
+           </includes>
+           <filtering>false</filtering>
+       </resource>
+   </resources>
+</build>
+```
+
+4、建立基本结构和配置框架！
+
+- com.balance.pojo
+
+- com.balance.dao
+
+- com.balance.service
+
+- com.balance.controller
+
+- mybatis-config.xml
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8" ?>
+  <!DOCTYPE configuration
+         PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+         "http://mybatis.org/dtd/mybatis-3-config.dtd">
+  <configuration>
+  
+  </configuration>
+  ```
+
+- applicationContext.xml
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <beans xmlns="http://www.springframework.org/schema/beans"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+  
+  </beans>
+  ```
+
+#### Mybatis层
+
+1、编写MyBatis的核心配置文件
+
+**取别名 和mapper映射**
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+    <typeAliases>
+        <package name="com.balance.pojo"/>
+    </typeAliases>
+    <mappers>
+        <mapper resource="com/balance/dao/BookMapper.xml"/>
+    </mappers>
+</configuration>
+```
+
+2、 编写数据库对应的实体类 
+
+com.balance.pojo.Books
+
+```java
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Books {
+
+    private int bookID;
+    private String bookName;
+    private int bookCounts;
+    private String detail;
+}
+```
+
+3 、编写Dao层的 Mapper接口
+
+```java
+public interface BookMapper {
+    //增加一个Book
+    int addBook(Books book);
+
+    //根据id删除一个Book
+    int deleteBookById(int id);
+
+    //更新Book
+    int updateBook(Books books);
+
+    //根据id查询,返回一个Book
+    Books queryBookById(int id);
+
+    //查询全部Book,返回list集合
+    List<Books> queryAllBook();
+}
+```
+
+4、编写接口对应的 Mapper.xml 文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.balance.dao.BookMapper">
+    <!--增加一个Book-->
+    <insert id="addBook" parameterType="books">
+        insert into books(bookName,bookCounts,detail) values(#{bookName},#{bookCounts},#{detail})
+    </insert>
+
+    <!--根据id删除一个Book-->
+    <delete id="deleteBookById" parameterType="int">
+        delete from books where bookID = #{bookID}
+    </delete>
+
+    <!--更新Book-->
+    <update id="updateBook"  parameterType="books">
+        update books
+        set bookName = #{bookName},bookCounts = #{bookCounts},detail = #{detail}
+        where bookID = #{bookID}
+    </update>
+
+    <!--根据id查询,返回一个Book-->
+    <select id="queryBookById" resultType="books">
+        select * from books where bookID = #{bookID}
+    </select>
+
+    <!--查询全部Book-->
+    <select id="queryAllBook" resultType="books">
+        select * from books
+    </select>
+</mapper>
+```
+
+5 、编写Service层的接口和实现类
+
+```java
+//BookService:底下需要去实现,调用dao层
+public interface BookService {
+    //增加一个Book
+    int addBook(Books book);
+    //根据id删除一个Book
+    int deleteBookById(int id);
+    //更新Book
+    int updateBook(Books books);
+    //根据id查询,返回一个Book
+    Books queryBookById(int id);
+    //查询全部Book,返回list集合
+    List<Books> queryAllBook();
+}
+```
+
+```java
+public class BookServiceImpl implements BookService{
+    //调用dao层的操作，设置一个set接口，方便Spring管理
+    private BookMapper bookMapper;
+
+    public void setBookMapper(BookMapper bookMapper) {
+        this.bookMapper = bookMapper;
+    }
+    @Override
+    public int addBook(Books book) {
+        return bookMapper.addBook(book);
+    }
+
+    @Override
+    public int deleteBookById(int id) {
+        return bookMapper.deleteBookById(id);
+    }
+
+    @Override
+    public int updateBook(Books books) {
+        return bookMapper.updateBook(books);
+    }
+
+    @Override
+    public Books queryBookById(int id) {
+        return bookMapper.queryBookById(id);
+    }
+
+    @Override
+    public List<Books> queryAllBook() {
+        return bookMapper.queryAllBook();
+    }
+}
+```
+
+#### Spring层
+
+1、配置**Spring整合MyBatis**，我们这里数据源使用c3p0连接池；
+
+2、我们去编写Spring整合Mybatis的相关的配置文件；spring-dao.xml
+
+**注意此处数据库配置文件是由Spring完成的**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- 配置整合mybatis -->
+    <!-- 1.关联数据库文件 -->
+    <context:property-placeholder location="classpath:database.properties"/>
+    <!-- 2.数据库连接池 -->
+    <!--数据库连接池
+        dbcp 半自动化操作 不能自动连接
+        c3p0 自动化操作（自动的加载配置文件 并且设置到对象里面）
+		druid：德鲁伊
+		hikari：spring2.x默认
+
+		也可以用之前spring的数据源
+    -->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <!-- 配置连接池属性 -->
+        <property name="driverClass" value="${jdbc.driver}"/>
+        <property name="jdbcUrl" value="${jdbc.url}"/>
+        <property name="user" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+
+        <!-- c3p0连接池的私有属性 -->
+        <property name="maxPoolSize" value="30"/>
+        <property name="minPoolSize" value="10"/>
+        <!-- 关闭连接后不自动commit -->
+        <property name="autoCommitOnClose" value="false"/>
+        <!-- 获取连接超时时间 -->
+        <property name="checkoutTimeout" value="10000"/>
+        <!-- 当获取连接失败重试次数 -->
+        <property name="acquireRetryAttempts" value="2"/>
+    </bean>
+
+    <!-- 3.配置SqlSessionFactory对象 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 注入数据库连接池 -->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 配置MyBaties全局配置文件:mybatis-config.xml -->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+    </bean>
+
+    <!-- 4.配置扫描Dao接口包，动态实现Dao接口注入到spring容器中 -->
+    <!--解释 ：https://www.cnblogs.com/jpfss/p/7799806.html-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!-- 注入sqlSessionFactory -->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+        <!-- 给出需要扫描Dao接口包 -->
+        <property name="basePackage" value="com.balance.dao"/>
+    </bean>
+</beans>
+```
+
+3、**Spring整合service层**
+
+spring-service.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- 扫描service相关的bean -->
+    <context:component-scan base-package="com.balance.service" />
+
+    <!--BookServiceImpl注入到IOC容器中-->
+    <bean id="bookServiceImpl" class="com.balance.service.BookServiceImpl">
+        <property name="bookMapper" ref="bookMapper"/>
+    </bean>
+
+    <!-- 配置事务管理器 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!-- 注入数据库连接池 -->
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+</beans>
+```
+
+此处如果`ref="bookMapper"`爆红或者 `ref="dataSource"`爆红，代表没有整合好
+
+首先在applicationContext.xml中导入
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <import resource="classpath:spring-dao.xml"/>
+    <import resource="classpath:spring-service.xml"/>
+</beans>
+```
+
+其次
+
+![image-20240311150243225](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240311150243225.png)
+
+此处的bean的注入也可以用注解实现
+
+```java
+@Service
+public class BookServiceImpl implements BookService{
+    //调用dao层的操作，设置一个set接口，方便Spring管理
+    private BookMapper bookMapper;
+
+    @Autowired
+    public void setBookMapper(BookMapper bookMapper) {
+        this.bookMapper = bookMapper;
+    }
+```
+
+#### SpringMVC层
+
+增加web支持
+
+编写web.xml
+
+* DispatchServlet
+* 乱码过滤
+
+首先新建一个空的 spring-mvc.xml 并且加入 applicationContext.xml之中
+
+web.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+    <!--DispatcherServlet-->
+    <servlet>
+        <servlet-name>DispatcherServlet</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <!--一定要注意:我们这里加载的是总的配置文件，之前被这里坑了！-->
+            <param-value>classpath:applicationContext.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DispatcherServlet</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <!--乱码过滤-->
+    <!--encodingFilter-->
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>
+            org.springframework.web.filter.CharacterEncodingFilter
+        </filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>utf-8</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <!--Session过期时间-->
+    <session-config>
+        <session-timeout>60</session-timeout>
+    </session-config>
+</web-app>
+```
+
+spring-mvc.xml 
+
+* 映射器
+* 适配器
+* 视图解析器
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <!--指定要扫描的包，这个包下注解（spring特有）就会生效-->
+    <context:component-scan base-package="com.balance.controller"/>
+
+    <!--让Spring MVC不处理静态资源 例如css、js等-->
+    <mvc:default-servlet-handler/>
+    <!--
+   支持mvc注解驱动
+       在spring中一般采用@RequestMapping注解来完成映射关系
+       要想使@RequestMapping注解生效
+       必须向上下文中注册DefaultAnnotationHandlerMapping 即映射器
+       和一个AnnotationMethodHandlerAdapter实例 即适配器
+       这两个实例分别在类级别和方法级别处理。
+       而annotation-driven配置帮助我们自动完成上述两个实例的注入。
+    -->
+    <mvc:annotation-driven />
+
+    <!-- 视图解析器 -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+          id="internalResourceViewResolver">
+        <!-- 前缀 -->
+        <property name="prefix" value="/WEB-INF/jsp/" />
+        <!-- 后缀 -->
+        <property name="suffix" value=".jsp" />
+    </bean>
+</beans>
+```
+
+**到此为止，基本框架搭建完成，可以写业务了**
+
+### 业务
+
+#### 查询全部书籍
+
+首先写Controller
+
+```java
+@Controller
+public class BookController {
+
+    @Autowired
+    private BookService bookService;
+
+    @RequestMapping("/book")
+    public String book(Model m){
+        List<Books> books = bookService.queryAllBook();
+        m.addAttribute("books",books);
+        return "book";
+    }
+
+}
+```
+
+然后在web-inf目录下新建jsp文件夹，新建book.jsp
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+${books}
+</body>
+</html>
+```
+
+成功得到结果！
+
