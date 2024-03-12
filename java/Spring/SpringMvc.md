@@ -1469,6 +1469,8 @@ public class BookServiceImpl implements BookService{
 </beans>
 ```
 
+> MapperScannerConfigurer 能够自动地扫描指定包路径下的 Mapper 接口，并将其注册为 Spring Bean，使得在需要使用 Mapper 接口时，可以直接通过注入的方式获取到对应的 Mapper 实例，而无需手动创建 sqlSessionTemplate 或者使用 sqlSessionTemplate.getMapper 的方式获取 Mapper。这种自动注册的方式大大简化了配置过程，提高了开发效率。
+
 3、**Spring整合service层**
 
 spring-service.xml
@@ -1669,3 +1671,495 @@ ${books}
 
 成功得到结果！
 
+## AJAX
+
+> https://mp.weixin.qq.com/s/tB4YX4H59wYS6rxaO3K2_g
+
+具体代码参照上述链接学习了解
+
+**异步无刷新请求**
+
+- **AJAX = Asynchronous JavaScript and XML（异步的 JavaScript 和 XML）。**
+- AJAX 是一种在无需重新加载整个网页的情况下，能够更新部分网页的技术。
+- **Ajax 不是一种新的编程语言，而是一种用于创建更好更快以及交互性更强的Web应用程序的技术。**
+- 在 2005 年，Google 通过其 Google Suggest 使 AJAX 变得流行起来。Google Suggest能够自动帮你完成搜索单词。
+- Google Suggest 使用 AJAX 创造出动态性极强的 web 界面：当您在谷歌的搜索框输入关键字时，JavaScript 会把这些字符发送到服务器，然后服务器会返回一个搜索建议的列表。就和国内百度的搜索框一样!
+
+传统的网页(即不用ajax技术的网页)，想要更新内容或者提交一个表单，都需要重新加载整个网页。
+
+使用ajax技术的网页，通过在后台服务器进行少量的数据交换，就可以实现异步局部更新。
+
+### Ajax和Axios
+
+>https://blog.csdn.net/weixin_53616401/article/details/130640884
+
+**同步：**
+
+浏览器页面在发送请求给服务器，在服务器处理请求的过程中，浏览器页面不能做其他的操作。只能等到服务器响应结束后才能，浏览器页面才能继续做其他的操作。
+
+![img](https://img-blog.csdnimg.cn/c48255f28eab4c32ab34636e056a436a.png)
+
+**异步：**
+
+浏览器页面发送请求给服务器，在服务器处理请求的过程中，浏览器页面还可以做其他的操作。
+
+![img](https://img-blog.csdnimg.cn/d26a19c41580434081cf2d7817f8f76e.png)
+
+#### 原生Ajax
+
+创建了一个XMLHttpRequest对象，用于和服务器交换数据，也是原生Ajax请求的核心对象，提供了各种方法。
+
+调用对象的open()方法设置请求的参数信息，例如请求地址，请求方式。然后调用send()方法向服务器发送请求。
+
+我们通过绑定事件的方式，来获取服务器响应的数据。
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原生Ajax</title>
+</head>
+<body>
+    
+    <input type="button" value="获取数据" onclick="getData()">
+ 
+    <div id="div1"></div>
+    
+</body>
+<script>
+    function getData(){
+        //1. 创建XMLHttpRequest 
+        var xmlHttpRequest  = new XMLHttpRequest();
+        
+        //2. 发送异步请求
+        xmlHttpRequest.open('GET','http://yapi.smart-xwork.cn/mock/169327/emp/list');
+        xmlHttpRequest.send();//发送请求
+        
+        //3. 获取服务响应数据
+        xmlHttpRequest.onreadystatechange = function(){
+            if(xmlHttpRequest.readyState == 4 && xmlHttpRequest.status == 200){
+                document.getElementById('div1').innerHTML = xmlHttpRequest.responseText;
+            }
+        }
+    }
+</script>
+</html>
+```
+
+#### Axios
+
+原生的Ajax使用起来还是比较繁琐的，接下来我们使用axios，Axios是对原生的AJAX进行封装，简化书写。
+
+引入axios文件
+
+**get:**
+
+```js
+axios({
+    method:"get",
+    url:"http://localhost:8080/ajax-demo1/aJAXDemo1?username=zhangsan"
+}).then(function (resp){
+    alert(resp.data);
+})
+```
+
+**post:**
+
+```js
+axios({
+    method:"post",
+    url:"http://localhost:8080/ajax-demo1/aJAXDemo1",
+    data:"username=zhangsan"
+}).then(function (resp){
+    alert(resp.data);
+});
+```
+
+axios()是用来发送异步请求的，小括号中使用 js的JSON对象传递请求相关的参数：
+
+method属性：用来设置请求方式的。取值为 get 或者 post。
+
+url属性：用来书写请求的资源路径。如果是 get 请求，需要将请求参数拼接到路径的后面，格式为： url?参数名=参数值&参数名2=参数值2。如果是post请求的方式，因为请求参数不能再，卸载路径的后面，需要单独设置一个属性。
+
+data属性：作为请求体被发送的数据。也就是说如果是 post 请求的话，数据需要作为 data 属性的值。
+
+then() 需要传递一个匿名函数。我们将 then()中传递的匿名函数称为 回调函数，意思是该匿名函数在发送请求时不会被调用，而是在成功响应后调用的函数。而该回调函数中的 resp 参数是对响应的数据进行封装的对象，通过 resp.data 可以获取到响应的数据。
+
+## 拦截器
+
+SpringMVC的处理器拦截器类似于Servlet开发中的过滤器Filter,用于对处理器进行预处理和后处理。开发者可以自己定义一些拦截器来实现特定的功能。
+
+**过滤器与拦截器的区别：**拦截器是AOP思想的具体应用。
+
+**过滤器**
+
+- servlet规范中的一部分，任何java web工程都可以使用
+- 在url-pattern中配置了/*之后，可以对所有要访问的资源进行拦截
+
+**拦截器** 
+
+- 拦截器是SpringMVC框架自己的，只有使用了SpringMVC框架的工程才能使用
+- 拦截器只会拦截访问的控制器方法， 如果访问的是jsp/html/css/image/js是不会进行拦截的
+
+### 示例
+
+初始化一个web工程
+
+第一步配置分发控制器
+
+web-inf/web.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+    <!--1.注册DispatcherServlet-->
+    <servlet>
+        <servlet-name>springmvc</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <!--关联一个springmvc的配置文件:【servlet-name】-servlet.xml-->
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:applicationContext.xml</param-value>
+        </init-param>
+        <!--启动级别-1-->
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <!--/ 匹配所有的请求；（不包括.jsp）-->
+    <!--/* 匹配所有的请求；（包括.jsp）-->
+    <servlet-mapping>
+        <servlet-name>springmvc</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+</web-app>
+```
+
+第二步配置注解扫描，静态资源过滤，处理器和适配器以及视图解析器
+
+resources/applicationContext.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <context:component-scan base-package="com.balance.controller" />
+    <mvc:default-servlet-handler />
+    <mvc:annotation-driven/>
+
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/jsp/" />
+        <property name="suffix" value=".jsp" />
+    </bean>
+</beans>
+```
+
+第三步，书写Controller
+
+```java
+@RestController
+public class TestInterceptor {
+
+    @RequestMapping("/test")
+    public String test(){
+        return "test方法执行了";
+    }
+}
+```
+
+#### **自定义拦截器**
+
+想要自定义拦截器，必须实现 HandlerInterceptor 接口。
+
+新建config包，实现拦截器
+
+```java
+public class MyInterceptor implements HandlerInterceptor {
+    //在请求处理的方法之前执行
+    //如果返回true执行下一个拦截器
+    //如果返回false就不执行下一个拦截器
+    public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
+        System.out.println("------------处理前------------");
+        return true;
+    }
+
+    //在请求处理方法执行之后执行
+    public void postHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, ModelAndView modelAndView) throws Exception {
+        System.out.println("------------处理后------------");
+    }
+
+    //在dispatcherServlet处理后执行,做清理工作.
+    public void afterCompletion(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) throws Exception {
+        System.out.println("------------清理------------");
+    }
+}
+```
+
+实际上无需 postHandle，afterCompletion方法因为没有要求我们强制重写方法，而且这两个方法无返回值，preHandle就已经足够
+
+#### **配置拦截器**
+
+```xml
+<!--关于拦截器的配置-->
+<mvc:interceptors>
+   <mvc:interceptor>
+       <!--/** 包括路径及其子路径-->
+       <!--/admin/* 拦截的是/admin/add等等这种 , /admin/add/user不会被拦截-->
+       <!--/admin/** 拦截的是/admin/下的所有-->
+       <mvc:mapping path="/**"/>
+       <!--bean配置的就是拦截器-->
+       <bean class="com.kuang.interceptor.MyInterceptor"/>
+   </mvc:interceptor>
+</mvc:interceptors>
+```
+
+#### **测试**
+
+![image-20240312145614580](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240312145614580.png)
+
+### 实战 -用户校验
+
+参见
+
+> https://mp.weixin.qq.com/s/NWJoYiirbkSDz6x01Jji3g
+
+这里有一个注意点是
+
+实际参数可以是HttpSession，如同之前的Model一样
+
+## 文件下载以及上传
+
+文件上传是项目开发中最常见的功能之一 ,springMVC 可以很好的支持文件上传，但是SpringMVC上下文中默认没有装配MultipartResolver，因此默认情况下其不能处理文件上传工作。**如果想使用Spring的文件上传功能，则需要在上下文中配置MultipartResolver。**
+
+前端表单要求：为了能上传文件，必须将表单的method设置为POST，并将enctype设置为multipart/form-data。只有在这样的情况下，浏览器才会把用户选择的文件以二进制数据发送给服务器；
+
+**对表单中的 enctype 属性做个详细的说明：**
+
+- application/x-www=form-urlencoded：默认方式，只处理表单域中的 value 属性值，采用这种编码方式的表单会将表单域中的值处理成 URL 编码方式。
+- multipart/form-data：这种编码方式会以二进制流的方式来处理表单数据，这种编码方式会把文件域指定文件的内容也封装到请求参数中，不会对字符编码。
+- text/plain：除了把空格转换为 "+" 号外，其他字符都不做编码处理，这种方式适用直接通过表单发送邮件。
+
+```html
+<form action="" enctype="multipart/form-data" method="post">
+   <input type="file" name="file"/>
+   <input type="submit">
+</form>
+```
+
+一旦设置了**enctype为multipart/form-data，浏览器即会采用二进制流的方式来处理表单数据**，而对于文件上传的处理则涉及在服务器端解析原始的HTTP响应。在2003年，Apache Software Foundation发布了开源的Commons FileUpload组件，其很快成为Servlet/JSP程序员上传文件的最佳选择。
+
+- Servlet3.0规范已经提供方法来处理文件上传，但这种上传需要在Servlet中完成。
+- 而Spring MVC则提供了更简单的封装。
+- Spring MVC为文件上传提供了直接的支持，这种支持是用即插即用的MultipartResolver实现的。
+- **Spring MVC使用Apache Commons FileUpload技术实现了一个MultipartResolver实现类：**
+- CommonsMultipartResolver。因此，**SpringMVC的文件上传还需要依赖Apache Commons FileUpload的组件。**
+
+### 文件上传
+
+导包
+
+```xml
+<!--文件上传-->
+<dependency>
+   <groupId>commons-fileupload</groupId>
+   <artifactId>commons-fileupload</artifactId>
+   <version>1.3.3</version>
+</dependency>
+<!--servlet-api导入高版本的-->
+<dependency>
+   <groupId>javax.servlet</groupId>
+   <artifactId>javax.servlet-api</artifactId>
+   <version>4.0.1</version>
+</dependency>
+```
+
+2、配置bean：multipartResolver
+
+【**注意！！！这个bena的id必须为：multipartResolver ， 否则上传文件会报400的错误！在这里栽过坑,教训！**】
+
+```xml 
+<!--文件上传配置-->
+<bean id="multipartResolver"  class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+   <!-- 请求的编码格式，必须和jSP的pageEncoding属性一致，以便正确读取表单的内容，默认为ISO-8859-1 -->
+   <property name="defaultEncoding" value="utf-8"/>
+   <!-- 上传文件大小上限，单位为字节（10485760=10M） -->
+   <property name="maxUploadSize" value="10485760"/>
+   <property name="maxInMemorySize" value="40960"/>
+</bean>
+```
+
+CommonsMultipartFile 的 常用方法：
+
+- **String getOriginalFilename()：获取上传文件的原名**
+- **InputStream getInputStream()：获取文件流**
+- **void transferTo(File dest)：将上传文件保存到一个目录文件中**
+
+ 我们去实际测试一下
+
+3、编写前端页面
+
+```
+<form action="/upload" enctype="multipart/form-data" method="post">
+ <input type="file" name="file"/>
+ <input type="submit" value="upload">
+</form>
+```
+
+4、Controller
+
+```java
+package com.kuang.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.*;
+
+@Controller
+public class FileController {
+   //@RequestParam("file") 将name=file控件得到的文件封装成CommonsMultipartFile 对象
+   //批量上传CommonsMultipartFile则为数组即可
+   @RequestMapping("/upload")
+   public String fileUpload(@RequestParam("file") CommonsMultipartFile file , HttpServletRequest request) throws IOException {
+
+       //获取文件名 : file.getOriginalFilename();
+       String uploadFileName = file.getOriginalFilename();
+
+       //如果文件名为空，直接回到首页！
+       if ("".equals(uploadFileName)){
+           return "redirect:/index.jsp";
+      }
+       System.out.println("上传文件名 : "+uploadFileName);
+
+       //上传路径保存设置
+       String path = request.getServletContext().getRealPath("/upload");
+       //如果路径不存在，创建一个
+       File realPath = new File(path);
+       if (!realPath.exists()){
+           realPath.mkdir();
+      }
+       System.out.println("上传文件保存地址："+realPath);
+
+       InputStream is = file.getInputStream(); //文件输入流
+       OutputStream os = new FileOutputStream(new File(realPath,uploadFileName)); //文件输出流
+
+       //读取写出
+       int len=0;
+       byte[] buffer = new byte[1024];
+       while ((len=is.read(buffer))!=-1){
+           os.write(buffer,0,len);
+           os.flush();
+      }
+       os.close();
+       is.close();
+       return "redirect:/index.jsp";
+  }
+}
+```
+
+5、测试上传文件，OK！
+
+#### file.Transto
+
+**采用file.Transto 来保存上传的文件**
+
+1、编写Controller
+
+```java
+/*
+* 采用file.Transto 来保存上传的文件
+*/
+@RequestMapping("/upload2")
+public String  fileUpload2(@RequestParam("file") CommonsMultipartFile file, HttpServletRequest request) throws IOException {
+
+   //上传路径保存设置
+   String path = request.getServletContext().getRealPath("/upload");
+   File realPath = new File(path);
+   if (!realPath.exists()){
+       realPath.mkdir();
+  }
+   //上传文件地址
+   System.out.println("上传文件保存地址："+realPath);
+
+   //通过CommonsMultipartFile的方法直接写文件（注意这个时候）
+   file.transferTo(new File(realPath +"/"+ file.getOriginalFilename()));
+
+   return "redirect:/index.jsp";
+}
+```
+
+2、前端表单提交地址修改
+
+3、访问提交测试，OK！
+
+**这种方法无需我们手动读写文件，直接将网上上传的文件保存到本地**
+
+### 文件下载
+
+**文件下载步骤：**
+
+1、**设置 response 响应头**
+
+2、读取文件 -- InputStream
+
+3、写出文件 -- OutputStream
+
+4、执行操作
+
+5、关闭流 （先开后关）
+
+**代码实现：**
+
+```java
+@RequestMapping(value="/download")
+public String downloads(HttpServletResponse response ,HttpServletRequest request) throws Exception{
+   //要下载的图片地址
+   String  path = request.getServletContext().getRealPath("/upload");
+   String  fileName = "基础语法.jpg";
+
+   //1、设置response 响应头
+   response.reset(); //设置页面不缓存,清空buffer
+   response.setCharacterEncoding("UTF-8"); //字符编码
+   response.setContentType("multipart/form-data"); //二进制传输数据
+   //设置响应头
+   response.setHeader("Content-Disposition",
+           "attachment;fileName="+URLEncoder.encode(fileName, "UTF-8"));
+
+   File file = new File(path,fileName);
+   //2、 读取文件--输入流
+   InputStream input=new FileInputStream(file);
+   //3、 写出文件--输出流
+   OutputStream out = response.getOutputStream();
+
+   byte[] buff =new byte[1024];
+   int index=0;
+   //4、执行 写出操作
+   while((index= input.read(buff))!= -1){
+       out.write(buff, 0, index);
+       out.flush();
+  }
+   out.close();
+   input.close();
+   return null;
+}
+```
+
+前端
+
+```
+<a href="/download">点击下载</a>
+```
+
+测试，文件下载OK，大家可以和我们之前学习的JavaWeb原生的方式对比一下，就可以知道这个便捷多了!
