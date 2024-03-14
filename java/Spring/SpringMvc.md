@@ -2,7 +2,7 @@
 
 ## 回顾MVC
 
-- MVC是模型(Model：==dao service==)、视图(View：==jsp==)、控制器(Controller：===servlet==)的简写，是一种软件设计规范。
+- MVC是模型(Model：==dao service==)、视图(View：==jsp==)、控制器(Controller：==servlet==)的简写，是一种软件设计规范。
 
 - 是将业务逻辑、数据、显示分离的方法来组织代码。
 - MVC主要作用是降低了视图与业务逻辑间的双向偶合。
@@ -446,7 +446,7 @@ public class HelloController {
 
 **修改了配置文件，重新发布**
 
-**修改了前端页面，刷新即可**
+**修改了前端页面，选择刷新即可**
 
 ### Restful风格
 
