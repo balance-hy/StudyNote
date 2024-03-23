@@ -1239,7 +1239,14 @@ public class User {
 
 ### @Bean
 
-一个带有该注解的方法将产生一个由 Spring 管理的 Bean 对象。通常，@Bean 注解用在配置类中，表示该方法返回的对象将被注册为 Spring Bean。
+一个带有该注解的方法将产生一个由 Spring 管理的 Bean 对象。通常，@Bean 注解用在配置类中，表示该方法返回的对象将被注册为 Spring Bean,在默认情况下，`@Bean` 注解的方法名称将作为 Bean 的名称注册到 Spring 容器中。你可以通过 `name` 属性显式地指定 Bean 的名称。
+
+```java
+@Bean(name = "myBean")
+public MyBean createMyBean() {
+    return new MyBean();
+}
+```
 
 ### @ComponentScan
 

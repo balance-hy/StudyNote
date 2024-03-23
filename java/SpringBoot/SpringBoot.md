@@ -1820,7 +1820,9 @@ spring:
 </dependency>
 ```
 
-6、现在需要程序员自己为 DruidDataSource 绑定全局配置文件中的参数，再添加到容器中，而不再使用 Spring Boot 的自动生成了；我们需要自己添加 DruidDataSource 组件到容器中，并绑定属性；
+6、现在需要程序员自己为 DruidDataSource 绑定全局配置文件中的参数，再添加到容器中，；
+
+**我们需要自己添加 DruidDataSource 组件到容器中，并绑定属性；**
 
 创建config包,下面新建 DruidConfig 配置类
 
