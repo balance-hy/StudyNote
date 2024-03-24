@@ -1373,7 +1373,7 @@ public class MyMvcConfig implements WebMvcConfigurer {
 }
 ```
 
-## 自定义starter
+### 自定义starter
 
 > Spring Boot Starters启动器依赖:
 > 官方文档:
@@ -1381,7 +1381,7 @@ public class MyMvcConfig implements WebMvcConfigurer {
 
 我们分析完毕了源码以及自动装配的过程，我们可以尝试自定义一个启动器来玩玩！
 
-### 6.1、说明
+#### 6.1、说明
 
 启动器模块是一个 空 jar 文件，仅提供辅助性依赖管理，这些依赖可能用于自动装配或者其他类库；
 
@@ -1397,7 +1397,7 @@ public class MyMvcConfig implements WebMvcConfigurer {
 - xxx-spring-boot-starter
 - 比如：mybatis-spring-boot-starter
 
-###  6.2、编写启动器
+####  6.2、编写启动器
 
 1、在IDEA中新建一个空项目 spring-boot-starter-diy
 
@@ -1528,7 +1528,7 @@ com.kuang.HelloServiceAutoConfiguration
 
 ![img](https://img2020.cnblogs.com/blog/1905053/202004/1905053-20200412223705466-546919127.png)
 
-### 6.3、新建项目测试我们自己写的启动器
+#### 6.3、新建项目测试我们自己写的启动器
 
 1、新建一个SpringBoot 项目
 
@@ -2058,3 +2058,701 @@ public class MyController {
 ```
 
 **这里省略了Service层**
+
+## 任务
+
+### 异步任务
+
+> 为什么要有异步任务
+
+异步处理任务，比如我们在网站上发送邮件，后台会去发送邮件，此时前台会造成响应不动，直到邮件发送完毕，响应才会成功，所以我们一般会采用多线程的方式去处理这些任务。
+
+使用两个注解解决：
+
+- @EnableAsync //SpringBoot启动类
+- @Async //执行方法
+
+在业务层 service 中定义AsyncService类
+
+```java
+@Service
+public class AsyncService {
+
+    @Async
+    public void hello() {
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("hello");
+    }
+}
+```
+
+在控制层 controller 中定义AsyncController控制类
+
+```java
+@RestController
+public class MyController {
+    @Autowired
+    AsyncService asyncService;
+
+    @GetMapping("/hello")
+    public String hello(){
+        asyncService.hello();
+        return "hello";
+    }
+}
+```
+
+在主启动类 Springboor09TestApplication 添加开启异步测试
+
+```java
+@EnableAsync
+@SpringBootApplication
+public class Springboot06TestApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Springboot06TestApplication.class, args);
+    }
+
+}
+```
+
+加上这两个注解之后，前台就不会卡在那里等响应了
+
+### 邮件任务
+
+邮件发送，在我们的日常开发中，也非常的多，Springboot也帮我们做了支持
+
+- 邮件发送需要引入spring-boot-start-mail
+- SpringBoot 自动配置MailSenderAutoConfiguration
+- 定义MailProperties内容，配置在application.yml中
+- 自动装配JavaMailSender
+- 测试邮件发送
+
+导入spring-boot-starter-mail依赖
+
+```xml
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-mail</artifactId>
+</dependency>
+```
+
+配置文件application.yml
+
+```yml
+spring:
+  mail:
+    username: 1835675603@qq.com
+    password: oevqqvpkacjwebhh # 授权码
+    host: smtp.qq.com
+    properties:
+      mail.smtp.ssl.enable: true
+```
+
+- 获取授权码：在QQ邮箱中的设置->账户->开启pop3和smtp服务
+
+测试类中进行测试
+
+```java
+@SpringBootTest
+class Springboot06TestApplicationTests {
+    @Autowired
+    JavaMailSenderImpl javaMailSender;
+
+    @Test
+    void contextLoads() {
+        //一个简单的邮件发送
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        //设置主题
+        message.setSubject("这是测试邮件，测试简单的邮件发送");
+        //设置正文
+        message.setText("这是一封测试邮件");
+        //设置收发人
+        message.setTo("1835675603@qq.com");
+        message.setFrom("1835675603@qq.com");
+
+        javaMailSender.send(message);
+    }
+
+}
+```
+
+![image-20240324125335152](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240324125335152.png)
+
+复杂邮件怎么发呢？比如有字体颜色，附件之类。这时可以与之前javaweb所学知识结合
+
+```java
+@SpringBootTest
+class Springboot06TestApplicationTests {
+    @Autowired
+    JavaMailSenderImpl javaMailSender;
+
+    @Test
+    void contextLoads() {
+        //一个简单的邮件发送
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        //设置主题
+        message.setSubject("这是测试邮件，测试简单的邮件发送");
+        //设置正文
+        message.setText("这是一封测试邮件");
+        //设置收发人
+        message.setTo("1835675603@qq.com");
+        message.setFrom("1835675603@qq.com");
+
+        javaMailSender.send(message);
+    }
+
+    @Test
+    void contextLoads2() throws MessagingException {
+        //复杂的邮件发送
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        //组装
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);////这里的true表示是否为Multipart，支持多文件
+
+        //设置主题
+        helper.setSubject("复杂的邮件发送");
+        //设置正文
+        helper.setText("<p style='color:red'>这是一封测试邮件</p>", true);//这里的true表示是否为html
+        //发送附件
+        helper.addAttachment("附件", new File("D:\\ideaProject\\SpringBoot\\springboot-06-test\\src\\main\\resources\\application.yml"));
+
+        //设置收发人
+        helper.setTo("1835675603@qq.com");
+        helper.setFrom("1835675603@qq.com");
+
+        javaMailSender.send(mimeMessage);
+    }
+    
+    /* 这样也可以
+    	//复杂的邮件发送
+        MimeMessage mimeMessage = new MimeMessage(javaMailSender.getSession());
+        //组装
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true,"utf-8");
+    */
+}
+
+```
+
+![image-20240324130318291](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240324130318291.png)
+
+### 定时任务
+
+项目开发中经常需要执行一些定时任务，比如需要在每天凌晨的时候，分析一次前一天的日志信息，Spring为我们提供了异步执行任务调度的方式，提供了自带两个接口。
+
+- TaskExecutor接口 **任务执行**
+- TaskScheduler接口 **任务调度**
+
+实际上就是写两个注解：
+
+- @EnableScheduling  //SpringBoot启动类 开启定时任务
+- @Scheduled  //方法上，什么时候执行
+
+ScheduledService业务类
+
+```java
+@Service
+public class ScheduledService {
+
+    @Scheduled(cron = "0/2 * * * * ?")
+    public void hello(){
+        System.out.println("hello");
+    }
+}
+```
+
+在SpringBoot主启动类中添加注解
+
+```java
+@EnableScheduling
+@SpringBootApplication
+public class Springboot06TestApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Springboot06TestApplication.class, args);
+    }
+
+}
+```
+
+常用的表达式 交给gpt生成就行了
+
+```
+0/2 * * * * ?   表示每2秒 执行任务
+0 0/2 * * * ?   表示每2分钟 执行任务
+0 0 2 1 * ?   表示在每月的1日的凌晨2点调整任务
+0 15 10 ? * MON-FRI   表示周一到周五每天上午10:15执行作业
+0 15 10 ? 6L 2002-2006   表示2002-2006年的每个月的最后一个星期五上午10:15执行作
+0 0 10,14,16 * * ?   每天上午10点，下午2点，4点
+0 0/30 9-17 * * ?   朝九晚五工作时间内每半小时
+0 0 12 ? * WED   表示每个星期三中午12点
+0 0 12 * * ?   每天中午12点触发
+0 15 10 ? * *   每天上午10:15触发
+0 15 10 * * ?     每天上午10:15触发
+0 15 10 * * ?   每天上午10:15触发
+0 15 10 * * ? 2005   2005年的每天上午10:15触发
+0 * 14 * * ?     在每天下午2点到下午2:59期间的每1分钟触发
+0 0/5 14 * * ?   在每天下午2点到下午2:55期间的每5分钟触发
+0 0/5 14,18 * * ?     在每天下午2点到2:55期间和下午6点到6:55期间的每5分钟触发
+0 0-5 14 * * ?   在每天下午2点到下午2:05期间的每1分钟触发
+0 10,44 14 ? 3 WED   每年三月的星期三的下午2:10和2:44触发
+0 15 10 ? * MON-FRI   周一至周五的上午10:15触发
+0 15 10 15 * ?   每月15日上午10:15触发
+0 15 10 L * ?   每月最后一日的上午10:15触发
+0 15 10 ? * 6L   每月的最后一个星期五上午10:15触发
+0 15 10 ? * 6L 2002-2005   2002年至2005年的每月的最后一个星期五上午10:15触发
+0 15 10 ? * 6#3   每月的第三个星期五上午10:15触发
+```
+
+## 分布式系统
+
+在《分布式系统原理与范型》一书中有如下定义：“分布式系统是若干独立计算机的集合，这些计算机对于用户来说就像单个相关系统”；
+
+分布式系统是由一组通过网络进行通信、为了完成共同的任务而协调工作的计算机节点组成的系统。分布式系统的出现是为了用廉价的、普通的机器完成单个计算机无法完成的计算、存储任务。其目的是**利用更多的机器，处理更多的数据**。
+
+分布式系统（distributed system）是建立在网络之上的软件系统。
+
+首先需要明确的是，**只有当单个节点的处理能力无法满足日益增长的计算、存储任务的时候，且硬件的提升（加内存、加磁盘、使用更好的CPU）高昂到得不偿失的时候，应用程序也不能进一步优化的时候，我们才需要考虑分布式系统**。因为，分布式系统要解决的问题本身就是和单机系统一样的，而由于分布式系统多节点、通过网络通信的拓扑结构，会引入很多单机系统没有的问题，为了解决这些问题又会引入更多的机制、协议，带来更多的问题。
+
+随着互联网的发展，网站应用的规模不断扩大，常规的垂直应用架构已无法应对，分布式服务架构以及流动计算架构势在必行，急需**一个治理系统**确保架构有条不紊的演进。
+
+在Dubbo的官网文档有这样一张图
+
+![image-20220311214745570](https://cocochimp-markdown-img.oss-cn-beijing.aliyuncs.com/16_Mybatis-plus/image-20220311214745570.png)
+
+> 单一应用架构
+
+当网站流量很小时，只需一个应用，将所有功能都部署在一起，以减少部署节点和成本。此时，用于简化增删改查工作量的数据访问框架(ORM)是关键。
+
+![image-20220311214819155](https://cocochimp-markdown-img.oss-cn-beijing.aliyuncs.com/16_Mybatis-plus/image-20220311214819155.png)
+
+适用于小型网站，小型管理系统，将所有功能都部署到一个功能里，简单易用。
+
+1、性能扩展比较难
+
+2、协同开发问题
+
+3、不利于升级维护
+
+> 垂直应用架构
+
+当访问量逐渐增大，单一应用增加机器带来的加速度越来越小，将应用拆成互不相干的几个应用，以提升效率。此时，用于加速前端页面开发的Web框架(MVC)是关键。
+
+![image-20220311214936464](https://cocochimp-markdown-img.oss-cn-beijing.aliyuncs.com/16_Mybatis-plus/image-20220311214936464.png)
+
+通过切分业务来实现各个模块独立部署，降低了维护和部署的难度，团队各司其职更易管理，性能扩展也更方便，更有针对性。
+
+**缺点：公用模块无法重复利用，开发性的浪费**
+
+> 分布式服务架构
+
+当垂直应用越来越多，应用之间交互不可避免，将核心业务抽取出来，作为独立的服务，逐渐形成稳定的服务中心，使前端应用能更快速的响应多变的市场需求。此时，用于提高业务复用及整合的**分布式服务框架(RPC: Remote Procedure Call 远程过程调用)**是关键。
+
+![image-20220311215008041](https://cocochimp-markdown-img.oss-cn-beijing.aliyuncs.com/16_Mybatis-plus/image-20220311215008041.png)
+
+> 流动计算架构
+
+当服务越来越多，容量的评估，小服务资源的浪费等问题逐渐显现，此时需增加一个调度中心基于访问压力实时管理集群容量，提高集群利用率。此时，用于**提高机器利用率的资源调度和治理中心**(SOA)[ Service Oriented Architecture]是关键。
+
+### 什么是RPC
+
+RPC【Remote Procedure Call】是指远程过程调用，是一种进程间通信方式，他是一种技术的思想，而不是规范。它允许程序调用另一个地址空间（通常是共享网络的另一台机器上）的过程或函数，而不用程序员显式编码这个远程调用的细节。即程序员无论是调用本地的还是远程的函数，本质上编写的调用代码基本相同。
+
+**为什么要用RPC呢？就是无法在一个进程内，甚至一个计算机内通过本地调用的方式完成的需求，比如不同的系统间的通讯，甚至不同的组织间的通讯，由于计算能力需要横向扩展，需要在多台机器组成的集群上部署应用。RPC就是要像调用本地的函数一样去调远程函数；**
+
+推荐阅读文章：https://www.jianshu.com/p/2accc2840a1b
+
+**基本原理**
+
+![image-20220311215125107](https://cocochimp-markdown-img.oss-cn-beijing.aliyuncs.com/16_Mybatis-plus/image-20220311215125107.png)
+
+![image-20220311215143733](https://cocochimp-markdown-img.oss-cn-beijing.aliyuncs.com/16_Mybatis-plus/image-20220311215143733.png)
+
+RPC两个核心模块：==通讯，序列化==
+
+### Dubbo
+
+![image-20220311215250368](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20220311215250368.png)
+
+**服务提供者**（Provider）：暴露服务的服务提供方，服务提供者在启动时，向注册中心注册自己提供的服务。
+
+**服务消费者**（Consumer）：调用远程服务的服务消费方，服务消费者在启动时，向注册中心订阅自己所需的服务，服务消费者，从提供者地址列表中，基于软负载均衡算法，选一台提供者进行调用，如果调用失败，再选另一台调用。
+
+**注册中心**（Registry）：注册中心返回服务提供者地址列表给消费者，如果有变更，注册中心将基于长连接推送变更数据给消费者
+
+**监控中心**（Monitor）：服务消费者和提供者，在内存中累计调用次数和调用时间，定时每分钟发送一次统计数据到监控中心
+
+**调用关系说明**
+
+- 服务容器负责启动，加载，运行服务提供者。
+- 服务提供者在启动时，向注册中心注册自己提供的服务。
+- 服务消费者在启动时，向注册中心订阅自己所需的服务。
+- 注册中心返回服务提供者地址列表给消费者，如果有变更，注册中心将基于长连接推送变更数据给消费者。
+- 服务消费者，从提供者地址列表中，基于软负载均衡算法，选一台提供者进行调用，如果调用失败，再选另一台调用。
+- 服务消费者和提供者，在内存中累计调用次数和调用时间，定时每分钟发送一次统计数据到监控中心。
+
+### Zookeeper 注册中心
+
+点进dubbo官方文档，推荐我们使用Zookeeper 注册中心
+
+下载链接：[Apache ZooKeeper](https://gitee.com/link?target=https%3A%2F%2Fzookeeper.apache.org%2Freleases.html%23download)
+
+下载版本：3.8.4
+
+[![image-20220617103517716](https://raw.githubusercontent.com/KyDestroy/image/main/image-20220617103517716.png)](https://raw.githubusercontent.com/KyDestroy/image/main/image-20220617103517716.png)
+
+- 注意：3.5版本后要下载bin文件
+
+解压后打开 conf，将`zoo_sample.cfg`复制一份改名为`zoo.cfg`
+
+bin目录下双击或者在cmd中执行zkServer.cmd
+
+![image-20240324150829686](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240324150829686.png)
+
+再启动客户端即 zkCli.cmd
+
+使用`zkCli.cmd`测试
+
+`ls /`：列出Zookeeper根下保存的所有节点
+
+![image-20240324151004270](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240324151004270.png)
+
+`create -e /balance 123`：创建一个 /dt 节点，值为123
+
+![image-20240324151126222](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240324151126222.png)
+
+`get /balance`：获取 /dt 节点的值
+
+![image-20240324151143348](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240324151143348.png)
+
+我们再来看下节点
+
+![image-20240324151156427](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240324151156427.png)
+
+### Dubbo-admin
+
+dubbo本身并不是服务软件。它其实就是一个jar包，能够帮助你的java程序连接到zookeeper，并利用zookeeper消费、提供服务。
+
+但是为了让用户更好的管理监控更多的dubbo服务，官方提供了一个可视化的监控程序dubbo-admin，不过这个监控即使不装也不影响使用。
+
+**我们这里来安装一下：**
+
+1. **下载dubbo-admin**
+
+   地址：https://github.com/apache/dubbo-admin/releases
+
+   0.6.0
+
+2. **解压进入目录**
+
+   修改 dubbo-admin\scr\main\resources\application.properties 指定zookeeper地址，如果前面未动，
+
+   ```properties
+   server.port=38080
+   spring.velocity.cache=false
+   spring.velocity.charset=UTF-8
+   spring.velocity.layout-url=/templates/default.vm
+   spring.messages.fallback-to-system-locale=false
+   spring.messages.basename=i18n/message
+   spring.root.password=root
+   spring.guest.password=guest
+   # 注册中心的地址
+   dubbo.registry.address=zookeeper://127.0.0.1:2181
+   ```
+
+3. 在项目dubbo-admin-server目录下打包 dubbo-admin windows使用powershell需要加引号 cmd无需
+
+   ```
+   mvn clean package '-Dmaven.test.skip=true'
+   ```
+
+   - 如果打包失败，切换环境变量的jdk版本为1.8
+
+4. 执行 dubbo/target 下的 `dubbo-admin-server-0.6.0.jar`
+
+   ```
+   java -jar dubbo-admin-server-0.6.0.jar
+   ```
+
+   - 注意：**Zookeeper的服务一定要打开**
+
+   注意新版本Dubbo是前后端分离项目，前端 dubbo-admin-ui 是一个 vue2 项目，运行需要 node.js 环境，安装好 node.js 环境后，用命令行进入 dubbo-admin-ui 目录下，使用 npm install 命令下载依赖包，再使用 npm run dev 运行项目。
+
+   执行完毕，我们去访问一下 http://localhost:8080/前端页面，这时候我们需要输入登录账号的密码，默认root-root
+
+   **我这里因为电脑node版本过高无法正常启动**
+
+### 实战
+
+1. zookeeper：注册中心
+
+   dubbo-admin：一个监控管理后台，查看我们注册了哪些服务，哪些服务被消费了
+
+   Dubbo：jar包
+
+2. 步骤
+
+   前提：zookeeper服务已经开启！
+
+   1. 提供者提供服务
+      1. 导入依赖
+      2. 配置注册中心的地址，以及服务发现名，和要扫描的包~
+      3. **在想要被注册的服务上面~ 增加一个注解 @DubboService**
+   2. 消费者如何消费
+      1. 导入依赖
+      2. 配置注册中心的地址，配置自己的服务名
+      3. **从远程注入服务~ @DubboReference**
+
+1. 创建一个空项目
+
+2. 创建两个module，皆为springboot项目，分别为 provider 和 consumer
+
+3. 导入依赖
+
+   ```xml
+   <!--导入依赖：Dubbo + Zookeeper-->
+   <!-- https://mvnrepository.com/artifact/org.apache.dubbo/dubbo-spring-boot-starter -->
+   <dependency>
+       <groupId>org.apache.dubbo</groupId>
+       <artifactId>dubbo-spring-boot-starter</artifactId>
+       <version>2.7.15</version>
+   </dependency>
+   <!--zkclient-->
+   <!-- https://mvnrepository.com/artifact/com.github.sgroschupf/zkclient -->
+   <dependency>
+       <groupId>com.github.sgroschupf</groupId>
+       <artifactId>zkclient</artifactId>
+       <version>0.1</version>
+   </dependency>
+   
+   <!--日志会冲突，需要导入如下依赖-->
+   <dependency>
+       <groupId>org.apache.curator</groupId>
+       <artifactId>curator-framework</artifactId>
+       <version>2.12.0</version>
+   </dependency>
+   <dependency>
+       <groupId>org.apache.curator</groupId>
+       <artifactId>curator-recipes</artifactId>
+       <version>2.12.0</version>
+   </dependency>
+   <dependency>
+       <groupId>org.apache.zookeeper</groupId>
+       <artifactId>zookeeper</artifactId>
+       <version>3.4.14</version>
+       <!--排除这个slf4j-log4j12-->
+       <exclusions>
+           <exclusion>
+               <groupId>org.slf4j</groupId>
+               <artifactId>slf4j-log4j12</artifactId>
+           </exclusion>
+       </exclusions>
+   </dependency>
+   ```
+
+   **provider项目结构**
+
+   ![image-20240324164006370](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240324164006370.png)
+
+- Service层
+
+  - TicketService
+
+    ```java
+    package com.balance.service;
+    
+    public interface TicketService {
+        public String getTicket();
+    }
+    
+    ```
+
+  - TicketServiceImpl
+
+    ```java
+    package com.balance.service;
+    
+    import org.apache.dubbo.config.annotation.DubboService;
+    import org.springframework.stereotype.Service;
+    
+    @DubboService //注册为Dubbo的服务
+    @Service //注册为Spring的服务 注意不要导错包
+    public class TicketServiceImpl implements TicketService{
+        @Override
+        public String getTicket() {
+            return "hello,world";
+        }
+    }
+    ```
+
+- `application.properties`
+
+  ```properties
+  # 应用服务 WEB 访问端口
+  server.port=8081
+  
+  # 服务提供者名称
+  spring.application.name=provider
+  # 服务的应用
+  dubbo.application.name=provider-service
+  # 注册中心地址
+  dubbo.registry.address=zookeeper://127.0.0.1:2181
+  # 哪些服务注册
+  dubbo.scan.base-packages=com.balance.service
+  ```
+
+**consumer项目结构**
+
+![image-20240324164546262](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240324164546262.png)
+
+- Service层
+
+  - UserService
+
+    ```java
+    @Service
+    public class UserService {
+        // 想拿到provider-server提供的票，要去注册中心拿到服务
+        // 引用， Pom坐标，可以定义路径相同的接口名
+        @DubboReference
+        TicketService ticketService;
+    
+        public void buyTicket(){
+            String ticket = ticketService.getTicket();
+            System.out.println("在注册中心拿到=>" + ticket);
+        }
+    }
+    ```
+
+  - TicketService **这里通过定义相同的接口来使用**
+
+    ```java
+    package com.balance.service;
+    
+    public interface TicketService {
+        public String getTicket();
+    }
+    ```
+
+- `application.properties`修改端口号
+
+  ```properties
+  # 应用服务 WEB 访问端口
+  server.port=8082
+  
+  #应用名称
+  spring.application.name=consumer-spring
+  #从哪里获得服务，此时需要给出自己的名字
+  dubbo.application.name=consumer
+  #注册中心的地址
+  dubbo.registry.address=zookeeper://127.0.0.1:2181
+  ```
+
+测试：
+
+编写测试类
+
+```java
+@SpringBootTest
+class ConsumerApplicationTests {
+    @Autowired
+    UserService userService;
+
+    @Test
+    void contextLoads() {
+        userService.buyTicket();
+    }
+
+}
+```
+
+* 开启ZooKeeper
+* 运行 ProviderApplication 启动类 服务提供者
+* 运行 ConsumerApplicationTests 测试类  消费者
+
+结果：
+
+![image-20240324165153093](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240324165153093.png)
+
+## 总结
+
+```
+三层架构 + MVC
+	架构 -->解耦
+
+开发框架
+    Spring:IOC AOP
+			IOC : 控制反转
+原来我们都是自己一步步操作,现在交给容器了!我们需要什么就去拿就可以了
+                
+            AOP:切面(本质,动态代理）
+为了解什么?不影响业本来的情况下,实现动态增加功能,大量应用在日志,事务等等
+                    
+	Spring是一个轻量级的Java开源框架，容器
+        目的：解决企业开发的复杂性问题
+        Spring是春天，但配置文件繁琐
+
+    SpringBoot
+      	SpringBoot,新代javaEE的开发标准,开箱即用!>拿过来就可以用,
+        它自动帮我们配置了非常多的东西,我们拿来即用,
+        特性:约定大于配置!
+                    
+随着公司体系越来越大,用户越来越多
+                    
+微服务架构—>新架构
+	模块化,功能化!
+	用户,支付,签到,娱乐…;
+	如果一台服务器解决不了就再增加一台服务器! --横向扩展
+	假设A服务器占用98%资源B服务器只占用了10%.–负载均衡;
+
+	用户非常多而到十分少给用户多一点服务器,给签到少一点服务器
+	
+	将原来的整体项,分成模块化,用户就是一个单独的项目,签到也是一个单独的项目,项目和项目之前需要通信,如何通信
+微服务架构问题?即分布式架构问题
+                    
+分布式架构会遇到的四个核心问题?
+   	1.这么多服务,客户端该如何去访问? 网关
+    2.这么多服务,服务之间如何进行通信? http/rpc
+    3.这么多服务,如何治理呢? //zookeeper
+    4.服务挂了,怎么办? // Hystrix
+        
+解决方案:                    
+	Springcloud是一套生态，就是来解决以上分布式架构的4个问题
+    想使用Spring Clould ,必须要掌握 springBoot , 因为Springcloud是基于springBoot ;
+
+	1. spring Cloud NetFlix ,出来了一套解决方案！一站式解决方案。可以直接使用
+	Api网关 , zuul组件
+	Feign --> Httpclient ---> http通信方式,同步并阻塞
+	服务注册与发现, Eureka
+	熔断机制, Hystrix
+                    
+2018年年底,NetFlix 宣布无限期停止维护。生态不再维护,就会脱节。
+
+	2. Apache Dubbo zookeeper ,第二套解决方案
+	API:没有!要么找第三方组件,要么自己实现
+	Dubbo 是一个高性能的基于Java实现的RPC通信框架!2.6.x
+	服务注册与发现 , zookeeper :动物管理者 ( Hadoop , Hive )
+	没有:借助了Hystrix
+                    
+不完善，Dubbo
+
+	3. SpringCloud Alibaba 一站式解决方案
+
+目前又提出了新的思路:
+	服务网格：也许是下一代维服务标准，Service mesh
+	代表解决方案：istio（未来可能需要掌握）
+
+万变不离其宗,一通百通！
+	1.API网关 ， 服务路由
+	2.HTTP，RPC框架，异步调用
+	3.服务注册与发现，高可用
+	4.熔断机制，服务降级
+         
+为什么要解决这个问题？因为网络是不可靠的!!!
+```
+
