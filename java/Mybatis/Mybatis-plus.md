@@ -472,14 +472,14 @@ public MybatisPlusInterceptor mybatisPlusInterceptor() {
 
 ```java
 //测试分页查询
-    @Test
-    void testPage(){
-        //参数一：当前页
-        //参数二：页面大小
-        Page<User> userPage = new Page<>(1,5);
-        userMapper.selectPage(userPage, null);
-        userPage.getRecords().forEach(System.out::println);
-    }
+@Test
+void testPage(){
+    //参数一：当前页
+    //参数二：页面大小
+    Page<User> userPage = new Page<>(1,5);
+    userMapper.selectPage(userPage, null);
+    userPage.getRecords().forEach(System.out::println);
+}
 ```
 
 ![image-20240325170333071](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240325170333071.png)
@@ -608,3 +608,9 @@ mybatis-plus:
 以一个简单查询的wrapper为例
 
 ![image-20240325184506697](https://raw.githubusercontent.com/balance-hy/typora/master/thinkbook/image-20240325184506697.png)
+
+## 代码自动生成器
+
+详见官网相关页面
+
+[代码生成器（新） | MyBatis-Plus (baomidou.com)](https://baomidou.com/pages/779a6e/)
